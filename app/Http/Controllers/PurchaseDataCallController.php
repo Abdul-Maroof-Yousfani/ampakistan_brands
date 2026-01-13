@@ -605,6 +605,7 @@ public function viewSubItemListAjax(Request $request)
     $category = $request->category;
     $sub_category = $request->sub_category;
     $principle_group = $request->principle_group;
+    $group = $request->group;
     $product_trend_id = $request->product_trend_id; // Assuming Product Trend IDs are passed in the request.
     $product_classification_id = $request->product_classification_id; // Assuming Product Classification IDs are passed in the request.
     $brand_ids = $request->brand_ids; // Assuming brand IDs are passed in the request.
@@ -668,6 +669,9 @@ $subitems = Subitem::where('subitem.status', 1)
     })
     ->when($principle_group, function($query, $principle_group) {
         $query->where("subitem.principal_group_id", $principle_group);
+    })
+    ->when($group, function($query, $group) {
+        $query->where("subitem.group_id", $group);
     })
     ->when($product_trend_id, function ($query, $product_trend_id) {
         $query->whereIn('subitem.product_trend_id', $product_trend_id);

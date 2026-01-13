@@ -100,6 +100,12 @@ class CommonHelper
         DB::reconnect('mysql');
     }
 
+    public static function get_all_groups() {
+        $groups = DB::connection("mysql2")->table("company_groups")->select("id", "name")->where("status", 1)->get();
+
+        return $groups;
+    }
+
     public static function get_all_principal_groups() {
         $principal_groups = ProductsPrincipalGroup::select("id", "products_principal_group")->where("status", 1)->get();
         return $principal_groups;

@@ -340,7 +340,8 @@ endif;
                                                 <tr style="font-size:large;font-weight: bold">
                                                     <td class="text-center" colspan="5">Total</td>
                                                     <td class="text-right" colspan="1"><input readonlyclass="form-control" type="text" id="actual_net" /> </td>
-                                                    <td class="text-center" colspan="2"></td>
+                                                    <td class="text-center" colspan="1"></td>
+                                                    <td class="text-center" colspan="1"><input type="text" readonly id="total_qty" /></td>
                                                     <td class="text-right" colspan="1"><input readonlyclass="form-control" type="text" id="net" /> </td>
                                                     <td></td>
                                                 </tr>
@@ -487,6 +488,21 @@ endif;
 <!-- AddMoreDetails -->
 <script>
 
+        function sumAllActualQuantities() {
+    let sum = 0;
+
+                $('.ActualQty').each(function () {
+                    const value = parseFloat($(this).val()) || 0;
+                    sum += value;
+                });
+
+                $("#total_qty").val(sum);
+            
+        }
+            $(document).on('input', '.ActualQty', function () {
+                sumAllActualQuantities();
+            });
+    
 
 
             var Counter = 1;
@@ -799,6 +815,7 @@ $(document).ready(function(){
 
         net_amount();
         sales_tax('sales_taxx');
+        sumAllActualQuantities();
     }
 
     function get_po(id) {

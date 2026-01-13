@@ -391,13 +391,51 @@ class SalesOrderController extends Controller
     }
 
     // new code
-    public function viewSaleOrdernew(Request $request)
-    {
-        $sale_order = Sales_Order::where('id', $request->id)->first();
+    // public function viewSaleOrdernew(Request $request)
+    // {
+    //     $sale_order = Sales_Order::where('id', $request->id)->first();
 
         
-        $sale_order_data = Sales_Order_Data::where('master_id', $request->id)->get();
+    //     $sale_order_data = Sales_Order_Data::where('master_id', $request->id)->get();
 
+    //     return view('selling.saleorder.viewSaleOrdernew', compact('sale_order', 'sale_order_data'));
+    // }
+
+    // public function viewSaleOrdernew(Request $request)
+    // {
+    //     $sale_order = Sales_Order::where('id', $request->id)->first();
+        
+    //     $sale_order_data = Sales_Order_Data::join(
+    //             'subitem',
+    //             'subitem.id',
+    //             '=',
+    //             'sales_order_data.item_id'
+    //         )
+    //         ->where('master_id', $request->id)
+    //         ->get();
+
+    //     return view('selling.saleorder.viewSaleOrdernew', compact('sale_order', 'sale_order_data'));
+    // }
+
+
+     public function viewSaleOrdernew(Request $request)
+    {
+        $sale_order = Sales_Order::where('id', $request->id)->first();
+        
+        $sale_order_data = Sales_Order_Data::join(
+                'subitem',
+                'subitem.id',
+                '=',
+                'sales_order_data.item_id'
+            )
+            ->select(
+                "*",
+                DB::raw("sales_order_data.rate as sale_order_rate")
+            )
+            ->where('master_id', $request->id)
+            ->get();
+
+       
         return view('selling.saleorder.viewSaleOrdernew', compact('sale_order', 'sale_order_data'));
     }
 
