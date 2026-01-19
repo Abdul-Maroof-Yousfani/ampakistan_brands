@@ -18,8 +18,8 @@ class ProductWiseSalesReportController extends Controller
         
             $items = DB::connection("mysql2")
                         ->table("subitem")
-                        ->join("sales_order_data", "sales_order_data.item_id", "=", "subitem.id")
-                        ->join("sales_order", "sales_order.id", "=", "sales_order_data.master_id")
+                        ->leftJoin("sales_order_data", "sales_order_data.item_id", "=", "subitem.id")
+                        ->leftJoin("sales_order", "sales_order.id", "=", "sales_order_data.master_id")
                         ->select(
                             "sales_order_data.date",
                             "sales_order.buyers_id",
@@ -36,7 +36,7 @@ class ProductWiseSalesReportController extends Controller
                             DB::raw("SUM(sales_order_data.mrp_price) AS mrp_price")
                         )
                         ->when(isset($from) && isset($to), function($query) use ($from, $to) {
-                            $query->whereBetween("subitem.date", [$from, $to]);
+                            $query->whereBetween("sales_order.date", [$from, $to]);
                         })
                         ->when(isset($brand_id), function($query) use ($brand_id) {
                             $query->where("subitem.brand_id", $brand_id);

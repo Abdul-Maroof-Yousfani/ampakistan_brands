@@ -477,7 +477,7 @@ public function exportCustomers(Request $request)
 
     public function uploadCreditCustomer(Request $request)
 {
-    dd("test");
+   
     $file = $request->file('import_file');
     $data = array_map('str_getcsv', file($file->getRealPath()));
 

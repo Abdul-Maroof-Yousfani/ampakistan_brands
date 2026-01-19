@@ -21,7 +21,7 @@ class CustomersExport implements FromCollection, WithHeadings
     public function collection()
     {
         // Use the main database name for countries, states, and cities
-        $mainDatabase = 'ampakistan_master';
+        $mainDatabase = 'inpl2erp_brands_unlimited_fze';
         
         $query = Customer::leftJoin(DB::raw("`$mainDatabase`.`countries` as countries"), 'countries.id', 'customers.country')
             ->leftJoin(DB::raw("`$mainDatabase`.`states` as states"), 'states.id', 'customers.province')
