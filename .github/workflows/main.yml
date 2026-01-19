@@ -20,7 +20,7 @@ jobs:
           port: 22
           source: "."
           # Chroot ki wajah se target path root se start hoga
-          target: "/ampakistan.erpcode.live/"
+          target: "/var/www/ampakistan.erpcode.live/"
           strip_components: 0
 
       # 2. Execute Commands (Ab ye chalega kyunki ForceCommand hata diya)
@@ -31,7 +31,7 @@ jobs:
           username: 'bftp'
           password: 'asdf878&5439JHGk857&8'
           script: |
-            cd /ampakistan.erpcode.live
+            cd /var/www/ampakistan.erpcode.live
             
             # Directory structure setup
             mkdir -p storage/framework/{sessions,views,cache}
