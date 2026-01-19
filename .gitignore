@@ -29,3 +29,10 @@ Homestead.json
 .phpactor.json
 auth.json
 composer.lock
+
+
+storage/framework/cache/*
+storage/framework/sessions/*
+storage/framework/views/*
+bootstrap/cache/*
+
