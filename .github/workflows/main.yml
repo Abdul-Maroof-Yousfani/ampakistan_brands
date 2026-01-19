@@ -15,8 +15,8 @@ jobs:
         uses: appleboy/scp-action@master
         with:
           host: ${{ secrets.SFTP_HOST }}
-          username: 'bftp'
-          password: 'asdf878&5439JHGk857&8'
+          username: ${{ secrets.SFTP_USER }}
+          password: ${{ secrets.SFTP_PASS }}
           port: 22
           source: "."
           # Chroot ki wajah se target path root se start hoga
@@ -28,8 +28,8 @@ jobs:
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.SFTP_HOST }}
-          username: 'bftp'
-          password: 'asdf878&5439JHGk857&8'
+          username: ${{ secrets.SFTP_USER }}
+          password: ${{ secrets.SFTP_PASS }}
           script: |
             cd /var/www/ampakistan.erpcode.live
             
