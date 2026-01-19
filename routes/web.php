@@ -1522,6 +1522,7 @@ Route::group(['prefix' => 'sales', 'middleware' => 'mysql2', 'before' => 'csrf']
     Route::get('/debtor_balance_page', 'SalesController@debtor_balance_page');
     Route::get('/commission_report_page', 'SalesController@commission_report_page');
 
+    
     Route::post('/uploadCreditCustomer', 'SalesController@uploadCreditCustomer');
     Route::post('/uploadProduct', 'SalesController@uploadProduct');
 
