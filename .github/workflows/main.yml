@@ -23,6 +23,7 @@ jobs:
           source: "."
           target: "/var/www/ampakistan.erpcode.live/"
           strip_components: 0
+          tar_options: "--no-same-owner --no-same-permissions"
 
       
       # 2. Permissions aur Laravel setup
