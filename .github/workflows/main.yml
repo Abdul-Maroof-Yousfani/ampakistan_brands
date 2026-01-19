@@ -23,7 +23,6 @@ jobs:
           source: "."
           target: "/var/www/ampakistan.erpcode.live/"
           strip_components: 0
-          tar_options: "--no-same-owner --no-same-permissions"
 
       
       # 2. Permissions aur Laravel setup
@@ -39,16 +38,13 @@ jobs:
             # Directory structure create karna (Sudo ki zaroorat nahi)
             mkdir -p storage/framework/{sessions,views,cache}
             mkdir -p bootstrap/cache
-
             # Permissions set karna (Sirf un folders par jo user owned hain)
             find . -type d -exec chmod 775 {} \;
             find . -type f -exec chmod 664 {} \;
             chmod -R 775 storage bootstrap/cache
-
             # Laravel Optimization
             # Agar composer path me nahi hai to full path use karein: /usr/local/bin/composer
             composer install --no-dev --optimize-autoloader --no-interaction
-
             # Cache clear (ye tabhi chalega jab .env file server par maujood ho)
             if [ -f .env ]; then
                 php artisan config:cache
