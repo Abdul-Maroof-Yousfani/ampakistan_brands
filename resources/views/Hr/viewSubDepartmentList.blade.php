@@ -62,7 +62,7 @@ use App\Models\Department;
 															<?php
 																//echo $y->department_id;
 															$departmentName = CommonHelper::get_dept_name_hr($m,$y->department_id);
-															echo strtoupper($departmentName->department_name);
+															// echo strtoupper($departmentName->department_name);
 															?>
 
 														</td>
