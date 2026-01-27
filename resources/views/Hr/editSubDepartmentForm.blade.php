@@ -20,6 +20,7 @@ $subDepartmentDetail = DB::selectOne('select * from `sub_department` where `id` 
 										<div class="row">
 											<div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
 												<input type="hidden" name="subDepartmentSection[]" class="form-control" id="subDepartmentSection" value="1" />
+												<input type="hidden" name="department_id_1" class="form-control" id="subDepartmentSection" value="1" />
 											</div>
 										</div>
 										<input type="hidden" name="sub_department_id_1" id="sub_department_id_1" value="<?php echo $subDepartmentDetail->id?>" class="form-control requiredField" />
