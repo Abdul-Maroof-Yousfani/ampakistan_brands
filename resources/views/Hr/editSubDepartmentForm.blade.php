@@ -11,7 +11,7 @@ $subDepartmentDetail = DB::selectOne('select * from `sub_department` where `id` 
 				<div class="row">
 					<div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
 						<div class="well">
-							<?php echo Form::open(array('url' => 'had/editSubDepartmentDetail?m='.$m.'&&d='.$d.'','id'=>'subDepartmentForm'));?>
+							<?php echo Form::open(array('url' => 'had/editSubDepartmentDetail?m='.$m.'&&d='.$d.'','id'=>''));?>
 								<input type="hidden" name="_token" value="{{ csrf_token() }}">
 								<input type="hidden" name="pageType" value="<?php echo $_GET['pageType']?>">
 								<input type="hidden" name="parentCode" value="<?php echo $_GET['parentCode']?>">
