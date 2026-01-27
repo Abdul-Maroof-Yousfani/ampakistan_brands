@@ -30,7 +30,7 @@ $subDepartmentDetail = DB::selectOne('select * from `sub_department` where `id` 
 												<select class="form-control requiredField" name="department_id_1" id="department_id_1">
 		                                    		<option value="">Select Department</option>
 		                                    		@foreach($departments as $key => $y)
-		                                    			<option value="{{ $y->id}}" {{ $subDepartmentDetail->department_id == $y->id ? 'selected="selected"' : '' }}>{{ $y->department_name}}</option>
+		                                    			<option value="{{ $y->id}}" selected>{{ $y->department_name}}</option>
 		                                    		@endforeach
 
 		                                    	</select>
