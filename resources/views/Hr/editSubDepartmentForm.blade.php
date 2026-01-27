@@ -78,22 +78,22 @@ $subDepartmentDetail = DB::selectOne('select * from `sub_department` where `id` 
 		</div>
 	</div>
 	<script type="text/javascript">
-		$(".btn-success").click(function(e){
-			var subDepartmentSection = new Array();
-			var val;
-			$("input[name='subDepartmentSection[]']").each(function(){
-    			subDepartmentSection.push($(this).val());
-			});
-			var _token = $("input[name='_token']").val();
-			for (val of subDepartmentSection) {
+		//$(".btn-success").click(function(e){
+		//	var subDepartmentSection = new Array();
+		//	var val;
+		//	$("input[name='subDepartmentSection[]']").each(function(){
+    	//		subDepartmentSection.push($(this).val());
+		//	});
+		//	var _token = $("input[name='_token']").val();
+		//	for (val of subDepartmentSection) {
 
-				jqueryValidationCustom();
-				if(validate == 0){
+		//		jqueryValidationCustom();
+		//		if(validate == 0){
 					//alert(response);
-				}else{
-					return false;
-				}
-			}
+		//		}else{
+		//			return false;
+		//		}
+		//	}
 
-		});
+		//});
 	</script>
