@@ -9,6 +9,8 @@
     @endif
     <div class="container-fluid">
         <div class="well_N">
+            <h1>Add Opening</h1>
+      
             <div class="dp_sdw">
                 <div class="panel">
                     <div class="panel-body">
