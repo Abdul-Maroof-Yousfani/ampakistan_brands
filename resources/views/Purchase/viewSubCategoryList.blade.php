@@ -42,8 +42,6 @@ if($accType == 'client'){
                                                             <th class="text-center">S.No</th>
                                                             <th class="text-center">Category</th>
                                                             <th class="text-center">Sub Category Name</th>
-                                                            <th class="text-center">Transactions</th>
-
                                                             <th class="text-center">Action </th>
 
                                                             </thead>
@@ -62,27 +60,22 @@ if($accType == 'client'){
                                                             ?>
                                                             <tr id="remove{{$row->id}}" class="text-center">
                                                                 <td><?php echo $Counter++;?></td>
-                                                                <td><?php echo $row->id?></td>
                                                                 <td><?php echo  $category_name;?></td>
                                                                 <td><?php echo  $row->sub_category_name;?></td>
-
-                                                                <td> @if($count>0){{'&#x2714;'}} @else {{'&#x2716;'}} @endif</td>
-                                                            <td>
-
-
-                                                                <td>
+                                                                 <td>
                                                                     <?php if($edit == true):?>
                                                                         <button type="button" onclick="showDetailModelMasterTable('<?php Session::get('run_company') ?>','purchase/edit_sub_ca?id=<?php echo $row->id ?>','1','<?php echo $row->id ?>','<?php echo  $row->id ?>', 'category','Edit Sub Category  Form')" class="btn btn-xs btn-info"><span class="glyphicon glyphicon-edit"></span></button>
                                                                         <!-- <a onclick="showDetailModelMasterTable('<?php Session::get('run_company') ?>','purchase/edit_sub_ca?id=<?php echo $row->id ?>','1','<?php echo $row->id ?>','<?php echo  $row->id ?>', 'category','Edit Sub Category  Form')"
                                                                            class="btn btn-xs btn-info"><span class="glyphicon glyphicon-edit"></span></a> -->
                                                                     <?php endif;?>
-                                                                @if ($count==0)
                                                                     <?php if($delete == true):?>
                                                                 <button type="button" class="btn btn-danger btn-xs" id="" onclick="delete_sub_cate('<?php echo $row->id ?>')"><span class="glyphicon glyphicon-trash"></span></button>
                                                                     <?php endif;?>
-                                                                    @endif
-
+                                                              
                                                                 </td>
+                                                           
+
+                                                               
 
                                                             </tr>
                                                             <?php endforeach;?>
