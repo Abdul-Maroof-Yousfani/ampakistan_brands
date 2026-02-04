@@ -62,7 +62,7 @@ input.form-control.form-control2{margin:0!important;}
                                     <div class="row">
                                         <div class="col-lg-6 col-md-6 col-sm-6 col-xs-6">
                                             <div class="contr">
-                                                <h2 class="subHeadingLabelClass">Brands Unlimited (Pvt) Ltd</h2>
+                                                <h2 class="subHeadingLabelClass">AM Pakistan (Pvt) Ltd</h2>
                                                 <p>301-305, 3rd Floor, Kavish Crown Plaza
                                                     Sharah-e-Faisal, karachi.</p>
                                                 <p>S.T.R.N #: 3277876156235</p>
@@ -75,8 +75,7 @@ input.form-control.form-control2{margin:0!important;}
                                                     {{$buyer_detail->address}}<br>
                                                     {{ CommonHelper::get_all_country_by_id($buyer_detail->country)->name ?? '-'}}<br>
                                                     <!-- {{$buyer_detail->phone_1}}<br> -->
-                                                    N.T.N #:{{isset($buyer_detail->cnic_ntn) ? $buyer_detail->cnic_ntn : "-" }}<br>
-                                                    S.T.R.N #: {{isset($buyer_detail->strn) ? $buyer_detail->strn : "-"}}
+                                                 
                                                 </p>
                                               
                                             </div>
