@@ -43,7 +43,20 @@ CommonHelper::reconnectMasterDatabase();
     <a href="{{route('dClient')}}">
       <img class="logo_m" src="{{ url('/logoo.png') }}">
     </a>
+     <div class="nav navbar-nav" style="float: right;  align-items: center">
+         <ul class=" tmenu-list d">
+            <li>
+               <div class="o_f">
+                  <a href="#" class="closebtn theme-f-clr Navclose" ><i class="fa fa-list-ul" aria-hidden="true" style="color: white; margin-top: 30px;"></i></a>
+               </div>
+            </li>
+           
+
+         </ul>
+
+      </div>
    </div>
+   
    @if(Session::get('run_company') != null)
    <?php
    $Clause = "";
@@ -180,54 +193,9 @@ CommonHelper::reconnectMasterDatabase();
 
 <div class="container-fluid head-sh">
    <div class="headerwrap">
-      <div class="nav navbar-nav">
-         <ul class=" tmenu-list d">
-            <li>
-               <div class="o_f">
-                  <a href="#" class="closebtn theme-f-clr Navclose" ><i class="fa fa-list-ul" aria-hidden="true"></i></a>
-               </div>
-            </li>
-            @if(in_array("dashboard", $dashboard_access)) 
-            <li>
-                <a class="btn btn-primary" href="{{route('dClient')}}">
-                Dashboard
-            </a>
-            </li>
-            @endif
-            @if(in_array("dashboard_production", $dashboard_access)) 
-
-            <li>
-                <a class="btn btn-primary" href="{{route('production_dashboard')}}">
-                Production Dashboard
-                </a>
-            </li>
-            @endif
-            @if(in_array("dashboard_management", $dashboard_access)) 
-
-            <li>
-                <a class="btn btn-primary" href="{{route('fClient')}}">
-                Management Dashboard
-                </a>
-            </li>
-            @endif
-
-         </ul>
-<select style="margin-top: 30px;" class="form-control select2" onchange="if(this.value) window.location.href='{{ url('set_user_db_id') }}?company=' + this.value">
-    <option value="">Select Company</option>
-    @foreach(App\Helpers\CommonHelper::get_companies() as $company)
-        <option value="{{ $company->id }}" {{ \App\Helpers\CommonHelper::get_current_company_id() == $company->id ? 'selected' : '' }}>
-            {{ $company->name }}
-        </option>
-    @endforeach
-</select>
-      </div>
+     
       <ul class='ctn-list'>
-         <li>
-            <div class='ser'>
-               <input  placeholder="Search anything"  /> 
-               <button><i class="fa fa-search" aria-hidden="true"></i></button>
-            </div>
-         </li>
+         
          <li>
             <div class="tim d">
                 {{-- Laravel se initial time show kare --}}
