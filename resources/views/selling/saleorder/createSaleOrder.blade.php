@@ -343,29 +343,9 @@
                                                            class="form-control form-control2" id="total_item"
                                                            value="" type="text"  readonly>
                                                 </li>
-                                                    <li></li><li></li>
-                                                <li>Sale Tax </li>
-                                              <li class="text-left">
-                                            <!-- <select name="sale_taxes_id" class="form-control" onchange="applySaleTax(this)">
-                                                <option value="">Select</option>
-                                                @foreach(CommonHelper::get_table_data('sale_taxes') as $item)
-                                                    <option value="{{ $item->id }}">{{ $item->name }} - {{ $item->discount_percentage }}%</option>
-                                                @endforeach
-                                            </select> -->
-                                                    @php
-                                                        $taxes = CommonHelper::get_table_data('sale_taxes');
-                                                    @endphp
+                                                   
 
-                                                    <select name="sale_taxes_id" class="form-control" onchange="applySaleTax(this)">
-                                                        <option value="">Select</option>
-                                                        @foreach($taxes as $index => $item)
-                                                            <option value="{{ $item->id }}" {{ $index == 0 ? 'selected' : '' }}>
-                                                                {{ $item->name }} - {{ $item->discount_percentage }}%
-                                                            </option>
-                                                        @endforeach
-                                                    </select>
-
-                                            </li>
+                                            
                                             </ul>
                                         </div>
                                     </div>
