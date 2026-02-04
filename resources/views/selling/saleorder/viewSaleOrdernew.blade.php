@@ -65,8 +65,7 @@ input.form-control.form-control2{margin:0!important;}
                                                 <h2 class="subHeadingLabelClass">AM Pakistan (Pvt) Ltd</h2>
                                                 <p>301-305, 3rd Floor, Kavish Crown Plaza
                                                     Sharah-e-Faisal, karachi.</p>
-                                                <p>S.T.R.N #: 3277876156235</p>
-                                                <p>N.T.N #:5098058-8 </p>
+                                                
                                                 <br>
                                                 <p style="margin-top:-13px;">Bill To:</p>
                                                 <br>
