@@ -382,7 +382,7 @@
                                                             class="form-control form-control2" value=""
                                                             type="text" readonly></li>
                                             </ul> 
-                                                <ul class="hide sale-l sale-l2">
+                                                <ul class="hide sale-l sale-l2 hide">
                                          
                                                 <li> sale Tax Amount</li>
                                                 <input type="text" class="form-control" name="sale_taxes_amount_rate" id="tax_amount_calculated" readonly>
