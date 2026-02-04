@@ -276,8 +276,12 @@ input.form-control.form-control2{margin:0!important;}
                                                             <th style="background: transparent; border-bottom: 1px solid #000 !important;  padding:0px 5px !important; margin:0 !important; text-align: center !important;">&nbsp;</th>
                                                         <th style="background: transparent; border-bottom: 1px solid #000 !important;  padding:0px 5px !important; margin:0 !important; text-align: center !important;"><p id="total_purchase_amount">{{ number_format(round($purchase_amount_total, 0)) }}</p></th>
                                                             <th style="background: transparent; border-bottom: 1px solid #000 !important;  padding:0px 5px !important; margin:0 !important; text-align: center !important;"><p  style="text-align: center !important;" id="total_profit_amount">{{ number_format(round($profit_amount_total, 0)) }}</p></th>
-                                                            <th style="background: transparent; border-bottom: 1px solid #000 !important;  padding:0px 5px !important; margin:0 !important;"><p style="text-align: center !important;" id="profit_percentage">{{ number_format(($profit_amount_total / $purchase_amount_total) * 100, 2) }}</p></th>
-                                                        </tr>
+                                                       {{ number_format(
+                                                            $purchase_amount_total != 0 
+                                                                ? ($profit_amount_total / $purchase_amount_total) * 100 
+                                                                : 0, 
+                                                            2
+                                                        ) }} </tr>
                                                     </tbody>
                                                 </table>
                                             </div>
