@@ -1009,75 +1009,73 @@ public function uploadProduct(Request $request)
                 $brand_id = $brand ? $brand->id : 0;
             }
           $sku_code = !empty($row[2]) ? trim($row[2]) : null;
+             if(empty($row[2])) {
+                return redirect()->back()->with("error", "SKU code is required");
+            }
+            if(!$product_name) {
+                return redirect()->back()->with("error", "Product Name is required");
+            }
+            if(empty($row[4])) {
+                return redirect()->back()->with("error", "Product Description is required");
+            }
+            if(empty($row[5])) {
+                return redirect()->back()->with("error", "UOM is required");
+            }
+            if(empty($row[7]))  {
+                return redirect()->back()->with("error", "Product Barcode is required");
+            }
+            if(empty($row[9])) {
+                 return redirect()->back()->with("error", "Group ID is required");
+            }
 
-            //  if(empty($row[2])) {
-            //     continue;
-            // }
-            // if(!$product_name) {
-            //     continue;
-            // }
-            // if(empty($row[4])) {
-            //     continue;
-            // }
-            // if(empty($row[5])) {
-            //     continue;   
-            // }
-            // if(empty($row[7]))  {
-            //     continue;
-            // }
-            // if(!$brand_id) {
-            //     continue;
-            // }
-            // if(empty($row[9])) {
-            //     continue;
-            // }
+            if(empty($row[10])) {
+                 return redirect()->back()->with("error", "Category is required");
+            }
 
-            // if(empty($row[10])) {
-            //     continue;
-            // }
+            if(empty($row[11])) {
+                return redirect()->back()->with("error", "Sub-Category is required");
+            } 
 
-            // if(empty($row[11])) {
-            //     continue;
-            // }
+            if(empty($row[12])) {
+                return redirect()->back()->with("error", "Product Classification is required");
+            }
 
-            // if(empty($row[12])) {
-            //     continue;
-            // }
+            if(empty($row[13])) {
+                return redirect()->back()->with("error", "Product Type is required");
+            }
 
-            // if(empty($row[13])) {
-            //     continue;
-            // }
+            if(empty($row[14])) {
+                return redirect()->back()->with("error", "Product Trend is required");
+            }
 
-            // if(empty($row[14])) {
-            //     continue;
-            // }
+            if(empty($row[15])) {
+                return redirect()->back()->with("error", "Purchase Price is required");
+            }
 
-            // if(empty($row[15])) {
-            //     continue;
-            // }
+            if(empty($row[16])) {
+                return redirect()->back()->with("error", "Sale Price is required");
+            }
 
-            // if(empty($row[16])) {
-            //     continue;
-            // }
+            if(empty($row[17])) {
+                return redirect()->back()->with("error", "MRP Price is required");
+            }
 
-            // if(empty($row[17])) {
-            //     continue;
-            // }
+            if(empty($row[18])) {
+                return redirect()->back()->with("error", "Tax Apply is required");
+            }
 
-            // if(empty($row[18])) {
-            //     continue;
-            // }
+            if(empty($row[20])) {
+                return redirect()->back()->with("error", "Tax Applied on is required");
+            }
+            if(empty($row[22])) {
+                return redirect()->back()->with("error", "Tax is required");
+            }
 
-            // if(empty($row[20])) {
-            //     continue;
-            // }
-            // if(empty($row[22])) {
-            //     continue;
-            // }
-
-            // if(empty($row[31])) {
-            //     continue;
-            // }
+            if(empty($row[31])) {
+                return redirect()->back()->with("error", "Product Status is required");
+            
+            }
+            
 
             $productData = [
                 'sku_code' => !empty($row[2]) ? trim($row[2]) : null,

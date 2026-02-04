@@ -294,7 +294,10 @@ public static function get_companies() {
         ->get();
 }
 
-
+public static function get_group_by($group_id) {
+    $group = DB::connection("mysql2")->table("company_groups")->find($group_id);
+    return $group->name;
+}
 public static function buyers_id_with_warehouse_name($customerId)
 {
     $customer = DB::connection('mysql2')
