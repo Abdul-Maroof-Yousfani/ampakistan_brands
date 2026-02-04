@@ -266,6 +266,7 @@ input.form-control.form-control2{margin:0!important;}
                                                                 {{number_format($sale_order_item->amount)}}</td> --}}
                                                         </tr>
                                                         @endforeach
+                                                        
                                                         <tr>
                                                             <th colspan="2" style="background: transparent; border-bottom: 1px solid #000 !important;  padding:0px 5px !important; margin:0 !important;font-size:13px!important;font-weight:400!important;">Sub Total</th>
                                                             <th style="background: transparent; border-bottom: 1px solid #000 !important;  padding:0px 5px !important; margin:0 !important;"></th>
