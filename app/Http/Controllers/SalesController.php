@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests;
 use App\Models\Quotation_Data;
+use App\Models\Regions;
 use Illuminate\Http\Request;
 use Auth;
 use DB;
@@ -496,6 +497,16 @@ public function exportCustomers(Request $request)
         $stateid = $cityData->state_id ?? 0;
         $countryid = CommonHelper::get_country_id_by_state_id($stateid);
 
+        if(empty($row[45])) {
+            return redirect()->back()->with("error", "Region is required");
+        }
+
+        $region = Region::where('region_name', $row[45])->value('id');
+        if(!$region) {
+            return redirect()->back()->with("error", "Invalid Region");
+        }
+
+
         $customerCode = !empty($row[1]) ? $row[1] : "";
         $customerData = [
             'name' => $row[0] ?? "",
@@ -536,6 +547,7 @@ public function exportCustomers(Request $request)
             'display_pending_payment_invoice' => $row[32] ?? "",
             'CustomerType' => CommonHelper::get_id_from_db_by_name($row[37], 'customer_types') ?? 0,
             'employee_id' => $row[39] ?? null,
+            'region_id' => Region::where('region_name', $row[45])->value('id'),
             'special_price_mapped' => $row[40] ?? "",
             'warehouse_from' => CommonHelper::get_warehouse_id_by_name($row[41]) ?? null,
             'warehouse_to' => $row[42] ?? null,
@@ -1449,12 +1461,13 @@ public function uploadProduct(Request $request)
         $StoresCategory = StoresCategory::where('status', '=', 1)->get();
         $Territory = Territory::where('status', '=', 1)->get();
         $CustomerType = CustomerType::where('status', '=', 1)->get();
+        $regions = Region::where("status", 1)->get();
 
        
         CommonHelper::reconnectMasterDatabase();
 
          $SubDepartments = SubDepartment::where('status','=', 1)->orderBy('id')->get();
-        return view('Sales.createCreditCustomerForm', compact('accounts', 'countries', 'StoresCategory', 'Territory', 'CustomerType','SubDepartments'));
+        return view('Sales.createCreditCustomerForm', compact('regions', 'accounts', 'countries', 'StoresCategory', 'Territory', 'CustomerType','SubDepartments'));
     }
 
     public function editCustomerForm($id)
@@ -1475,10 +1488,14 @@ public function uploadProduct(Request $request)
         $Territory = Territory::where('status', '=', 1)->get();
         $CustomerType = CustomerType::where('status', '=', 1)->get();
         CommonHelper::reconnectMasterDatabase();
-
+        CommonHelper::companyDatabaseConnection(1);
+        $regions = new Region;
+        $regions = $regions::get();
+        CommonHelper::reconnectMasterDatabase();
+        
          $salesPersons = SubDepartment::where('status','=', 1)->orderBy('id')->get();
 
-        return view('Sales.editCustomerForm', compact('accounts', 'countries', 'id', 'StoresCategory', 'Territory', 'CustomerType','salesPersons'));
+        return view('Sales.editCustomerForm', compact('regions', 'accounts', 'countries', 'id', 'StoresCategory', 'Territory', 'CustomerType','salesPersons'));
     }
     public function approveCustomer(Request $request)
     {

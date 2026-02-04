@@ -625,6 +625,8 @@ class SalesAddDetailControler extends Controller
             'customer_type' => 'required',
             'ba_mapping' => 'required_if:customer_type,3',
             'warehouse_to' => 'required_if:customer_type,3',
+            'region_id' => 'required',
+            'status' => 'required'
         ], [
             'ba_mapping.required_if' => 'BA Mapping is required for Reseller/Distributor.',
             'warehouse_to.required_if' => 'Warehouse To is required for Reseller/Distributor.',
@@ -703,6 +705,9 @@ class SalesAddDetailControler extends Controller
                 'ba_mapping' => $request->input('ba_mapping', $customer->ba_mapping),
                 'employee_id' => $request->input('employee_id', $customer->employee_id),
                 'special_price_mapped' => $request->input('special_price_mapped', $customer->special_price_mapped),
+                'region_id' => $request->input("region_id"),
+                   'status' => request()->input("status"),
+          
                 // 'warehouse_from' => $request->input('warehouse_from', $customer->warehouse_from),
                 'warehouse_from' => is_array($request->warehouse_from)
     ? implode(',', $request->warehouse_from)

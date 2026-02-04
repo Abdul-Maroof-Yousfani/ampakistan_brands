@@ -512,6 +512,30 @@ $m=Session::get('run_company');
                                                                             
                                                                         </select>
                                                                     </div>
+
+                                                                     <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
+                                                                        <label>Region :</label>
+                                                                        <span class="rflabelsteric"></span>
+                                                                        <br>
+                                                                        <select name="region_id" class="select2" style="width: 100%;" id="region_id"
+                                                                            class="form-control">
+                                                                            <option value="">All</option>
+                                                                            @foreach($regions as $region)
+                                                                                <option value="{{ $region->id }}">{{ $region->region_name }}</option>
+                                                                            @endforeach
+                                                                            
+                                                                        </select>
+                                                                    </div>
+                                                                     <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
+                                                                        <label>Status :</label>
+                                                                        <span class="rflabelsteric"></span>
+                                                                        <br>
+                                                                        <select name="status" class="select2" style="width: 100%;" id="status"
+                                                                            class="form-control">
+                                                                            <option value="1">Active</option>
+                                                                            <option value="0">In-active</option>
+                                                                        </select>
+                                                                    </div>
                                                                     <div
                                                                         class="col-lg-12 col-md-12 col-sm-12 col-xs-12 hide customerTypeField">
                                                                         <label>Warehouse To :</label>
@@ -949,6 +973,11 @@ $m=Session::get('run_company');
                                         </th>
                                     </tr>
                                   
+                                    <tr>
+                                        <td>Region</td>
+                                        <th><span class="badge badge-outline-success">This Field is required</span>
+                                        </th>
+                                    </tr>
 
                                 </tbody>
                             </table>
@@ -998,8 +1027,8 @@ $m=Session::get('run_company');
         'Name,Customer Code,Email,Phone no 1,Phone no 2,Country,State,City,Address,Zip,Title,Contact Person,Contact Person Email,Company Shipping Address,Shipping City,Shipping State,Shipping Country,Opening Balance,Opening Balance Date,Tax Filer Registered,NTN,STRN,STRN Note,Display Notes in Invoice,W.H Tax,Credit Days,Credit Amount Limit,Locality,Stores Category,Territory Id,Sales Person,Accept Cheque,Display Pending Payment in Invoice,Bank Account No,Bank Account Title,Bank,Branch Code,Customer Type,Status,Employee,Special Price Mapped,Warehouse From,Warehouse To,BA Mapping,Adv Tax, Region\n';
 
         var csvFileData = [
-        ['Ahmed', 'CUST001', 'ahmed@example.com', '0333-1234567', '0334-7654321', 'Pakistan', 'Sindh', 'Karachi', 'Street 123', '75500', 'Mr.', 'Ali', 'ali@example.com', 'same as company address', '', '', '', '50000', '2024-01-01', 'Yes', '123456', '654321', 'STRN Note 1', 'No', '5', '23','100000', 'Local', 'GTTTZ', 'territory 1', 'John Doe', 'Yes', 'No', '12345678901234', 'Ali Ahmed', 'Bank Name', '001', 'General', 'Active', '', 'Yes', 'karachi warehouse', '','yes','0'],
-        ['Sara', 'CUST002', 'sara@example.com', '0331-2233445', '', 'Pakistan', 'Punjab', 'Lahore', 'Street ABC', '54000', 'Ms.', 'Hina', 'hina@example.com', 'others', 'Lahore', 'Punjab', 'Pakistan', '30000', '2024-02-01', 'No', '789012', '210987', 'STRN Note 2', 'Yes', '10','25', '150000', 'International', 'GTTTZ', 'territory 2', 'Jane Doe', 'No', 'Yes', '', '', '', '', 'General', 'Inactive', '', 'No', 'karachi warehouse', '','No','12'],
+        ['Ahmed', 'CUST001', 'ahmed@example.com', '0333-1234567', '0334-7654321', 'Pakistan', 'Sindh', 'Karachi', 'Street 123', '75500', 'Mr.', 'Ali', 'ali@example.com', 'same as company address', '', '', '', '50000', '2024-01-01', 'Yes', '123456', '654321', 'STRN Note 1', 'No', '5', '23','100000', 'Local', 'GTTTZ', 'territory 1', 'John Doe', 'Yes', 'No', '12345678901234', 'Ali Ahmed', 'Bank Name', '001', 'General', 'Active', '', 'Yes', 'karachi warehouse', '','yes','0', 'Lahore'],
+        ['Sara', 'CUST002', 'sara@example.com', '0331-2233445', '', 'Pakistan', 'Punjab', 'Lahore', 'Street ABC', '54000', 'Ms.', 'Hina', 'hina@example.com', 'others', 'Lahore', 'Punjab', 'Pakistan', '30000', '2024-02-01', 'No', '789012', '210987', 'STRN Note 2', 'Yes', '10','25', '150000', 'International', 'GTTTZ', 'territory 2', 'Jane Doe', 'No', 'Yes', '', '', '', '', 'General', 'Inactive', '', 'No', 'karachi warehouse', '','No','12', 'Lahore'],
     ];
         //merge the data with CSV
         csvFileData.forEach(function(row) {

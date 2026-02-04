@@ -1056,6 +1056,9 @@ Route::group(['prefix' => 'pdc', 'middleware' => 'mysql2', 'before' => 'csrf'], 
     Route::get('/get_grn_history', 'PurchaseDataCallController@get_grn_history');
     Route::get('/search/{categoryId?}/{subCategory_id?}', 'PurchaseDataCallController@search');
 
+     Route::get('/region/{id}/delete', 'PurchaseAddDetailControler@deleteRegion');
+   
+
     Route::get('/viewCategoryList', 'PurchaseDataCallController@viewCategoryList');
     Route::get('/viewRegionList', 'PurchaseDataCallController@viewRegionList');
     Route::get('/viewSubItemList', 'PurchaseDataCallController@viewSubItemList');

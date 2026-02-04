@@ -630,8 +630,7 @@ class PurchaseAddDetailControler extends Controller
 
         $data2['region_code'] = strip_tags($RegionCode);
         $data2['region_name'] = strip_tags($RegionName);
-        $data2['cluster_id'] = $ClusterId;
-
+       
 
         $data2['status'] = 1;
 
@@ -1234,7 +1233,7 @@ class PurchaseAddDetailControler extends Controller
         $ClusterId = Input::get('cluster_id');
         $UpdateData['region_code'] = $RegionCode;
         $UpdateData['region_name'] = $RegionName;
-        $UpdateData['cluster_id'] = $ClusterId;
+        // $UpdateData['cluster_id'] = $ClusterId;
 
         DB::Connection('mysql2')->table('region')->where('id',$UpdateId)->update($UpdateData);
         return Redirect::to('purchase/regionList?pageType=' . Input::get('pageType') . '&&parentCode=' . Input::get('parentCode') . '&&m=' . $CompanyId . '#SFR');
@@ -1788,6 +1787,14 @@ class PurchaseAddDetailControler extends Controller
         return Redirect::to('sales/surveylist?pageType=' . Input::get('pageType') . '&&parentCode=' . Input::get('parentCode') . '&&m=' . Input::get('m') . '#SFR');
     }
 
+    public function deleteRegion(int $id) {
+        $region_id = $id;
+
+        $region = DB::connection("mysql2")->table("region")->where("id", $region_id)->delete($region_id);
+
+
+        return back()->with("message", "Region has been deleted!");
+    }
     function updateSurveyDetail(Request $request)
     {
         $EditId = $request->EditId;
