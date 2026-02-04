@@ -118,11 +118,11 @@ foreach ($delivery_note_data as $sale_order_item) {
                             </div>
     
                             <div class="contr">
-                                <h2 class="subHeadingLabelClass">Brands Unlimited (Pvt) Ltd</h2>
-                                <p>301-305, 3rd Floor, Kavish Crown Plaza
+                                <h2 class="subHeadingLabelClass">AM Pakistan (Pvt) Ltd</h2>
+                                <!-- <p>301-305, 3rd Floor, Kavish Crown Plaza
                                     Sharah-e-Faisal, karachi.</p>
                                 <p>S.t #: 3277876156235</p>
-                                <p>N.T.N #:5098058-8 </p>
+                                <p>N.T.N #:5098058-8 </p> -->
                                 <br>
                                 <p style="margin-top:-13px;">Bill To:</p>
                                   <br>

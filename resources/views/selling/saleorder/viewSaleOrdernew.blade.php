@@ -63,8 +63,8 @@ input.form-control.form-control2{margin:0!important;}
                                         <div class="col-lg-6 col-md-6 col-sm-6 col-xs-6">
                                             <div class="contr">
                                                 <h2 class="subHeadingLabelClass">AM Pakistan (Pvt) Ltd</h2>
-                                                <p>301-305, 3rd Floor, Kavish Crown Plaza
-                                                    Sharah-e-Faisal, karachi.</p>
+                                                <!-- <p>301-305, 3rd Floor, Kavish Crown Plaza
+                                                    Sharah-e-Faisal, karachi.</p> -->
                                                 
                                                 <br>
                                                 <p style="margin-top:-13px;">Bill To:</p>
@@ -330,7 +330,7 @@ input.form-control.form-control2{margin:0!important;}
                             <div class="sgnature2">
                                 <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12 text-center">
                                     <div class="row">
-                                        <div class="col-lg-4 col-md-4 col-sm4 col-xs-4">
+                                        <!-- <div class="col-lg-4 col-md-4 col-sm4 col-xs-4">
                                             <p><strong>Prepared By</strong> </p>
                                             <p><strong>{{$sale_order->username}}</strong> </p>
                                         </div>
@@ -341,7 +341,7 @@ input.form-control.form-control2{margin:0!important;}
                                         </div>
                                         <div class="col-lg-4 col-md-4 col-sm4 col-xs-4">
                                             <p><strong>Received By</strong> </p>
-                                        </div>
+                                        </div> -->
                                     </div>
                                     <br>
                                     <br>
