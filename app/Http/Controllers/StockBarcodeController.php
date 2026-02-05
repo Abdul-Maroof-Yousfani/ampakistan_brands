@@ -184,7 +184,6 @@ class StockBarcodeController extends Controller
     {
         $stock_voucher_no = $stockBarcode->voucher_no;
         $gdn = DB::connection("mysql2")->table("delivery_note")->where("gd_no", $stock_voucher_no)->first();
-        dd($gdn);
         if($gdn->status == 1) {
             return response()->json("Gdn has already approved", 404);
         }
