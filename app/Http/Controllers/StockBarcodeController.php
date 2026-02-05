@@ -6,6 +6,7 @@ use App\Models\DeliveryNoteData;
 use App\Models\GRNData;
 use App\StockBarcode;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class StockBarcodeController extends Controller
 {
