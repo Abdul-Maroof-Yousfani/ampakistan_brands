@@ -341,6 +341,9 @@ class SalesAddDetailControler extends Controller
             'customer_type' => 'nullable',
             'ba_mapping' => 'nullable',
             'warehouse_to' => 'nullable',
+            
+            'region_id' => "required",
+            "status" => "required"
         ];
     
         $validator = Validator::make($request->all(), $rules, [
@@ -461,6 +464,9 @@ class SalesAddDetailControler extends Controller
         $data2['time']                = date("H:i:s");
         $data2['action']              = 'create';
         $data2['terms_of_payment']     = Input::get('term') ?? 0;
+         $data2['region_id'] = $request->input("region_id");
+        $data2['status'] = request()->input("status");
+       
         // $data2['discount_percent']     = Input::get('discount_percent') ?? 0;
 
         $CustId = DB::table('customers')->insertGetId($data2);

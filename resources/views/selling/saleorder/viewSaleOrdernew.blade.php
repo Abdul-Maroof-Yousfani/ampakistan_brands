@@ -63,10 +63,10 @@ input.form-control.form-control2{margin:0!important;}
                                         <div class="col-lg-6 col-md-6 col-sm-6 col-xs-6">
                                             <div class="contr">
                                                 <h2 class="subHeadingLabelClass">AM Pakistan (Pvt) Ltd</h2>
-                                                <p>301-305, 3rd Floor, Kavish Crown Plaza
+                                                <!-- <p>301-305, 3rd Floor, Kavish Crown Plaza
                                                     Sharah-e-Faisal, karachi.</p>
                                                 <p>S.T.R.N #: 3277876156235</p>
-                                                <p>N.T.N #:5098058-8 </p>
+                                                <p>N.T.N #:5098058-8 </p> -->
                                                 <br>
                                                 <p style="margin-top:-13px;">Bill To:</p>
                                                 <br>
@@ -160,29 +160,23 @@ input.form-control.form-control2{margin:0!important;}
                                                             {{--   <th style="background: #000 !important; color:#fff !important;">Item & Description</th>--}}
                                                             <th style="background: #000 !important; color:#fff !important;    text-align: center !important;">Barcode</th>
                                                             <th style="background: #000 !important; color:#fff !important;">Qty</th>
-                                                            <th style="background: #000 !important; color:#fff !important;">Sale Rate</th>
-                                                            <th style="background: #000 !important; color:#fff !important;">Gross Amount</th>
-                                                            <th style="background: #000 !important; color:#fff !important;">Purchase Rate</th>
-                                                            <th style="background: #000 !important; color:#fff !important;">Purchase Amount</th>
-                                                            <th style="background: #000 !important; color:#fff !important;">Profit</th>
-                                                            <th style="background: #000 !important; color:#fff !important;">Profit %</th>
-                                                            
 <!--                                                             
                                                             <th style="background: #000 !important; color:#fff !important;">FOC</th> -->
-                                                            {{-- <th style="background: #000 !important; color:#fff !important;">MRP</th>
+                                                            <th style="background: #000 !important; color:#fff !important;">MRP</th>
                                                             <th style="background: #000 !important; color:#fff !important;">Rate</th>
+                                                            <th style="background: #000 !important; color:#fff !important;">Gross Amount</th>
                                                             <th style="background: #000 !important; color:#fff !important;">Disc%</th>
-                                                            <th style="background: #000 !important; color:#fff !important;">Disc Amount</th> --}}
+                                                            <th style="background: #000 !important; color:#fff !important;">Disc Amount</th>
                                                             {{--  <th style="background: #000 !important; color:#fff !important;">Disc 2(%)</th>--}}
                                                             {{--  <th style="background: #000 !important; color:#fff !important;">Disc 2 Amount</th>--}}
-                                                            {{-- <th style="background: #000 !important; color:#fff !important;">Tax%</th>
+                                                            <th style="background: #000 !important; color:#fff !important;">Tax%</th>
                                                             <th style="background: #000 !important; color:#fff !important;">Tax Amount</th>
-                                                            <th style="background: #000 !important; color:#fff !important;">Total Amount</th> --}}
+                                                            <th style="background: #000 !important; color:#fff !important;">Total Amount</th>
                                                         </tr>
                                                     </thead>
                                                     <tbody id="data">
                                                         @php $total_discount_amount = 0; @endphp
-                                                        @php $total_foc = 0; $total_qty_get =0; $purchase_amount_total = 0; $profit_amount_total = 0; @endphp
+                                                        @php $total_foc = 0; $total_qty_get =0; @endphp
 
                                                         @foreach($sale_order_data as $sale_order_item)
                                                         @php
@@ -208,47 +202,22 @@ input.form-control.form-control2{margin:0!important;}
                                                             <td  style="text-align: center !important;" class="wsale2">
                                                                 <p>{{number_format($sale_order_item->qty)}}</p>
                                                             </td>
-                                                            <td  style="text-align: center !important;" class="wsale2">
-                                                                <p>{{number_format($sale_order_item->sale_order_rate, 2)}}</p>
-                                                            </td>
-
-                                                               <td style="text-align: center !important;">
-                                                                {{number_format($sale_order_item->sub_total)}}</td>
-
-                                                               <td style="text-align: center !important;">
-                                                                {{number_format($sale_order_item->purchase_price, 2)}}</td>
-                                                                @php
-                                                                    $purchase_amount = $sale_order_item->purchase_price * $sale_order_item->qty;
-                                                                    $purchase_amount_total += $purchase_amount;
-                                                                @endphp
-                                                                    <td style="text-align: center !important;">
-                                                                {{number_format($purchase_amount)}}</td>
-                                                                
-                                                                @php
-                                                                    $profit = $sale_order_item->sub_total - $purchase_amount;
-                                                                    $profit_amount_total += $profit;
-                                                                @endphp
-                                                                      <td style="text-align: center !important;">
-                                                                {{number_format( $profit )}}</td>
-
-                                                                      <td style="text-align: center !important;">&nbsp;</td>
-
-                                                         
-                                                        
                                                             
                                                             <!-- <td  style="text-align: center !important;">
                                                                 {{number_format($sale_order_item->foc)}}
                                                             </td> -->
-                                                            {{-- <td style="text-align: center !important;">
+                                                            <td style="text-align: center !important;">
                                                                 {{number_format($sale_order_item->mrp_price)}}</td>
                                                             <td  style="text-align: center !important;">
                                                                 {{number_format($sale_order_item->rate)}}</td>
+                                                            <td style="text-align: center !important;">
+                                                                {{number_format($sale_order_item->sub_total)}}</td>
                                                             <td  style="text-align: center !important;">
                                                                 {{number_format($sale_order_item->discount_percent_1,0)}}
 
-                                                            </td> --}}
+                                                            </td>
                                                             
-                                                            {{-- <td style="text-align: center !important;">
+                                                            <td style="text-align: center !important;">
                                                             {{ number_format(round($sale_order_item->discount_amount_1)) }}
 
 
@@ -262,7 +231,7 @@ input.form-control.form-control2{margin:0!important;}
                                                             <td  style="text-align: center !important;">
                                                                 {{number_format($sale_order_item->tax_amount)}}</td>
                                                             <td style="text-align: center !important;">
-                                                                {{number_format($sale_order_item->amount)}}</td> --}}
+                                                                {{number_format($sale_order_item->amount)}}</td>
                                                         </tr>
                                                         @endforeach
                                                         
@@ -272,16 +241,14 @@ input.form-control.form-control2{margin:0!important;}
                                                             <th style="background: transparent; border-bottom: 1px solid #000 !important;  padding:0px 5px !important; margin:0 !important;text-align: center !important;"><p id="total_qty">{{$sale_order->total_qty}}</p></th>
                                                             <!-- <th style="background: transparent; border-bottom: 1px solid #000 !important;  padding:0px 5px !important; margin:0 !important;"text-align: center !important;><p style="text-align: center !important;" id="total-fac">{{ number_format($total_foc,2) }}</p></th> -->
                                                             <th style="background: transparent; border-bottom: 1px solid #000 !important;  padding:0px 5px !important; margin:0 !important;"></th>
+                                                            <th style="background: transparent; border-bottom: 1px solid #000 !important;  padding:0px 5px !important; margin:0 !important;"></th>
                                                             <th style="background: transparent; border-bottom: 1px solid #000 !important;  padding:0px 5px !important; margin:0 !important; text-align: center !important;"><p id="total_gross_amount">{{number_format( round($sale_order->total_amount),0) }}</p></th>
-                                                            <th style="background: transparent; border-bottom: 1px solid #000 !important;  padding:0px 5px !important; margin:0 !important; text-align: center !important;">&nbsp;</th>
-                                                        <th style="background: transparent; border-bottom: 1px solid #000 !important;  padding:0px 5px !important; margin:0 !important; text-align: center !important;"><p id="total_purchase_amount">{{ number_format(round($purchase_amount_total, 0)) }}</p></th>
-                                                            <th style="background: transparent; border-bottom: 1px solid #000 !important;  padding:0px 5px !important; margin:0 !important; text-align: center !important;"><p  style="text-align: center !important;" id="total_profit_amount">{{ number_format(round($profit_amount_total, 0)) }}</p></th>
-                                                       {{ number_format(
-                                                            $purchase_amount_total != 0 
-                                                                ? ($profit_amount_total / $purchase_amount_total) * 100 
-                                                                : 0, 
-                                                            2
-                                                        ) }} </tr>
+                                                            <th style="background: transparent; border-bottom: 1px solid #000 !important;  padding:0px 5px !important; margin:0 !important;"><p></p></th>
+                                                            <th style="background: transparent; border-bottom: 1px solid #000 !important;  padding:0px 5px !important; margin:0 !important; text-align: center !important;"><p  style="text-align: center !important;" id="disc">{{ number_format(round($total_discount_amount),0) }}</p></th>
+                                                            <th style="background: transparent; border-bottom: 1px solid #000 !important;  padding:0px 5px !important; margin:0 !important;"></th>
+                                                            <th style="background: transparent; border-bottom: 1px solid #000 !important;  padding:0px 5px !important; margin:0 !important;text-align: center !important;"><p id="total_sales_tax">{{ number_format(round($sale_order->sales_tax_rate),0) }}</p></th>
+                                                            <th style="background: transparent; border-bottom: 1px solid #000 !important;  padding:0px 5px !important; margin:0 !important;text-align: center !important;"><p id="total_amount_after_sale_tax">{{ number_format(round($sale_order->total_amount_after_sale_tax),0) }}</p></th>
+                                                        </tr>
                                                     </tbody>
                                                 </table>
                                             </div>
@@ -331,7 +298,7 @@ input.form-control.form-control2{margin:0!important;}
                             <div class="sgnature2">
                                 <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12 text-center">
                                     <div class="row">
-                                        <div class="col-lg-4 col-md-4 col-sm4 col-xs-4">
+                                        <!-- <div class="col-lg-4 col-md-4 col-sm4 col-xs-4">
                                             <p><strong>Prepared By</strong> </p>
                                             <p><strong>{{$sale_order->username}}</strong> </p>
                                         </div>
@@ -342,7 +309,7 @@ input.form-control.form-control2{margin:0!important;}
                                         </div>
                                         <div class="col-lg-4 col-md-4 col-sm4 col-xs-4">
                                             <p><strong>Received By</strong> </p>
-                                        </div>
+                                        </div> -->
                                     </div>
                                     <br>
                                     <br>

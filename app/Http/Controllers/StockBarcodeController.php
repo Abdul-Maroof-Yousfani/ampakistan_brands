@@ -6,6 +6,7 @@ use App\Models\DeliveryNoteData;
 use App\Models\GRNData;
 use App\StockBarcode;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class StockBarcodeController extends Controller
 {
@@ -179,8 +180,15 @@ class StockBarcodeController extends Controller
      * @param  \App\StockBarcode  $stockBarcode
      * @return \Illuminate\Http\Response
      */
-    public function destroy(StockBarcode $stockBarcode)
+      public function destroy(StockBarcode $stockBarcode)
     {
-        //
+        $stock_voucher_no = $stockBarcode->voucher_no;
+        $gdn = DB::connection("mysql2")->table("delivery_note")->where("gd_no", $stock_voucher_no)->first();
+        if($gdn->status == 1) {
+            return response()->json("Gdn has already approved", 404);
+        }
+
+        $stockBarcode->delete();
+        return response()->json("deleted");
     }
 }

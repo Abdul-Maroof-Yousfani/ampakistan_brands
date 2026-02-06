@@ -40,12 +40,12 @@ input.form-control.form-control2{margin:0!important;}
                                     <div class="row">
                                         <div class="col-lg-6 col-md-6 col-sm-6 col-xs-6">
                                             <div class="contr">
-                                                <h2 class="subHeadingLabelClass">Brands Unlimited (Pvt) Ltd</h2>
-                                                <p>301-305, 3rd Floor, Kavish Crown Plaza
-                                                    Sharah-e-Faisal, karachi.</p>
+                                                <h2 class="subHeadingLabelClass">AM Pakistan (Pvt) Ltd</h2>
+                                                <!-- <p>301-305, 3rd Floor, Kavish Crown Plaza
+                                                    Sharah-e-Faisal, karachi.</p> -->
                                                     <br>
-                                                <p>N.T.N #:5098058-8 </p>
-                                                <p>S.t #: 3277876156235</p>
+                                                <!-- <p>N.T.N #:5098058-8 </p>
+                                                <p>S.t #: 3277876156235</p> -->
 
                                                 <br>
                                                 <p>Bill To:</p>

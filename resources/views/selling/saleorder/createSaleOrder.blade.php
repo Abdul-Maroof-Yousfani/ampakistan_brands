@@ -343,29 +343,9 @@
                                                            class="form-control form-control2" id="total_item"
                                                            value="" type="text"  readonly>
                                                 </li>
-                                                    <li></li><li></li>
-                                                <li>Sale Tax </li>
-                                              <li class="text-left">
-                                            <!-- <select name="sale_taxes_id" class="form-control" onchange="applySaleTax(this)">
-                                                <option value="">Select</option>
-                                                @foreach(CommonHelper::get_table_data('sale_taxes') as $item)
-                                                    <option value="{{ $item->id }}">{{ $item->name }} - {{ $item->discount_percentage }}%</option>
-                                                @endforeach
-                                            </select> -->
-                                                    @php
-                                                        $taxes = CommonHelper::get_table_data('sale_taxes');
-                                                    @endphp
+                                                   
 
-                                                    <select name="sale_taxes_id" class="form-control" onchange="applySaleTax(this)">
-                                                        <option value="">Select</option>
-                                                        @foreach($taxes as $index => $item)
-                                                            <option value="{{ $item->id }}" {{ $index == 0 ? 'selected' : '' }}>
-                                                                {{ $item->name }} - {{ $item->discount_percentage }}%
-                                                            </option>
-                                                        @endforeach
-                                                    </select>
-
-                                            </li>
+                                            
                                             </ul>
                                         </div>
                                     </div>
@@ -378,7 +358,7 @@
                                                                              class="form-control form-control2" value=""
                                                                              type="text" readonly></li>
                                             </ul>
-                                            <ul class="sale-l sale-l2">
+                                            <ul class="sale-l sale-l2 hide">
                                                 <li>Tax Amount</li>
                                                 <li class="text-left"><input name="total_sales_tax"
                                                                              id="total_sales_tax" style="background: white !important;"
@@ -394,7 +374,7 @@
                                                             class="form-control form-control2" value=""
                                                             type="text" readonly></li>
                                             </ul>
-                                            <ul class="sale-l sale-l2">
+                                            <ul class="sale-l sale-l2 hide">
                                                 <li>Sale Tax Amount</li>
                                                 <li class="text-left"><input
                                                             name="sale_taxes_amount_total"
@@ -402,7 +382,7 @@
                                                             class="form-control form-control2" value=""
                                                             type="text" readonly></li>
                                             </ul> 
-                                                <ul class="hide sale-l sale-l2">
+                                                <ul class="hide sale-l sale-l2 hide">
                                          
                                                 <li> sale Tax Amount</li>
                                                 <input type="text" class="form-control" name="sale_taxes_amount_rate" id="tax_amount_calculated" readonly>

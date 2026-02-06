@@ -245,7 +245,7 @@ $Bank = DB::Connection('mysql2')->table('bank_detail')->where('acc_id',$Cusomter
                                                                             <span class="rflabelsteric"><strong>*</strong></span>
                                                                             <select onChange="taxFiler(this)" name="tax_filer"
                                                                                 class="form-control ">
-                                                                                
+
                                                                                 <option value="">Select Option</option>
                                                                                 <option value="yes"
                                                                                     {{$Cusomter->regd_in_income_tax == "es" ? 'selected' : ''}}>
@@ -798,6 +798,13 @@ $(document).ready(function() {
         width: '100%'
     });
 });
+
+$(document).ready(function() {
+    $('#employee_id').select2({
+        width: '100%'
+    });
+});
+
 </script>
 {{-- <script src="{{URL::asset('assets/js/select2/js_tabindex.js') }}"></script> --}}
 @endsection
