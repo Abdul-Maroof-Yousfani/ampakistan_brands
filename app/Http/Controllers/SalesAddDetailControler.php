@@ -483,6 +483,11 @@ class SalesAddDetailControler extends Controller
         $data3['action']               = 'create';
         DB::table('transactions')->insert($data3);
 
+        $type = "Customer " . $customer_name;
+        \App\Helpers\CommonHelper::createNotification(
+            $type . " is created by " . auth()->user()->name, 
+            "Customer"
+        )
         if (Input::get('accept_cheque') == "yes") {
             // bank fields
             $data4['bank_name']     = Input::get('bank') ?? "-";
@@ -764,6 +769,12 @@ class SalesAddDetailControler extends Controller
                 // Update if exists, otherwise create a new record
                 $bankDetail = DB::connection('mysql2')->table('bank_detail')->updateOrInsert($searchCriteria, $dataToUpdateOrCreate);
             }
+
+            $type = "Customer " . $customer->name;
+            \App\Helpers\CommonHelper::createNotification(
+                $type . " is edited by " . auth()->user()->name,
+                "Customer"
+            );
 
             // Reconnect to the master database
             CommonHelper::reconnectMasterDatabase();
@@ -3049,8 +3060,14 @@ class SalesAddDetailControler extends Controller
                 ->where('voucher_no', $gi)
                 ->update(['status' => 0]);
         endif;
-
-
+    
+        $type = "Sales Tax Invoice";
+        SalesHelper::sales_activity($gi, date('Y-m-d'), 0, 3, 'Delete');
+        \App\Helpers\CommonHelper::createNotification(
+            $type . " with " . $gi . " is deleted by " . auth()->user()->username, 
+            $type . ""
+        );
+        
         SalesHelper::sales_activity($gi, date('Y-m-d'), 0, 3, 'Delete');
         CommonHelper::reconnectMasterDatabase();
     }
@@ -3505,7 +3522,11 @@ class SalesAddDetailControler extends Controller
             endif;
 
 
-
+            $type = "Sale Return";
+            \App\Helpers\CommonHelper::createNotification(
+                $type . " with Sale Order of " . $sale_order->so_no . " is created by " . auth()->user()->name, 
+                $type . ""
+            );
             DB::Connection('mysql2')->commit();
         } catch (Exception $ex) {
 
@@ -3670,6 +3691,12 @@ class SalesAddDetailControler extends Controller
 
 
         endif;
+
+        $type = "Sale Return";
+        \App\Helpers\CommonHelper::createNotification(
+            $type . " with " . $cr_no. " is edited by " . auth()->user()->name, 
+            $type . ""
+        );
       return Redirect::to('sales/viewCustomerCreditNoteList?pageType=view&&parentCode=000&&m=' . $_GET['m'] . '#SFR');
     }
 

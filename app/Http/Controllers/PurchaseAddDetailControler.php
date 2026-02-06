@@ -870,7 +870,11 @@ class PurchaseAddDetailControler extends Controller
 
            $subject = 'Purchase Request '.$demand_no;
            NotificationHelper::send_email('Purchase Request','Create',$sub_department_id,$demand_no,$subject,$v_type);
-
+            $type = "Purchase Request";
+            \App\Helpers\CommonHelper::createNotification(
+                $type . " has been made with " . $demand_no . " is created by " . auth()->user()->name, 
+                $type . ""
+            );
             DB::Connection('mysql2')->commit();
         }
         catch(\Exception $e)
@@ -959,6 +963,12 @@ class PurchaseAddDetailControler extends Controller
             echo "EROOR"; //die();
             dd($e->getMessage());
         }
+
+        $type = "Purchase Request";
+        \App\Helpers\CommonHelper::createNotification(
+            $type . " has been updated with " . $demand_no . " by " . auth()->user()->name, 
+            $type . ""
+        );
         Session::flash('dataInsert', 'Purchase Request Successfully Saved.');
 
         return Redirect::to('purchase/viewDemandList?pageType=' . Input::get('pageType') . '&&parentCode=' . Input::get('parentCode') . '&&m=' . $_GET['m'] . '#SFR');
@@ -1372,6 +1382,10 @@ class PurchaseAddDetailControler extends Controller
                 $data2['barcodes'] = Input::get('barcodes'.$row1);
                 $grn_data_id= DB::Connection('mysql2')->table('grn_data')->insertGetId($data2);
             }
+
+            $type = "Goods Receipt Note";
+            \App\Helpers\CommonHelper::createNotification($type . " with " . $grn_no . " is created by " . auth()->user()->name, $type . "");
+     
 
 
             $Loop = Input::get('account_id');
@@ -3753,6 +3767,10 @@ class PurchaseAddDetailControler extends Controller
             DB::connection('mysql2')->commit();
 
             Session::flash('dataInsert', 'Stock Transfer Successfully Saved.');
+            $type = "Stock Transfer Form";
+
+            \App\Helpers\CommonHelper::createNotification($type . " with " . $uniq . " is created by " . auth()->user()->name, $type . "");
+        
             return Redirect::to('store/stock_transfer_list?pageType=view&&parentCode=95&&m=' . $request->m . '#murtazaCorporation');
         } catch (\Exception $e) {
             DB::connection('mysql2')->rollBack();
@@ -3872,6 +3890,10 @@ class PurchaseAddDetailControler extends Controller
             endforeach;
 
             CommonHelper::inventory_activity($uniq,$request->tr_date,$TotAmount,6,'Update');
+
+            $type = "Stock Transfer";
+            \App\Helpers\CommonHelper::createNotification($type . " with " . $uniq . " is edited by " . auth()->user()->name, $type . "");
+        
 
             DB::Connection('mysql2')->commit();
         }
