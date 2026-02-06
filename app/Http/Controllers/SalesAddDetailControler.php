@@ -487,7 +487,7 @@ class SalesAddDetailControler extends Controller
         \App\Helpers\CommonHelper::createNotification(
             $type . " is created by " . auth()->user()->name, 
             "Customer"
-        )
+        );
         if (Input::get('accept_cheque') == "yes") {
             // bank fields
             $data4['bank_name']     = Input::get('bank') ?? "-";
