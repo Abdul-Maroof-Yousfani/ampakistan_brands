@@ -324,6 +324,7 @@ public static function get_companies() {
                                 ->when($acc_type != "client", function($query) {
                                     $query->where("user_id", auth()->user()->id);
                                 })
+                                ->orderBy("id", "desc")
                                 ->where("is_read", 0)
                                 ->get();
 
