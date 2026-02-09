@@ -225,7 +225,7 @@ endif;
                 <a class="nav-link bella" href="javascript:void(0)" data-bs-toggle="dropdown" aria-expanded="false">
                     <i class="fa fa-bell" aria-hidden="true"></i>
                     <span
-                        class="badge rounded-pill bg-danger badge-up notification-count">{{ App\Helpers\CommonHelper::countOfUnreadMessages() }}</span>
+                        class="badge rounded-pill bg-danger badge-up notification-count">{{ $total_pending }}</span>
                 </a>
 
                 <ul class="dropdown-menu dropdown-menu-media dropdown-menu-end">
@@ -233,7 +233,7 @@ endif;
                         <div class="dropdown-header d-flex">
                             <h4 class="notification-title mb-0 me-auto">Notifications</h4>
                             <div class="badge rounded-pill badge-light-primary"><span
-                                    class="notification-count">{{ App\Helpers\CommonHelper::countOfUnreadMessages() }}</span>
+                                    class="notification-count">{{ $total_pending }}</span>
                                 New</div>
                         </div>
                     </li>
