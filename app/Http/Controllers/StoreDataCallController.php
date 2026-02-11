@@ -236,6 +236,8 @@ class StoreDataCallController extends Controller
         $fromDate = $_GET['fromDate'];
         $toDate = $_GET['toDate'];
         $m = $_GET['m'];
+        $type = $_GET['type'];
+    
         $selectVoucherStatus = $_GET['selectVoucherStatus'];
         $selectSubDepartment = $_GET['selectSubDepartment'];
         $selectSubDepartmentId = $_GET['selectSubDepartmentId'];
@@ -263,7 +265,11 @@ class StoreDataCallController extends Controller
                                 ->where('purchase_request.purchase_request_status','!=','4')
                                 ->when($pr_no, function($query, $pr_no){ $query
                                 ->whereRaw('LOWER(purchase_request.pr_no) LIKE ?', ['%'.strtolower($pr_no).'%']); })
-                                ->orderBy('purchase_request.id','desc');
+                                ->orderBy('purchase_request.id','desc')
+                                ->when($type == 'pending', function($query) {
+                                    $query->where("purchase_request_status", 1);
+                                });
+      
          if(!empty($search)){
             $purchaseRequestDetail = $purchaseRequestDetail->whereRaw('LOWER(subitem.product_name) LIKE ?', ['%'.strtolower($search).'%'])
                                     ->orWhereRaw('LOWER(subitem.sku_code) LIKE ?',['%'.strtolower($search).'%'])

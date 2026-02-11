@@ -35,7 +35,8 @@ $currentMonthStartDate = date('Y-m-01'); $currentMonthEndDate = date('Y-m-t');
           <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
             <div class="well">
             
-            
+              <input type="hidden" name="type" id="type" value="{{ request()->type }}" />
+          
               <input
                 type="hidden"
                 name="functionName"
