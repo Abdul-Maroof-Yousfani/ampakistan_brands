@@ -566,6 +566,9 @@ public function getlistSaleOrder(Request $request)
         $data=DB::Connection('mysql2')->table('subitem')->select('id','product_name','product_barcode','sku_code','product_type_id','product_classification_id','product_trend_id','main_ic_id','mrp_price')->where('product_status','Active')->orWhere('product_status','active')->get();
         return $data;
     }
+    public static function get_all_customers() {
+        return DB::connection("mysql2")->table("customers")->select("id", "name")->where("status", 1)->get();
+    }
     public static function get_product_trend_name($id)
     {
         $productTrend= new ProductClassification();
