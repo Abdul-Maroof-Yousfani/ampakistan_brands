@@ -17,7 +17,7 @@ class CustomerGroupController extends Controller
     public function listCustomerGroup()
     {
         $responses = CustomerGroup::where('status', 1)->get();
-        return view('sales.customergroup.listCustomerGroup', compact('responses'));
+        return view('Sales.customergroup.listCustomerGroup', compact('responses'));
     }
 
     /**
@@ -27,7 +27,7 @@ class CustomerGroupController extends Controller
      */
     public function createCustomerGroup()
     {
-        return view('sales.customergroup.createCustomerGroup');
+        return view('Sales.customergroup.createCustomerGroup');
     }
 
     /**
