@@ -36,6 +36,8 @@ Route::group(['prefix' => 'hr','before' => 'csrf'], function () {
     Route::get('/viewLoanTypeList','HrController@viewLoanTypeList');
     Route::get('/editLoanTypeForm', 'HrController@editLoanTypeForm');
 
+    Route::get("/editUOM/{id}", "HrController@editUOM");
+
     Route::get('/createAdvanceTypeForm', 'HrController@createAdvanceTypeForm');
     Route::get('/viewAdvanceTypeList','HrController@viewAdvanceTypeList');
     Route::get('/editAdvanceTypeForm', 'HrController@editAdvanceTypeForm');
