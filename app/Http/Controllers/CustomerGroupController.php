@@ -78,7 +78,7 @@ class CustomerGroupController extends Controller
     public function editCustomerGroup($id)
     {
         $response = CustomerGroup::find($id);
-        return view('customergroup.editCustomerGroup', compact('response'));
+        return view('Sales.customergroup.editCustomerGroup', compact('response'));
     }
 
     /**
