@@ -552,6 +552,7 @@ public function exportCustomers(Request $request)
             'warehouse_from' => CommonHelper::get_warehouse_id_by_name($row[41]) ?? null,
             'warehouse_to' => $row[42] ?? null,
             'username' => Auth::user()->name,
+            'customer_group_id' => CommonHelper::get_id_from_db_by_name($row[31], 'customer_group') ?? NULL,
             'date' => date("Y-m-d"),
             'time' => date("H:i:s"),
             'action' => 'create',
@@ -1465,9 +1466,9 @@ public function uploadProduct(Request $request)
 
        
         CommonHelper::reconnectMasterDatabase();
-
-         $SubDepartments = SubDepartment::where('status','=', 1)->orderBy('id')->get();
-        return view('Sales.createCreditCustomerForm', compact('regions', 'accounts', 'countries', 'StoresCategory', 'Territory', 'CustomerType','SubDepartments'));
+        $SubDepartments = SubDepartment::where('status','=', 1)->orderBy('id')->get();
+        $customerGroups = \App\Models\CustomerGroup::where('status', 1)->get();
+        return view('Sales.createCreditCustomerForm', compact('regions', 'accounts', 'countries', 'StoresCategory', 'Territory', 'CustomerType','SubDepartments', 'customerGroups'));
     }
 
     public function editCustomerForm($id)
@@ -1494,9 +1495,10 @@ public function uploadProduct(Request $request)
         CommonHelper::reconnectMasterDatabase();
         
          $salesPersons = SubDepartment::where('status','=', 1)->orderBy('id')->get();
+    $customerGroups = \App\Models\CustomerGroup::where('status', 1)->get();
 
-        return view('Sales.editCustomerForm', compact('regions', 'accounts', 'countries', 'id', 'StoresCategory', 'Territory', 'CustomerType','salesPersons'));
-    }
+        return view('Sales.editCustomerForm', compact('regions', 'accounts', 'countries', 'id', 'StoresCategory', 'Territory', 'CustomerType','salesPersons', 'customerGroups'));
+        }
     public function approveCustomer(Request $request)
     {
         $customerApprove = Customer::find($request->id);
