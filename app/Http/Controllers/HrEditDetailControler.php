@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 use App\Models\Employee;
 use App\Models\EmployeeGsspDocuments;
 use App\Models\EmployeeTransfer;
+use App\Models\UOM;
 use Illuminate\Database\DatabaseManager;
 use App\Http\Requests;
 use App\Helpers\FinanceHelper;
@@ -60,6 +61,13 @@ class HrEditDetailControler extends Controller
         }
         Session::flash('dataEdit', 'successfully edit.');
         return Redirect::to('hr/viewDepartmentList?pageType=' . Input::get('pageType') . '&&parentCode=' . Input::get('parentCode') . '&&m=' . $_GET['m'] . '#SFR');
+    }
+
+    public function deleteUOM(int $id) {
+        $uom = UOM::find($id);
+        $uom->delete();
+        Session::flash("UOM Delete");
+        return back();
     }
 
 
