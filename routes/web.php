@@ -12,6 +12,7 @@
 use App\Helpers\CommonHelper;
 use App\Http\Controllers\StoreController;
 use App\Models\Branch;
+use App\Models\Employee;
 use App\Models\Stock;
 use App\Models\Subitem;
 use App\User;
@@ -21,7 +22,7 @@ Route::auth();
 
 
 Route::get('testing', function () {
-    Auth::logout(); 
+    dd(Employee::all());
 });
 
 Route::get("privileges", function() {
