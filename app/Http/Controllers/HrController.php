@@ -261,18 +261,9 @@ class HrController extends Controller
     public function viewEmployeeList(){
 
         $regions =  CommonHelper::regionRights(Session::get('run_company'));
-        CommonHelper::companyDatabaseConnection(Session::get('run_company'));
-        $employees = Employee::where([['status', '!=', '2']])
-            ->select('id','emp_department_id','emp_code','emp_name','emp_salary','emp_contact_no','region_id', 'emp_joining_date', 'emp_cnic','emp_date_of_birth','status')
-            ->whereIn('region_id',$regions)
-            ->orderBy('emp_code','asc')->get();
-        CommonHelper::reconnectMasterDatabase();
-        $departments = Department::where([['company_id', '=', Input::get('m')], ['status', '=', '1'], ])->orderBy('id')->get();
-        $regions = Regions::where([['company_id', '=', Input::get('m')], ['status', '=', '1'], ])
-            ->whereIn('id',$regions)
-            ->orderBy('id')->get();
-
-        return view('Hr.viewEmployeeList',compact('employees', 'departments', 'employee_category', 'regions','Employee_projects','buildings'));
+        $employees = Employee::where("status", "1")->get();
+        
+        return view('Hr.viewEmployeeList',compact('employees'));
     }
 
     public function uploadEmployeeFileForm()
