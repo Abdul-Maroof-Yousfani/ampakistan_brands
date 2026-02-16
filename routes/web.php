@@ -1529,6 +1529,10 @@ Route::group(['prefix' => 'sales', 'middleware' => 'mysql2', 'before' => 'csrf']
     Route::get('/debtor_balance_page', 'SalesController@debtor_balance_page');
     Route::get('/commission_report_page', 'SalesController@commission_report_page');
 
+
+    Route::delete("/branch/{id}", "BranchController@destroy")->name("branch.delete");
+    Route::get("/branch/{id}/edit", "BranchController@edit")->name("branch.edit");
+    Route::put("/branch/{id}/edit", "BranchController@update")->name("branch.edit");
     
     Route::post('/uploadCreditCustomer', 'SalesController@uploadCreditCustomer');
     Route::post('/uploadProduct', 'SalesController@uploadProduct');
