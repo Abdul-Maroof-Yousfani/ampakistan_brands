@@ -37,6 +37,33 @@ use App\Models\Department;
 						</div>
 						<div class="lineHeight">&nbsp;</div>
 						<div class="panel">
+							<div class="panel-body">
+								<?php echo Form::open(array('url' => 'hr/viewSubDepartmentList','method'=>'GET','id'=>'subDepartmentFilterForm'));?>
+								<input type="hidden" name="m" value="{{ $m }}">
+								<input type="hidden" name="pageType" value="{{ $_GET['pageType'] ?? '' }}">
+								<input type="hidden" name="parentCode" value="{{ $_GET['parentCode'] ?? '' }}">
+								<div class="row">
+									<div class="col-lg-4 col-md-4 col-sm-6 col-xs-12">
+										<label>Filter by Region:</label>
+										<select class="form-control select2" name="territory_id" id="territory_id">
+											<option value="">All Regions</option>
+											@foreach($territories as $territory)
+												<option value="{{ $territory->id }}" {{ Input::get('territory_id') == $territory->id ? 'selected="selected"' : '' }}>{{ $territory->name }}</option>
+											@endforeach
+										</select>
+									</div>
+									<div class="col-lg-4 col-md-4 col-sm-6 col-xs-12">
+										<div style="margin-top: 25px;">
+											<button type="submit" class="btn btn-primary">Filter</button>
+											<a href="{{ url('hr/viewSubDepartmentList?m='.$m.'&pageType='.($_GET['pageType'] ?? '').'&parentCode='.($_GET['parentCode'] ?? '')) }}" class="btn btn-danger">Clear</a>
+										</div>
+									</div>
+								</div>
+								<?php echo Form::close();?>
+							</div>
+						</div>
+						<div class="lineHeight">&nbsp;</div>
+						<div class="panel">
 							<div class="panel-body" id="PrintSubDepartmentList">
 								<div class="row">
 									<div class="col-lg-12 col-md-12 col-sm-12col-xs-12">
@@ -46,10 +73,9 @@ use App\Models\Department;
 												<th class="text-center col-sm-1">S.No</th>
 												<th class="text-center hide">Department Name</th>
 												<th class="text-center">Salesman Name</th>
-											
+												<th class="text-center">Region</th>
 												<th class="text-center">Designation</th>
 												<th class="text-center">Ph Number</th>
-
 												<th class="text-center">Created By</th>
 												<th class="text-center">Status</th>
 									
@@ -64,15 +90,15 @@ use App\Models\Department;
 															<?php
 																//echo $y->department_id;
 															$departmentName = CommonHelper::get_dept_name_hr($m,$y->department_id);
-															// echo strtoupper($departmentName->department_name);
+															echo strtoupper($departmentName->department_name);
 															?>
 
 														</td>
 														<td><?php echo $y->sub_department_name;?></td>
+														<td>{{ CommonHelper::territory_name($y->territory_id) }}</td>
 														<td>{{ $y->designation ? $y->designation : 'N/A' }}</td>
 														<td>{{ $y->phone_number ? $y->phone_number : 'N/A' }}</td>
-						
-														<td><?php echo $y->username;?></td>
+																				<td><?php echo $y->username;?></td>
 														<td class="text-center">{{ HrHelper::getStatusLabel($y->status) }}</td>
 														<td class="text-center hidden-print">
 															@if(in_array('edit',$operation_rights))
@@ -111,4 +137,16 @@ use App\Models\Department;
 		</div>
 	</div>
 
+@endsection
+
+@section('js')
+	<script type="text/javascript">
+		$(document).ready(function() {
+			$('.select2').select2({
+				placeholder: "Select",
+				allowClear: true,
+				width: '100%'
+			});
+		});
+	</script>
 @endsection
