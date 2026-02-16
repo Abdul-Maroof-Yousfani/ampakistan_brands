@@ -84,9 +84,9 @@ $currentMonthEndDate = date('Y-m-t');
                                                                 <td class="text-center counterId" id="<?php echo $counter; ?>">
                                                                     <?php echo $counter++; ?>
                                                                 </td>
-                                                                <td class="text-center">{{ $y->emp_no }}</td>
-                                                                <td>{{ $y->emp_name }}</td>
-                                                                <td>{{ $y->emp_email }}</td>
+                                                                <td class="text-center">{{ $y->emp_code }}</td>
+                                                                <td>{{ $y->name }}</td>
+                                                                <td>{{ $y->email }}</td>
                                                                 <td
                                                                     @if ($y->status == 4) onclick="showDetailModelTwoParamerter('hmfal/makeFormEmployeeInActive','<?php echo $y->id; ?>','','<?php echo $m; ?>')" class="text-center pointer" @else class="text-center" @endif>
                                                                     {{ HrHelper::getStatusLabel($y->status) }}</td>
