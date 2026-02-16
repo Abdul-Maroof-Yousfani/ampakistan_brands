@@ -63,6 +63,17 @@ class HrEditDetailControler extends Controller
         return Redirect::to('hr/viewDepartmentList?pageType=' . Input::get('pageType') . '&&parentCode=' . Input::get('parentCode') . '&&m=' . $_GET['m'] . '#SFR');
     }
 
+     public function editUOM(int $id) {
+        $uom = UOM::find($id);
+
+        $uom->update([
+            "uom_name" => \Illuminate\Support\Facades\Input::get("uom_name")
+        ]);
+
+        Session::flash("dataEdit", 'UOM successfully edited');
+        return back();
+    }
+
     public function deleteUOM(int $id) {
         $uom = UOM::find($id);
         $uom->delete();
