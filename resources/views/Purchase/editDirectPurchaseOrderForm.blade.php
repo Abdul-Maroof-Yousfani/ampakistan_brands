@@ -248,7 +248,9 @@ endif;
                                                                 class="form-control requiredField ActualQty"
                                                                 name="actual_qty[]" id="actual_qty{{ $index + 1 }}"
                                                                 value="{{ $detail->purchase_request_qty }}"></td>
-                                                        
+                                                        @php
+                                                            dd($detail->rate);
+                                                        @endphp
                                                         <td><input type="text"
                                                                 onkeyup="claculation({{ $index + 1 }})"
                                                                 class="form-control requiredField ActualRate"
