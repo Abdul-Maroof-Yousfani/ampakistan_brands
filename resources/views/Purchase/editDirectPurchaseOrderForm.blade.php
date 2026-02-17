@@ -135,7 +135,7 @@ endif;
                                         <div class="col-lg-6 col-md-6 col-sm-6 col-xs-12">
                                             <label class="sf-label">Supplier's Address</label>
                                             <input readonly type="text" class="form-control" name="address"
-                                                id="addresss" value="{{ $detail->rate }}" />
+                                                id="addresss" value="123" />
                                         </div>
                                     </div>
 
@@ -253,7 +253,7 @@ endif;
                                                                 onkeyup="claculation({{ $index + 1 }})"
                                                                 class="form-control requiredField ActualRate"
                                                                 name="rate[]" id="rate{{ $index + 1 }}"
-                                                                value="123"></td>
+                                                                value="{{ $detail->rate }}"></td>
                                                         <td><input readonly type="text" class="form-control"
                                                                 name="amount[]" id="amount{{ $index + 1 }}"
                                                                 value="{{ $detail->amount }}"></td>
