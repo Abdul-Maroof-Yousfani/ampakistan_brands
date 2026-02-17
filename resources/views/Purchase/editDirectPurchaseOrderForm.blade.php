@@ -526,8 +526,8 @@ endif;
                         $('#product_classification' + index_val).val(response.product_classification_id);
                         $('#product_trend' + index_val).val(response.product_trend_id);
                         $('#uom_id' + index_val).val(response.uom);
-                        $("#rate" + index_val).val(response.purchase_price);
-                        // claculation(index_val);
+                        // $("#rate" + index_val).val(response.purchase_price);
+                        claculation(index_val);
                     }
                 });
             }
