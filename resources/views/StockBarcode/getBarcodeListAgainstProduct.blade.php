@@ -59,8 +59,20 @@
                 existingBarcodes = existingBarcodes.filter(barcodeValue => barcodeValue != barcode);
                 localStorage.setItem('existingBarcodes', JSON.stringify(existingBarcodes));
 
-                $(".scanned").text(existingBarcodes.length);
-                $(".remaining_qty").text(existingBarcodes.length + 1);
+                var totalQty = parseInt($('#voucherItemQty').val()) || 0;
+                var scannedQty = existingBarcodes.length;
+                var remainingQty = totalQty - scannedQty;
+
+                $(".scanned").text(scannedQty);
+                $(".remaining_qty").text(remainingQty);
+
+                // Update button color dynamically
+                var $scannedBtn = $(".scanned").closest('button');
+                if (scannedQty === totalQty) {
+                    $scannedBtn.removeClass('btn-danger').addClass('btn-success');
+                } else {
+                    $scannedBtn.removeClass('btn-success').addClass('btn-danger');
+                }
                 
                 console.log('Success:', response);
             },
