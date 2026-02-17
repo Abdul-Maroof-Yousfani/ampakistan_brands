@@ -193,9 +193,6 @@ endif;
                                                 </tr>
                                             </thead>
                                             <tbody id="AppnedHtml">
-                                                @php
-                                                    $sum = 0;
-                                                @endphp
                                                 @forelse($purchaseDetails as $index => $detail)
                                                     <tr id="RemoveRows{{ $index + 1 }}" class="AutoNo main">
                                                         <td>
@@ -251,9 +248,6 @@ endif;
                                                                 class="form-control requiredField ActualQty"
                                                                 name="actual_qty[]" id="actual_qty{{ $index + 1 }}"
                                                                 value="{{ $detail->purchase_request_qty }}"></td>
-                                                                @php
-                                                                    $sum += $detail->purchase_request_qty;
-                                                                @endphp
                                                         <td><input type="text"
                                                                 onkeyup="claculation({{ $index + 1 }})"
                                                                 class="form-control requiredField ActualRate"
@@ -299,16 +293,6 @@ endif;
                                                 @empty
                                                     <!-- Same first row as create -->
                                                 @endforelse
-                                            </tbody>
-                                            <tbody>
-                                                <tr style="font-size:large;font-weight: bold">
-                                                    <td class="text-center" colspan="5">Total</td>
-                                                    <td class="text-right" colspan="1"><input readonlyclass="form-control" type="text" id="actual_net" /> </td>
-                                                    <td class="text-center" colspan="1"></td>
-                                                    <td class="text-center" colspan="1"><input type="text" readonly id="total_qty" value="{{ $sum }}" /></td>
-                                                    <td class="text-right" colspan="1"><input readonlyclass="form-control" type="text" id="net" /> </td>
-                                                    <td></td>
-                                                </tr>
                                             </tbody>
                                             <!-- Totals and Tax section same as create -->
                                             <!-- ... (copy from your create form) -->
@@ -385,19 +369,6 @@ endif;
 
 
     <script>
-        function sumAllActualQuantities() {
-             let sum = 0;
-
-            $('.ActualQty').each(function () {
-                const value = parseFloat($(this).val()) || 0;
-                sum += value;
-            });
-
-            $("#total_qty").val(sum);
-        }
-             $(document).on('input', '.ActualQty', function () {
-               sumAllActualQuantities();
-            });
         $('[name="brand_id[]"]').trigger("change");
         var Counter = {{ count($purchaseDetails) ?: 1 }};
         // TAB key to add new row from last editable field
@@ -474,8 +445,6 @@ endif;
             $('#RemoveRows' + Row).remove();
             $('#span').text($('.AutoNo').length);
             net_amount();
-            sumAllActualQuantities();
-            
             sales_tax('sales_taxx');
         }
 
