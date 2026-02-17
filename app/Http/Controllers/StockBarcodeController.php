@@ -29,9 +29,9 @@ class StockBarcodeController extends Controller
 //            return '<div class="col-12 text-center"><h4>Please Select Item</h4></div>';
 //        }
 
-        if ($request->type == 'grn') {
-
-
+        if ($request->has('voucherItemCount')) {
+            $data['voucherItemCount'] = $request->voucherItemCount;
+        } elseif ($request->type == 'grn') {
             $data['voucherItemCount'] = GRNData::where('grn_no', $request->voucher_no)
                 ->where('sub_item_id', $request->product)
                 ->value('purchase_recived_qty');
@@ -39,7 +39,7 @@ class StockBarcodeController extends Controller
             $data['voucherItemCount'] = DeliveryNoteData::where('gd_no', $request->voucher_no)
                 ->where('item_id', $request->product)
                 ->value('qty');
-            }
+        }
 
 
 
