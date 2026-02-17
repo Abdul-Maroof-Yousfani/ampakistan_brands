@@ -714,8 +714,9 @@ $grn_no = 'grn' . ($str + 1) . date('my');
 
         $.ajax({
             url: '{{route('getBarcodeListAgainstProduct')}}',
-            type: 'GET',
+            type: 'POST',
             data: {
+                _token: '{{ csrf_token() }}',
                 voucher_no: voucherNo,
                 product: productId,
                 type: 'grn',
