@@ -135,7 +135,7 @@ endif;
                                         <div class="col-lg-6 col-md-6 col-sm-6 col-xs-12">
                                             <label class="sf-label">Supplier's Address</label>
                                             <input readonly type="text" class="form-control" name="address"
-                                                id="addresss" value="123" />
+                                                id="addresss" value="{{ $detail->rate }}" />
                                         </div>
                                     </div>
 
