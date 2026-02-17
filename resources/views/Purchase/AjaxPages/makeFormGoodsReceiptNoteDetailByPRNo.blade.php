@@ -315,22 +315,9 @@ $grn_no = 'grn' . ($str + 1) . date('my');
                                 <div class="modal-body">
                                     <div class="row">
                                         <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
-                                            <label class="sf-label">Scan Barcode</label>
-                                            <div class="input-group">
-                                                <input type="text" id="barcodeInput<?php echo $row->id;?>" class="form-control" placeholder="Scan or type barcode here">
-                                                <span class="input-group-btn">
-                                                    <button class="btn btn-primary" type="button" onclick="submitBarcode('<?php echo $row->id;?>')">Add</button>
-                                                </span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <hr>
-                                    <div class="row">
-                                        <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
-                                            <div id="barcodeListContainer<?php echo $row->id;?>" style="max-height: 400px; overflow-y: auto;">
-                                                <!-- Barcode list will be loaded here via AJAX -->
-                                                <p class="text-center">Loading barcodes...</p>
-                                            </div>
+                                            <label class="sf-label">QR / Barcode</label>
+                                            <textarea name="barcodes<?php echo $row->id;?>" id="barcodes<?php echo $row->id;?>" rows="4" cols="50"
+                                                      style="resize:none;" class="form-control"></textarea>
                                         </div>
                                     </div>
 
@@ -358,7 +345,7 @@ $grn_no = 'grn' . ($str + 1) . date('my');
                     </td>
 
 
-                    <td> <button type="button" data-toggle="modal" data-target="#qrModal<?php echo $storeRowId?>" class="btn btn-info" onclick="loadBarcodeList('<?php echo $storeRowId?>')"> + <span id="barcodeCountRow<?php echo $storeRowId?>"></span>
+                    <td> <button type="button" data-toggle="modal" data-target="#qrModal<?php echo $storeRowId?>" class="btn btn-info"> +
                         </button> </td>
 
 
@@ -703,99 +690,6 @@ $grn_no = 'grn' . ($str + 1) . date('my');
             $('.' + id).fadeOut(500);
         }
     }
-
-    function loadBarcodeList(rowId) {
-        var voucherNo = $('#grn_no').val();
-        var productId = $('#subItemId_' + rowId).val();
-        var voucherItemCount = $('#rec_qty_' + rowId).val();
-        var container = $('#barcodeListContainer' + rowId);
-
-        container.html('<p class="text-center">Loading barcodes...</p>');
-
-        $.ajax({
-            url: '{{route('getBarcodeListAgainstProduct')}}',
-            type: 'POST',
-            data: {
-                _token: '{{ csrf_token() }}',
-                voucher_no: voucherNo,
-                product: productId,
-                type: 'grn',
-                voucherItemCount: voucherItemCount
-            },
-            success: function(response) {
-                container.html(response);
-                // Update the count on the main table button
-                var scannedCount = $(response).find('.scanned').first().text();
-                var remainingCount = $(response).find('.remaining_qty').first().text();
-                if (scannedCount !== "") {
-                    $('#barcodeCountRow' + rowId).text(' (' + scannedCount + ')');
-                    // Change button color if complete
-                    var $btn = $('#barcodeCountRow' + rowId).closest('button');
-                    if (parseInt(remainingCount) === 0) {
-                        $btn.removeClass('btn-info').addClass('btn-success');
-                    } else {
-                        $btn.removeClass('btn-success').addClass('btn-info');
-                    }
-                }
-            },
-            error: function() {
-                container.html('<p class="text-danger text-center">Error loading barcodes.</p>');
-            }
-        });
-    }
-
-    function submitBarcode(rowId) {
-        var barcode = $('#barcodeInput' + rowId).val();
-        var voucherNo = $('#grn_no').val();
-        var productId = $('#subItemId_' + rowId).val();
-        var voucherItemCount = $('#rec_qty_' + rowId).val();
-
-        if (!barcode) {
-            alert('Please enter a barcode.');
-            return;
-        }
-
-        // Check against existing barcodes if they are loaded in the view
-        // The view "getBarcodeListAgainstProduct" sets existingBarcodes in localStorage
-        var existingBarcodes = JSON.parse(localStorage.getItem('existingBarcodes') || '[]');
-        if (existingBarcodes.includes(barcode)) {
-            alert('This barcode has already been scanned.');
-            return;
-        }
-
-        if (existingBarcodes.length >= parseInt(voucherItemCount)) {
-            alert('All items have already been scanned.');
-            return;
-        }
-
-        $.ajax({
-            url: '{{route('stockBarcode.store')}}',
-            type: 'POST',
-            data: {
-                _token: '{{ csrf_token() }}',
-                product_id: productId,
-                voucher_no: voucherNo,
-                voucher_type: 'grn',
-                barcode: barcode
-            },
-            success: function(response) {
-                $('#barcodeInput' + rowId).val('');
-                loadBarcodeList(rowId);
-            },
-            error: function(xhr) {
-                alert('Error biological: ' + (xhr.responseJSON ? xhr.responseJSON.message : xhr.statusText));
-            }
-        });
-    }
-
-    // Handle Enter key in barcode input
-    $(document).on('keypress', '[id^="barcodeInput"]', function(e) {
-        if (e.which == 13) {
-            var rowId = $(this).attr('id').replace('barcodeInput', '');
-            submitBarcode(rowId);
-            return false;
-        }
-    });
 
     function Nancheck(value) {
 
