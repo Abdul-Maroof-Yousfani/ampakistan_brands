@@ -249,11 +249,11 @@ endif;
                                                                 name="actual_qty[]" id="actual_qty{{ $index + 1 }}"
                                                                 value="{{ $detail->purchase_request_qty }}"></td>
                                                         
-                                                        {{-- <td><input type="text"
+                                                        <td><input type="text"
                                                                 onkeyup="claculation({{ $index + 1 }})"
                                                                 class="form-control requiredField ActualRate"
                                                                 name="rate[]" id="rate{{ $index + 1 }}"
-                                                                value="{{ $detail->rate }}"></td> --}}
+                                                                value="{{ $detail->rate }}"></td>
                                                         <td><input readonly type="text" class="form-control"
                                                                 name="amount[]" id="amount{{ $index + 1 }}"
                                                                 value="{{ $detail->amount }}"></td>
