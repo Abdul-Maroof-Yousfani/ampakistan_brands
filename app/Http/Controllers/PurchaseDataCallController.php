@@ -3100,7 +3100,7 @@ $subitems = Subitem::where('subitem.status', 1)
         $id=$request->id;
        $vendorId = $request->vendor_id;
         $data = DB::Connection('mysql2')->table('currency')->where('to_type_id',$id)->select('*')->get();
-        $vendors = DB::Connection('mysql2')->table('supplier')->where('id',$vendorId)->select('*')->get();
+        $vendors = DB::Connection('mysql2')->table('supplier')->select('*')->get();
 
         $currencyOptions = '<option value="">Select Currency</option>';
 
@@ -3126,7 +3126,7 @@ $subitems = Subitem::where('subitem.status', 1)
         $id=$request->id;
    
         $data = DB::Connection('mysql2')->table('currency')->where('to_type_id',$id)->select('*')->get();
-        $vendors = DB::Connection('mysql2')->table('supplier')->where('to_type_id',$id)->select('*')->get();
+        $vendors = DB::Connection('mysql2')->table('supplier')->select('*')->get();
 
         $currencyOptions = '<option value="">Select Currency</option>';
 
