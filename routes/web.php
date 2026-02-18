@@ -17,6 +17,7 @@ use App\Models\Stock;
 use App\Models\Subitem;
 use App\User;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 Route::auth();
 
@@ -29,6 +30,12 @@ Route::get("privileges", function() {
     dd(\App\Helpers\CommonHelper::get_users_companies());
     // dd($privileges);
 });
+
+Route::get("delete-grn", function() {
+    $grn = DB::table("goods_receipt_note")->delete();
+    dd("deleted");
+});
+
 
 Route::get("test", function() {
     $branches = Branch::all();
