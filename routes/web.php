@@ -32,7 +32,7 @@ Route::get("privileges", function() {
 });
 
 Route::get("delete-grn", function() {
-    $grn = DB::table("goods_receipt_note")->delete();
+    $grn = DB::connection("mysql2")->table("goods_receipt_note")->delete();
     dd("deleted");
 });
 
