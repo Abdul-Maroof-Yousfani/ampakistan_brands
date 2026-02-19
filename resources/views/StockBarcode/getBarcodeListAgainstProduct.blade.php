@@ -29,7 +29,7 @@
             <td>{{$sb->product_name}}</td>
             <td class="text-uppercase">{{$sb->voucher_no}}</td>
             <td>
-                <button class="btn btn-danger btn-xs" onclick="deleteBarcode('{{ $sb->id }}', '{{ $sb->barcode }}')">
+                <button type="button" class="btn btn-danger btn-xs" onclick="deleteBarcode('{{ $sb->id }}', '{{ $sb->barcode }}')">
                     <i class="fa fa-trash"></i> Delete
                 </button>
             </td>
