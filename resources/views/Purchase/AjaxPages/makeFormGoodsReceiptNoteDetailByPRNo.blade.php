@@ -720,7 +720,8 @@ $grn_no = 'grn' . ($str + 1) . date('my');
                 voucher_no: voucherNo,
                 product: productId,
                 type: 'grn',
-                voucherItemCount: voucherItemCount
+                voucherItemCount: voucherItemCount,
+                skip_check: 1
             },
             success: function(response) {
                 container.html(response);

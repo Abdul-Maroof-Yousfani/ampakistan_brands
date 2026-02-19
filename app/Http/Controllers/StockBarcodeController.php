@@ -52,6 +52,7 @@ class StockBarcodeController extends Controller
 
         $data['product_id'] = $request->product;
         $data['voucher_no'] = $request->voucher_no;
+        $data['skip_check'] = $request->skip_check ?? 0;
 //dd($data['barcode']);
         return view('StockBarcode.getBarcodeListAgainstProduct',$data);
 
@@ -183,11 +184,16 @@ class StockBarcodeController extends Controller
      */
       public function destroy(StockBarcode $stockBarcode)
     {
+        if(request()->skip_check == 1) {
+            $stockBarcode->delete();
+            return response()->json("deleted");
+        }
+
         $stock_voucher_no = $stockBarcode->voucher_no;
 
         if(str_contains(strtolower($stock_voucher_no), "grn")) {
             $grn = GoodsReceiptNote::where("grn_no", $stock_voucher_no)->first();
-            if($grn->grn_status == 2) {
+            if($grn && $grn->grn_status == 2) {
                 return response()->json("GRN has already approved", 404);
             }
     
@@ -196,7 +202,7 @@ class StockBarcodeController extends Controller
         
         } else {
             $gdn = DB::connection("mysql2")->table("delivery_note")->where("gd_no", $stock_voucher_no)->first();
-            if($gdn->status == 1) {
+            if($gdn && $gdn->status == 1) {
                 return response()->json("Gdn has already approved", 404);
             }
     

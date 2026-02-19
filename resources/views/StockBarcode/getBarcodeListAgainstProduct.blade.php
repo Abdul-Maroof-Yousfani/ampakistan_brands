@@ -29,7 +29,7 @@
             <td>{{$sb->product_name}}</td>
             <td class="text-uppercase">{{$sb->voucher_no}}</td>
             <td>
-                <button type="button" class="btn btn-danger btn-xs" onclick="deleteBarcode('{{ $sb->id }}', '{{ $sb->barcode }}')">
+                <button type="button" class="btn btn-danger btn-xs" onclick="deleteBarcode('{{ $sb->id }}', '{{ $sb->barcode }}', '{{ $skip_check ?? 0 }}')">
                     <i class="fa fa-trash"></i> Delete
                 </button>
             </td>
@@ -50,7 +50,7 @@
     // Optionally, you can store it in localStorage for later use
     localStorage.setItem('existingBarcodes', JSON.stringify(existingBarcodes));
 
-    function deleteBarcode(id, barcode) {
+    function deleteBarcode(id, barcode, skip_check = 0) {
         if (!confirm('Are you sure you want to delete this barcode?')) {
             return;
         }
@@ -60,7 +60,8 @@
             type: 'POST',
             data: {
                 _token: '{{ csrf_token() }}',
-                _method: 'DELETE'
+                _method: 'DELETE',
+                skip_check: skip_check
             },
             dataType: 'json',
             success: function(response) {
