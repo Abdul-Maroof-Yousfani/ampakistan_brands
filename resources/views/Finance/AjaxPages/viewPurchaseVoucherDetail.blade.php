@@ -187,7 +187,6 @@ $item_amount= DB::Connection('mysql2')->table('new_purchase_voucher_data')->wher
                                             <?php echo CommonHelper::get_uom($row2->sub_item);?>
                                         </td>
 
-                                        <td title="{{$row2->sub_item}}">{{ CommonHelper::get_item_name($row2->sub_item) }} </td>
                                         <td><?php  echo $row2->qty?></td>
                                         <td><?php  echo $row2->rate?></td>
                                         <td><?php  echo $row2->amount; ?></td>
