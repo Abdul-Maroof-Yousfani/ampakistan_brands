@@ -176,7 +176,9 @@ if($_GET['pageType']=='viewlist'){
                                 {{--<th class="text-center">PR NO</th>--}}
                                 {{--<th style="font-size: 13px;" class="text-center">PR  Date </th>--}}
 
+                                <th class="text-center">SKU</th>
                                 <th class="text-center">Product Name</th>
+                                <th class="text-center">Barcode</th>
                                 <th class="text-center">UOM</th>
 
                                 
@@ -212,6 +214,7 @@ if($_GET['pageType']=='viewlist'){
                                 {{--<td class="text-center">< ?php echo strtoupper($row1->demand_no);?></td>--}}
                                 {{--<td class="text-center">< ?php echo  CommonHelper::changeDateFormat($row1->demand_date);?></td>--}}
 
+                                <td>{{ CommonHelper::get_product_sku($row1->sub_item_id) }}</td>
                                 <td title="item_name={{CommonHelper::get_product_name($row1->sub_item_id)}}">
                                     <?php $accType = Auth::user()->acc_type;
                                     if($accType == 'client'):
@@ -223,6 +226,7 @@ if($_GET['pageType']=='viewlist'){
                                     <?php echo CommonHelper::get_product_name($row1->sub_item_id);?>
                                     <?php endif;?>
                                 </td>
+                                <td>{{ CommonHelper::get_item_product_barcode($row1->sub_item_id) }}</td>
 
 
                                 <?php $sub_ic_detail=CommonHelper::get_subitem_detail($row1->sub_item_id);
