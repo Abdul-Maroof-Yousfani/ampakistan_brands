@@ -134,7 +134,9 @@ $item_amount= DB::Connection('mysql2')->table('new_purchase_voucher_data')->wher
                                         <tr>
                                             <th class="text-center" style="width:50px;">S.No</th>
 
+                                            <th class="text-center">SKU</th>
                                             <th class="text-center">Item</th>
+                                            <th class="text-center">Barcode</th>
                                             <th class="text-center">Uom</th>
                                             <th class="text-center">Qty</th>
                                             <th class="text-center">Rate</th>
@@ -176,11 +178,12 @@ $item_amount= DB::Connection('mysql2')->table('new_purchase_voucher_data')->wher
                                     ?>
                                     <tr class="text-center">
                                         <td class="text-center"><?php echo $counter++;?></td>
-
-                                        <td title="{{$row2->sub_item}}">{{ CommonHelper::get_item_name($row2->sub_item) }} </td>
+                                        <td>{{ CommonHelper::get_item_product_barcode($row2->sub_item) }}</td>
+                                        <td title="{{$row2->sub_item}}">{{ CommonHelper::get_item_sku_code($row2->sub_item) }} </td>
                                         <td>
                                             <?php echo CommonHelper::get_uom($row2->sub_item);?>
                                         </td>
+                                        <td title="{{$row2->sub_item}}">{{ CommonHelper::get_item_product_barcode($row2->sub_item) }} </td>
                                         <td><?php  echo $row2->qty?></td>
                                         <td><?php  echo $row2->rate?></td>
                                         <td><?php  echo $row2->amount; ?></td>
