@@ -265,6 +265,7 @@ if($_GET['pageType']=='viewlist'){
                                 <td style="background-color: darkgray" class="text-right"  >{{number_format($actual_amount,2)}} ({{$currency}})</td>
                                 <td  style="background-color: darkgray" class="text-right"  colspan="4">{{number_format($total,2)}}</td>
                                 <td  style="background-color: darkgray;display: none" class="text-right showw"  colspan="1">{{number_format($total_exchange,2)}}</td>
+                                <td  style="background-color: darkgray" class="text-right" >&nbsp;</td>
                             </tr>
                             </tbody>
 
