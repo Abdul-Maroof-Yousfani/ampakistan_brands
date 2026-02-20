@@ -279,7 +279,7 @@ $grnqty=        $checkifbarcodescanningproduct->sum('purchase_recived_qty');
    }
 
    $("form").submit(function(e) {
-  
+        return true;
        var validate=form_validate();
     
 
