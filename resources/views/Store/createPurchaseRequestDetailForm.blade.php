@@ -89,9 +89,13 @@ var counter = 1;
 
                  $implodedVoucherNos = implode(',', $voucherNos);
 
+$comparativeNumbers = [];
+
 foreach($data as $row){
     $comparativeNumbers[] = $row->comparative_number;
 }
+
+$comparativeNumbers = array_unique($comparativeNumbers);
 
 //                $quotation = DB::connection('mysql2')
 //     ->table('quotation_data as qd')
@@ -790,7 +794,7 @@ A WITHOLDING AGENT SHALL DEDUCT AN AMOUNT AS PER SRB WITHHOLDING RULES-2014</tex
     });
 
 
-    function claculation(number) {
+    function claculatiodnbk(number) {
 
         var qty = $('#purchase_approve_qty_' + number).val();
         var rate = $('#rate_' + number).val();
@@ -807,6 +811,7 @@ A WITHOLDING AGENT SHALL DEDUCT AN AMOUNT AS PER SRB WITHHOLDING RULES-2014</tex
             amount += +$('#after_dis_amountt_' + count).val();
             count++;
         });
+
         amount = parseFloat(amount);
 
 
@@ -1118,8 +1123,8 @@ $(document).ready(function () {
     let firstCurrency = $("#curren option:eq(1)");
     if (firstCurrency.length) {
         firstCurrency.prop("selected", true);
-        claculation(1);
-        get_rate();
+        // claculation(1);
+        // get_rate();
     }
 });
 
