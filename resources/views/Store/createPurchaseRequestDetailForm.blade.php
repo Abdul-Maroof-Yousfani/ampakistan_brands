@@ -77,10 +77,22 @@ var counter = 1;
 
                  ->select('a.sub_item_id','d.comparative_number','a.id','c.vendor','a.demand_no'
                  ,'a.demand_date','a.qty','c.rate','c.tax_percent','c.amount','c.tax_per_item_amount','c.tax_total_amount','b.sub_department_id','d.gst','b.p_type','d.vendor_id')
-                ->groupBy('a.id');
-$comparativeNumbers = $data->groupby('comparative_number')->pluck('comparative_number')->toArray();
+                ->groupBy('a.id')->get();
+                 $datas = DB::Connection('mysql2')->table('demand_data as a')
+                 ->join('demand as b','a.master_id','=','b.id')
+                 ->join('quotation_data as c','c.pr_data_id','=','a.id')
+                 ->join('quotation as d','d.id','=','c.master_id')
+                 ->whereIn('a.id',$demand_data_id)
+                 ->where('c.quotation_status',1)
+                 ->where('b.status',1)->where('d.quotation_status',2)
 
-                $data = $data->get();     
+                 ->select('a.sub_item_id','d.comparative_number','a.id','c.vendor','a.demand_no'
+                 ,'a.demand_date','a.qty','c.rate','c.tax_percent','c.amount','c.tax_per_item_amount','c.tax_total_amount','b.sub_department_id','d.gst','b.p_type','d.vendor_id')
+                // ->groupBy('a.id');
+                 ->groupBy('d.comparative_number', 'a.id');
+// $comparativeNumbers = $datas->groupby('d.comparative_number')->pluck('d.comparative_number')->toArray();
+$comparativeNumbers = $datas->pluck('d.comparative_number')->unique()->toArray();
+
                  
                
          
@@ -107,12 +119,6 @@ $comparativeNumbers = $data->groupby('comparative_number')->pluck('comparative_n
 // $implodedComparatives = $comparative;
 
 
-$quotations = DB::connection('mysql2')
-    ->table('quotation_data as qd')
-    ->join('quotation as q', 'qd.master_id', '=', 'q.id')
-    ->where('qd.pr_data_id', $data[0]->id)
-    ->select('q.comparative_number')
-    ->get(); // <-- all records
 
     // dd($quotations);
 // Convert to array of comparative numbers
