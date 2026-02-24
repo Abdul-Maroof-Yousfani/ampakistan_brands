@@ -1512,6 +1512,15 @@ public static function displayPrintButtonInBlade($param1, $param2, $param3)
             return '';
         endif;
     }
+
+    public static function get_tax_rate($PoDataId)
+    {
+
+        $PurchaseRequestData = new PurchaseRequestData();
+        $PurchaseRequestData = $PurchaseRequestData->SetConnection('mysql2');
+        $Rate = $PurchaseRequestData->where('id', $PoDataId)->select('tax_rate')->first();
+        return $Rate;
+    }
     public static function get_item_product_barcode($id)
     {
         if ($id != 0):
