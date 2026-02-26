@@ -1513,6 +1513,13 @@ public static function displayPrintButtonInBlade($param1, $param2, $param3)
         endif;
     }
 
+    public static function get_goodreciptnotedata_child($id)
+    {
+        $grn_data = new \App\Models\GRNData();
+        $grn_data = $grn_data->SetConnection('mysql2');
+        return $grn_data->where('id', $id)->first();
+    }
+
     public static function get_tax_rate($PoDataId)
     {
 
