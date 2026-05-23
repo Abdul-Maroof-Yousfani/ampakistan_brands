@@ -32,9 +32,8 @@ $currentMonthEndDate   = date('Y-m-t');
             <div class="well">
             
           
-    <input type="hidden" value="{{ request()->type }}" name="type" id="type" />
-
-            <div class="row align-items-base ">
+              <input type="hidden" value="{{ request()->type }}" name="type" id="type" />
+              <div class="row align-items-base ">
                 <div class="col-lg-2 col-md-2 col-sm-2 col-xs-12">
                   <label>From Date</label>
                   <input

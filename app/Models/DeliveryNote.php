@@ -47,6 +47,7 @@ class DeliveryNote extends Model
             \App\Helpers\CommonHelper::createNotification("Delivery Note with " . $delivery_note->gd_no . " is deleted by " . auth()->user()->name, "Delivery Note");
         });
     }
+
     public function customer() {
         return $this->belongsTo(Customer::class, "buyers_id");
     }

@@ -76,7 +76,7 @@ $sys_code =CommonHelper::generateUniquePosNo('subitem','sys_no','ITEM');
                                                                 @endforeach
                                                             </select>
                                                         </div>
-                                                        <!-- <div class="col-lg-3 col-md-3 col-sm-3 col-xs-12">
+                                                        <div class="col-lg-3 col-md-3 col-sm-3 col-xs-12">
                                                             <label>Sub Category :</label>
                                                             <span class="rflabelsteric"><strong>*</strong></span>
                                                             <select style="width:100% !important;" autofocus name="SubCategoryId" id="SubCategoryId"
@@ -84,7 +84,7 @@ $sys_code =CommonHelper::generateUniquePosNo('subitem','sys_no','ITEM');
                                                                 <option value="">Select Category</option>
 
                                                             </select>
-                                                        </div> -->
+                                                        </div>
 
                                                         <div class="col-lg-3 col-md-3 col-sm-3 col-xs-12">
                                                             <label>Principal Group :</label>
@@ -269,12 +269,10 @@ $sys_code =CommonHelper::generateUniquePosNo('subitem','sys_no','ITEM');
                                                         <div class="col-lg-3 col-md-3 col-sm-3 col-xs-12">
                                                             <label>Tax Applied :</label><br>
                                                             <span class="rflabelsteric"></span>
-                                                            <input  type="checkbox" id="tax_applied" {{ $subitem->is_tax_apply == 1 ? "checked" : "" }} name="tax_applied"value="1">
-
-                                                            <label for="tax_applied"> Yes </label>
-                                                            <input type="checkbox" id="tax_applied" {{ $subitem->is_tax_apply == 0 ? "checked" : "" }} name="tax_applied"value="0">
-                                                            <label for="tax_applied"> No </label>
-
+                                                            <input type="checkbox" id="tax_applied_yes" class="tax-applied-toggle" {{ $subitem->is_tax_apply == 1 ? "checked" : "" }} name="tax_applied" value="1">
+                                                            <label for="tax_applied_yes"> Yes </label>
+                                                            <input type="checkbox" id="tax_applied_no" class="tax-applied-toggle" {{ $subitem->is_tax_apply == 0 ? "checked" : "" }} name="tax_applied" value="0">
+                                                            <label for="tax_applied_no"> No </label>
                                                         </div>
                                                     </div>
                                                     <div class="row">
@@ -291,14 +289,20 @@ $sys_code =CommonHelper::generateUniquePosNo('subitem','sys_no','ITEM');
                                                         <div class="col-lg-3 col-md-3 col-sm-3 col-xs-12">
                                                             <label>Tax Applied On :</label>
                                                             <span class="rflabelsteric"></span>
-                                                            <input style="width:100% !important;" type="text" name="tax_applied_on" id="tax_applied_on"
-                                                                class="form-control" value="{{ $subitem->tax_applied_on }}" />
+                                                            <select style="width:100% !important;" name="tax_applied_on" id="tax_applied_on" class="form-control select2">
+                                                                <option value="">Select Option</option>
+                                                                <option value="MRP" {{ $subitem->tax_applied_on == 'MRP' ? "selected" : "" }}>MRP</option>
+                                                                <option value="TP" {{ $subitem->tax_applied_on == 'TP' ? "selected" : "" }}>TP</option>
+                                                            </select>
                                                         </div>
                                                         <div class="col-lg-3 col-md-3 col-sm-3 col-xs-12">
                                                             <label>Tax Policy :</label>
                                                             <span class="rflabelsteric"></span>
-                                                            <input style="width:100% !important;" type="text" name="tax_policy" id="tax_policy" value="{{ $subitem->tax_policy }}"
-                                                                class="form-control" />
+                                                            <select style="width:100% !important;" name="tax_policy" id="tax_policy" class="form-control select2">
+                                                                <option value="">Select Option</option>
+                                                                <option value="Tax Before Discount" {{ $subitem->tax_policy == 'Tax Before Discount' ? "selected" : "" }}>Tax Before Discount</option>
+                                                                <option value="Tax After Discount" {{ $subitem->tax_policy == 'Tax After Discount' ? "selected" : "" }}>Tax After Discount</option>
+                                                            </select>
                                                         </div>
                                                         <div class="col-lg-3 col-md-3 col-sm-3 col-xs-12">
                                                             <label>Tax :</label>
@@ -788,6 +792,12 @@ $(document).ready(function() {
             } else {
                 return false;
             }
+        }
+    });
+
+    $('.tax-applied-toggle').on('change', function() {
+        if ($(this).is(':checked')) {
+            $('.tax-applied-toggle').not(this).prop('checked', false);
         }
     });
 });

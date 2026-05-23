@@ -12,37 +12,57 @@ class ProductWiseSalesReportController extends Controller
 
             $from = request()->from;
             $to = request()->to;
-            $brand_id = request()->brand_id;
-            $store_id = request()->store_id;
+            $brand_ids = request()->brand_id;
+            $store_ids = request()->store_id;
+            $ba_ids = request()->ba_id;
             $subitem_id = request()->subitem_id;
         
             $items = DB::connection("mysql2")
                         ->table("subitem")
-                        ->leftJoin("sales_order_data", "sales_order_data.item_id", "=", "subitem.id")
-                        ->leftJoin("sales_order", "sales_order.id", "=", "sales_order_data.master_id")
+                        ->leftJoin("retail_sale_order_details", "retail_sale_order_details.product_id", "=", "subitem.id")
+                        ->leftJoin("retail_sale_orders", "retail_sale_orders.id", "=", "retail_sale_order_details.retail_sale_order_id")
                         ->select(
-                            "sales_order_data.date",
-                            "sales_order.buyers_id",
+                            "retail_sale_orders.sale_order_date",
+                            "retail_sale_orders.distributor_id AS buyers_id",
+                            "retail_sale_orders.user_id as ba_id",
                             "subitem.sku_code",
                             "subitem.sku_code AS sku",
                             "subitem.product_barcode",
                             "subitem.product_name",
                             "subitem.brand_id",
                             "subitem.purchase_price",
-                            "subitem.date",
+                            "subitem.sale_price",
+                            "retail_sale_orders.created_at as date",
                             "subitem.id",
-                            DB::raw("SUM(sales_order_data.qty) AS qty"),
-                            DB::raw("SUM(sales_order_data.amount) AS amount"),
-                            DB::raw("SUM(sales_order_data.mrp_price) AS mrp_price")
+                            "subitem.tax as tax_amount",
+                            DB::raw("SUM(retail_sale_order_details.qty) AS qty"),
+                            DB::raw("SUM(subitem.sale_price * retail_sale_order_details.qty) AS amount"),
+                            DB::raw("subitem.mrp_price AS mrp_price")
                         )
                         ->when(isset($from) && isset($to), function($query) use ($from, $to) {
-                            $query->whereBetween("sales_order.date", [$from, $to]);
+                            $query->whereDate("retail_sale_orders.sale_order_date", ">=", $from)
+                                  ->whereDate("retail_sale_orders.sale_order_date", "<=", $to);
                         })
-                        ->when(isset($brand_id), function($query) use ($brand_id) {
-                            $query->where("subitem.brand_id", $brand_id);
+                        ->when(!empty($brand_ids), function($query) use ($brand_ids) {
+                            if (is_array($brand_ids)) {
+                                $query->whereIn("subitem.brand_id", $brand_ids);
+                            } else {
+                                $query->where("subitem.brand_id", $brand_ids);
+                            }
                         })
-                        ->when(isset($store_id), function($query) use ($store_id) {
-                            $query->where('sales_order.buyers_id', $store_id);
+                        ->when(!empty($store_ids), function($query) use ($store_ids) {
+                            if (is_array($store_ids)) {
+                                $query->whereIn('retail_sale_orders.distributor_id', $store_ids);
+                            } else {
+                                $query->where('retail_sale_orders.distributor_id', $store_ids);
+                            }
+                        })
+                        ->when(!empty($ba_ids), function($query) use ($ba_ids) {
+                            if (is_array($ba_ids)) {
+                                $query->whereIn('retail_sale_orders.user_id', $ba_ids);
+                            } else {
+                                $query->where('retail_sale_orders.user_id', $ba_ids);
+                            }
                         })
                         ->when(isset($subitem_id), function($query) use($subitem_id) {
                             $query->where("subitem.id", $subitem_id);

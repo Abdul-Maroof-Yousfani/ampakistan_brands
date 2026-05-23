@@ -85,10 +85,21 @@ if($accType == 'client'){
                                                                 ->groupBy('pv_no')
                                                                 ->first();
 
+                                                      
+                                                        $return = DB::connection('mysql2')->table('purchase_return as a')
+                                                            ->join('purchase_return_data as b', 'a.id', 'b.master_id')
+                                                            ->where('a.status', 1)
+                                                            ->where('a.type', 2)
+                                                            ->where('a.grn_no',$purchase_voucher->grn_id)
+                                                            ->select('a.summary_withholding_tax', DB::raw('SUM(b.net_amount) as total_net_amount'))
+                                                            ->groupBy('a.id', 'a.summary_withholding_tax')
+                                                            ->first();
+                                                        $return_amount = $return ? ($return->total_net_amount + $return->summary_withholding_tax) : 0;
+
                                                         $amount = $pv_no->amount;
                                                         $purchase_amount = $purchase_voucher_data->totalamount;
                                                         $paid_amount = $purchase_voucher_payment_data->totalamount;
-                                                        $total_remain_amount = $purchase_amount-$paid_amount+$amount;
+                                                        $total_remain_amount = $purchase_amount-$paid_amount-$return_amount+$amount;
 
                                                         $supplier_id = $purchase_voucher->supplier;
                                                         $supplier_name = CommonHelper::get_supplier_name($supplier_id);
@@ -101,47 +112,50 @@ if($accType == 'client'){
                                                                 <input type="hidden" name="new_purchase_voucher_payment_id[]" value="{{$new_purchase_voucher_payment_id}}" />
                                                                 <input type="hidden" name="new_pv_id" value="{{$new_pv_id}}" />
                                                                 <input type="hidden" name="new_pv_no" value="{{$new_pv_no}}" />
-                                                                <div class="col-lg-2 col-md-2 col-sm-2 col-xs-2">
-                                                                    <label class="sf-label">Purchase No. <span class="rflabelsteric"><strong>*</strong></span></label>
+                                                                <div class="col-lg-1 col-md-1 col-sm-1 col-xs-1">
+                                                                    <label class="sf-label">Purchase No.</label>
                                                                     <input readonly type="text" class="form-control requiredField" name="pv_no{{$new_purchase_voucher_payment_id}}" id="pv_no" value="{{$purchase_voucher->pv_no}}" />
                                                                 </div>
 
-                                                                <div class="col-lg-2 col-md-2 col-sm-2 col-xs-2">
-                                                                    <label class="sf-label">Purchase Date.</label>
-                                                                    <span class="rflabelsteric"><strong>*</strong></span>
+                                                                <div class="col-lg-1 col-md-1 col-sm-1 col-xs-1">
+                                                                    <label class="sf-label">P. Date.</label>
                                                                     <input readonly type="date" class="form-control requiredField" name="purchase_date{{$new_purchase_voucher_payment_id}}" id="demand_date_1" value="{{$purchase_voucher->pv_date}}" />
                                                                 </div>
 
                                                                 <div class="col-lg-2 col-md-2 col-sm-2 col-xs-2">
-                                                                    <label class="sf-label">Supplier Name<span class="rflabelsteric"><strong>*</strong></span></label>
-                                                                    <input readonly type="text" class="form-control requiredField" name="supplier{{$new_purchase_voucher_payment_id}}" id="" value="{{$supplier_name}}" />
+                                                                    <label class="sf-label">Supplier Name</label>
+                                                                    <input readonly title="{{$supplier_name}}" type="text" class="form-control requiredField" name="supplier{{$new_purchase_voucher_payment_id}}" id="" value="{{$supplier_name}}" />
                                                                 </div>
 
-                                                                <div class="col-lg-2 col-md-2 col-sm-2 col-xs-2">
-                                                                    <label class="sf-label">Ref / Bill No. <span class="rflabelsteric"><strong>*</strong></span></label>
+                                                                <div class="col-lg-1 col-md-1 col-sm-1 col-xs-1">
+                                                                    <label class="sf-label">Ref / Bill No.</label>
                                                                     <input readonly type="text" class="form-control" name="slip_no{{$new_purchase_voucher_payment_id}}" id="slip_no_1" value="{{$purchase_voucher->slip_no}}" />
                                                                 </div>
 
-                                                                <div class="col-lg-2 col-md-2 col-sm-2 col-xs-2">
+                                                                <div class="col-lg-1 col-md-1 col-sm-1 col-xs-1">
                                                                     <label class="sf-label">Bill Date.</label>
-                                                                    <span class="rflabelsteric"><strong>*</strong></span>
                                                                     <input readonly type="date" class="form-control requiredField"  name="bill_date{{$new_purchase_voucher_payment_id}}" id="bill_date" value="{{$purchase_voucher->bill_date}}" />
                                                                 </div>
 
-                                                                <div class="col-lg-2 col-md-2 col-sm-2 col-xs-2">
-                                                                    <label class="sf-label">Purchase Amount<span class="rflabelsteric"><strong>*</strong></span></label>
-                                                                    <input type="text" class="form-control requiredField" readonly value="{{$purchase_amount}}" />
+                                                                <div class="col-lg-1 col-md-1 col-sm-1 col-xs-1">
+                                                                    <label class="sf-label" title="Purchased Amount">Purchased Invoice</label>
+                                                                    <input readonly type="text" class="form-control" value="{{number_format($purchase_amount, 2)}}" />
+                                                                </div>
+
+                                                                <div class="col-lg-1 col-md-1 col-sm-1 col-xs-1">
+                                                                    <label class="sf-label" title="Return Amount">Return Invoice</label>
+                                                                    <input readonly type="text" class="form-control" value="{{number_format($return_amount, 2)}}" />
+                                                                </div>
+
+                                                                <div class="col-lg-1 col-md-1 col-sm-1 col-xs-1">
+                                                                    <label class="sf-label" title="Paid Amount">Paid Amount</label>
+                                                                    <input readonly type="text" class="form-control" value="{{number_format($paid_amount, 2)}}" />
                                                                 </div>
 
                                                                 <div class="col-lg-2 col-md-2 col-sm-2 col-xs-2">
-                                                                    <label class="sf-label">Paid Amount<span class="rflabelsteric"><strong>*</strong></span></label>
-                                                                    <input type="text" class="form-control requiredField" readonly value="{{$paid_amount}}" />
-                                                                </div>
-
-                                                                <div class="col-lg-2 col-md-2 col-sm-2 col-xs-2">
-                                                                    <label class="sf-label">Amount<span class="rflabelsteric"><strong>*</strong></span></label>
+                                                                    <label class="sf-label">Remaining Amount<span class="rflabelsteric"><strong>*</strong></span></label>
                                                                     <input type="text" class="form-control requiredField amount" onkeyup="sumed();CheckAmount('<?= $new_purchase_voucher_payment_id; ?>')" name="amount{{$new_purchase_voucher_payment_id}}" id="amount{{$new_purchase_voucher_payment_id}}" value="{{$amount}}" />
-                                                                    <span>{{'('.($total_remain_amount-$amount).')'}}</span>
+                                                                    <span class="hide">{{'('.($total_remain_amount-$amount).')'}}</span>
                                                                     <input type="hidden" id="existAmount{{$new_purchase_voucher_payment_id}}" value="{{$total_remain_amount}}" />
                                                                 </div>
 
@@ -156,13 +170,13 @@ if($accType == 'client'){
                                                             <div class="row">
 
                                                                 <div class="col-lg-2 col-md-2 col-sm-2 col-xs-2">
-                                                                    <label class="sf-label">PV Date. <span class="rflabelsteric"><strong>*</strong></span></label>
-                                                                    <input type="date" class="form-control requiredField" name="bpv_date" id="bpv_date" value="<?php echo $pv_date; ?>" />
+                                                                    <label class="radio-inline"><input @if($payment_type==1): checked="checked" @endif onclick="bank_cash()" type="radio" name="payment_type_mod" id="bank_radio" value="1">Bank</label>
+                                                                    <label class="radio-inline"><input @if($payment_type==2): checked="checked" @endif onclick="bank_cash()" type="radio" name="payment_type_mod" id="cash_radio" value="2">Cash</label>
                                                                 </div>
 
                                                                 <div class="col-lg-2 col-md-2 col-sm-2 col-xs-2">
-                                                                    <label class="radio-inline"><input @if($payment_type==1): checked="checked" @else disabled @endif onclick="bank_cash()" type="radio" name="payment_type_mod" id="bank_radio" value="1" readonly>Bank</label>
-                                                                    <label class="radio-inline"><input @if($payment_type==2): checked="checked" @else disabled @endif onclick="bank_cash()" type="radio" name="payment_type_mod" id="cash_radio" value="2" readonly>Cash</label>
+                                                                    <label class="sf-label">PV Date. <span class="rflabelsteric"><strong>*</strong></span></label>
+                                                                    <input type="date" class="form-control requiredField" name="bpv_date" id="bpv_date" value="<?php echo $pv_date; ?>" />
                                                                 </div>
 
                                                                 <div class="col-lg-2 col-md-2 col-sm-2 col-xs-2 payment_nature">
@@ -196,7 +210,7 @@ if($accType == 'client'){
                                                                     </th>
                                                                     <th class="text-center" style="width:150px;">Debit <span class="rflabelsteric"><strong>*</strong></span></th>
                                                                     <th class="text-center" style="width:150px;">Credit <span class="rflabelsteric"><strong>*</strong></span></th>
-                                                                    <th class="text-center" style="width:150px;">Action</th>
+                                                                    <!-- <th class="text-center" style="width:150px;">Action</th> -->
                                                                 </tr>
                                                                 </thead>
                                                                 <tbody class="addMorePvsDetailRows_1" id="addMorePvsDetailRows_1">
@@ -218,7 +232,7 @@ if($accType == 'client'){
                                                                     <td>
                                                                         <input readonly placeholder="Credit" class="form-control requiredField " type="text" name="c_amount[]" id="" value="" />
                                                                     </td>
-                                                                    <td class="text-center">---</td>
+                                                                    <!-- <td class="text-center">---</td> -->
                                                                 </tr>
 
                                                                 <tr>
@@ -236,11 +250,11 @@ if($accType == 'client'){
                                                                     <td>
                                                                         <input readonly placeholder="Credit" class="form-control requiredField " type="text" name="c_amount[]" id="c_amount" value="{{$new_pv_data_amt2}}" />
                                                                     </td>
-                                                                    <td class="text-center">---</td>
+                                                                    <!-- <td class="text-center">---</td> -->
                                                                 </tr>
 
                                                                 {{--For Tax Amir--}}
-                                                                <tr>
+                                                                <!-- <tr>
                                                                     <td>
                                                                         <select style="width: 100%" class="form-control requiredField select2" name="account_id[]" id="account_id_1_3">
                                                                             <option value="0">Select Account</option>
@@ -255,8 +269,8 @@ if($accType == 'client'){
                                                                     <td>
                                                                         <input onkeyup="income_tax()"  placeholder="Credit" class="form-control  " type="text" name="c_amount[]" id="tax" value="{{$new_pv_data_amt3}}" />
                                                                     </td>
-                                                                    <td class="text-center">---</td>
-                                                                </tr>
+                                                                    
+                                                                </tr> -->
 
                                                                 {{--For Tax--}}
 
@@ -288,9 +302,9 @@ if($accType == 'client'){
                                                                                 class="form-control  text-right number_format"
                                                                                 value=""/>
                                                                     </td>
-                                                                    <td class="diff" style="width:150px;font-size: 20px;">
+                                                                    <!-- <td class="diff" style="width:150px;font-size: 20px;">
                                                                         <input readonly style="color: blue;font-weight: 600" class="form-control" type="text" id="diff" value=""/>
-                                                                    </td>
+                                                                    </td> -->
                                                                 </tr>
                                                                 </tbody>
                                                             </table>

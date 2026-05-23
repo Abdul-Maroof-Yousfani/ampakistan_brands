@@ -107,7 +107,7 @@ label {
                                                                                     Payment <span
                                                                                         class="rflabelsteric"><strong>*</strong></span></label>
                                                                                 <input type="text"
-                                                                                    class="form-control requiredField"
+                                                                                    class="form-control"
                                                                                     placeholder=""
                                                                                     name="model_terms_of_payment"
                                                                                     id="model_terms_of_payment"
@@ -199,9 +199,9 @@ label {
                                                                                 class="col-lg-6 col-md-6 col-sm-6 col-xs-12">
                                                                                 <label class="sf-label">Despatched
                                                                                     through<span
-                                                                                        class="rflabelsteric"><strong>*</strong></span></label>
+                                                                                        class="rflabelsteric"></span></label>
                                                                                 <input readonly type="text"
-                                                                                    class="form-control requiredField"
+                                                                                    class="form-control"
                                                                                     placeholder=""
                                                                                     name="despacth_through"
                                                                                     id="despacth_through"
@@ -291,11 +291,11 @@ label {
                                                                                 <label
                                                                                     class="sf-label">Description</label>
                                                                                 <span
-                                                                                    class="rflabelsteric"><strong>*</strong></span>
+                                                                                    class="rflabelsteric"></span>
                                                                                 <textarea name="description"
                                                                                     id="description" rows="4" cols="50"
                                                                                     style="resize:none;text-transform: capitalize"
-                                                                                    class="form-control requiredField">{{$delivery_note->description}}</textarea>
+                                                                                    class="form-control">{{$delivery_note->description}}</textarea>
                                                                             </div>
                                                                         </div>
                                                                     </div>
@@ -419,6 +419,7 @@ label {
                                                                                 <th class="text-center hide">Net Amount
                                                                                 </th>
                                                                                 <th class="text-center hide">0 Qty</th>
+                                                                                 <th class="text-center">Action</th>
                                                                             </tr>
                                                                         </thead>
                                                                         <tbody>
@@ -443,17 +444,19 @@ label {
                                                                             $qty = $dnQty =SalesHelper::get_dn_total_qty($row1->so_data_id);
                                                                             $SODQTY = CommonHelper::get_sod_qty($row1->so_data_id);
 
-                                                                            $qty = $SODQTY - $qty;
+                                                                            $qty = $qty;
+                                                                            // $qty = $SODQTY - $qty;
 
 
                                                                             $working_counter++;
                                                                             $id_count++;     ?>
+                                                                            <tr>
                                                                             {{--hidden data--}}
                                                                             <input type="hidden"
-                                                                                name="data_id{{$id_count}}" id="data_id"
+                                                                                name="data_id{{$id_count}}"
                                                                                 value="{{$row1->so_data_id}}" />
                                                                             <input type="hidden"
-                                                                                name="groupby{{$id_count}}" id="groupby"
+                                                                                name="groupby{{$id_count}}"
                                                                                 value="{{$row1->groupby}}" />
                                                                             <input type="hidden"
                                                                                 name="item_id{{$working_counter}}"
@@ -463,22 +466,12 @@ label {
                                                                                 name="rate{{$working_counter}}"
                                                                                 id="rate{{$working_counter}}"
                                                                                 value="{{$row1->rate}}" />
-                                                                            {{-- <input type="hidden" name="discount_percent{{$working_counter}}"
-                                                                            id="discount_percent{{$working_counter}}"
-                                                                            value="{{$row1->discount_percent}}"/> --}}
-                                                                            {{-- <input type="hidden" name="discount_amount{{$working_counter}}"
-                                                                            id="discount_amount{{$working_counter}}"
-                                                                            value="{{$row1->discount_amount}}"/> --}}
                                                                             <input type="hidden"
                                                                                 name="amount{{$working_counter}}"
                                                                                 id="amount{{$working_counter}}"
                                                                                 value="{{$row1->amount}}" />
-
-
                                                                             {{--hidden data End --}}
 
-
-                                                                            <tr>
                                                                                 <td class="text-center"
                                                                                     class="text-center">
                                                                                     <?php echo $counter;?>
@@ -505,6 +498,12 @@ label {
 
 
                                                                                 <?php $total_qty+=$row1->qty; ?>
+
+  <?php
+                                                                                    $actual_qty = DB::Connection('mysql2')->table('sales_order_data')->where('id',$row1->so_data_id)->first()->qty;
+                                                                                    $dn_qty = DB::Connection('mysql2')->table('delivery_note_data')->where('so_data_id',$row1->so_data_id)->sum('qty');
+                                                                                    ?>
+
                                                                                 <td class="text-right">
                                                                                     <input
                                                                                         onkeyup="calc('{{$id_count}}')"
@@ -514,10 +513,7 @@ label {
                                                                                         name="send_qty{{$id_count}}"
                                                                                         id="send_qty{{$id_count}}"
                                                                                         value="{{$qty}}" />
-                                                                                    <?php
-                                                                                    $actual_qty = DB::Connection('mysql2')->table('sales_order_data')->where('id',$row1->so_data_id)->first()->qty;
-                                                                                    $dn_qty = DB::Connection('mysql2')->table('delivery_note_data')->where('so_data_id',$row1->so_data_id)->sum('qty');
-                                                                                    ?>
+                                                                                  
                                                                                     <input type="hidden"
                                                                                         name="qty{{$id_count}}"
                                                                                         id="qty{{$id_count}}"
@@ -639,6 +635,8 @@ label {
                                                                                         class="" id="check{{$id_count}}"
                                                                                         onclick="required_none('{{$id_count}}','{{$row1->qty}}')">
                                                                                 </td>
+                                                                                <td><button type="button" class="btn btn-danger btn-xs" onclick="deleteRow(this)"><i class="fa fa-trash"></i></button>
+                                                                                </td>
                                                                                 <input type="hidden"
                                                                                     name="bundles_id{{$working_counter}}"
                                                                                     value="0" />
@@ -702,12 +700,10 @@ label {
                                                                             <?php $bundle_stop++ ?>
                                                                             @endif
 
+                                                                            <tr style="background-color: lightyellow">
                                                                             <input type="hidden"
-                                                                                name="data_id{{$id_count}}" id="data_id"
+                                                                                name="data_id{{$id_count}}"
                                                                                 value="{{$bundle_data->so_data_id}}" />
-                                                                            {{--<input type="hidden" name="qty{{$working_counter}}"
-                                                                            id="qty{{$working_counter}}"
-                                                                            value="{{$bundle_data->qty}}"/>--}}
                                                                             <input type="hidden"
                                                                                 name="bundles_id{{$working_counter}}"
                                                                                 value="{{$bundle_data->bundles_id}}" />
@@ -715,8 +711,6 @@ label {
                                                                                 name="item_id{{$working_counter}}"
                                                                                 id="item_id{{$working_counter}}"
                                                                                 value="{{$bundle_data->item_id}}" />
-
-                                                                            <tr style="background-color: lightyellow">
                                                                                 <td class="text-center"
                                                                                     class="text-center">
                                                                                     <?php echo $item_count;?></td>
@@ -838,6 +832,8 @@ label {
                                                                                         id="check{{$id_count}}"
                                                                                         onclick="required_none('{{$id_count}}','{{$bundle_data->qty}}')">
                                                                                 </td>
+                                                                                <td><button type="button" class="btn btn-danger btn-xs" onclick="deleteRow(this)"><i class="fa fa-trash"></i></button>
+                                                                                </td>
                                                                             </tr>
                                                                             <?php  $item_count+=0.1; endforeach ;$bundle_stop=1; ?>
 
@@ -954,7 +950,7 @@ label {
                                             </div>
                                         </div>
                                         <div class="demandsSection"></div>
-                                        <div class="row" id="subm">
+                                        <div class="row" id="">
                                             <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12 text-center">
                                                 {{ Form::submit('Submit', ['class' => 'btn btn-success']) }}
 
@@ -981,7 +977,7 @@ function required_none(number, qry) {
     if ($("#check" + number).prop('checked') == true) {
         $("#batch_code" + number).removeClass("requiredField");
         $('#send_qty' + number).attr('readonly', true);
-        $('#send_qty' + number).val(0);
+        $('#send_qty' + number).val();
         calc(number);
         //     sales_tax();
         net();
@@ -1282,6 +1278,60 @@ function sales_tax() {
     $('#grand').val(sales_tax + amount);
     toWords(1);
 }
+
+function deleteRow(btn) {
+    if(confirm("Are you sure to delete this row?")) {
+        $(btn).closest('tr').remove();
+        reIndexTable();
+        net();
+        sales_tax();
+    }
+}
+
+function reIndexTable() {
+    var count = 0;
+    $('#addMoreDemandsDetailRows_1 tbody tr').each(function() {
+        var row = $(this);
+        // Checking if it is a data row (has send_qty in it)
+        if (row.find('input[name^="send_qty"]').length > 0) {
+            count++;
+            row.find('td:first').text(count); // Update S.NO
+            
+            // Update all inputs/selects with index-based names
+            row.find('input, select, textarea').each(function() {
+                var name = $(this).attr('name');
+                if (name) {
+                    // Replace trailing digits with new count
+                    $(this).attr('name', name.replace(/\d+$/, count));
+                }
+                var id = $(this).attr('id');
+                if (id) {
+                    $(this).attr('id', id.replace(/\d+$/, count));
+                }
+                
+                // Update event handlers
+                var attrs = ['onclick', 'onkeyup', 'onblur', 'onchange'];
+                for (var i = 0; i < attrs.length; i++) {
+                    var attr = row.find('input, select, textarea').attr(attrs[i]); // Wait, this only gets first. Fixed below.
+                }
+            });
+
+            // Fixed re-indexing of attributes
+            var attrs = ['onclick', 'onkeyup', 'onblur', 'onchange'];
+            row.find('*').each(function() {
+                var element = $(this);
+                attrs.forEach(function(attr) {
+                    var val = element.attr(attr);
+                    if (val) {
+                        element.attr(attr, val.replace(/\d+/g, count));
+                    }
+                });
+            });
+        }
+    });
+    $('#count').val(count);
+}
+
 </script>
 
 
@@ -1316,6 +1366,60 @@ function get_batch_detail(id, number) {
         }
     });
 }
+
+function deleteRow(btn) {
+    if(confirm("Are you sure to delete this row?")) {
+        $(btn).closest('tr').remove();
+        reIndexTable();
+        net();
+        sales_tax();
+    }
+}
+
+function reIndexTable() {
+    var count = 0;
+    $('#addMoreDemandsDetailRows_1 tbody tr').each(function() {
+        var row = $(this);
+        // Checking if it is a data row (has send_qty in it)
+        if (row.find('input[name^="send_qty"]').length > 0) {
+            count++;
+            row.find('td:first').text(count); // Update S.NO
+            
+            // Update all inputs/selects with index-based names
+            row.find('input, select, textarea').each(function() {
+                var name = $(this).attr('name');
+                if (name) {
+                    // Replace trailing digits with new count
+                    $(this).attr('name', name.replace(/\d+$/, count));
+                }
+                var id = $(this).attr('id');
+                if (id) {
+                    $(this).attr('id', id.replace(/\d+$/, count));
+                }
+                
+                // Update event handlers
+                var attrs = ['onclick', 'onkeyup', 'onblur', 'onchange'];
+                for (var i = 0; i < attrs.length; i++) {
+                    var attr = row.find('input, select, textarea').attr(attrs[i]); // Wait, this only gets first. Fixed below.
+                }
+            });
+
+            // Fixed re-indexing of attributes
+            var attrs = ['onclick', 'onkeyup', 'onblur', 'onchange'];
+            row.find('*').each(function() {
+                var element = $(this);
+                attrs.forEach(function(attr) {
+                    var val = element.attr(attr);
+                    if (val) {
+                        element.attr(attr, val.replace(/\d+/g, count));
+                    }
+                });
+            });
+        }
+    });
+    $('#count').val(count);
+}
+
 </script>
 
 <script>
@@ -1336,6 +1440,13 @@ function calc(num) {
     var aterCalcQty = parseFloat($('#aterCalcQty' + num).val());
 
 
+
+    if (send_qty <= 0) {
+        alert('Quantity must be greater than zero. Please use the delete button to remove this item.');
+        $('#send_qty' + num).val(aterCalcQty);
+        net();
+        return false;
+    }
 
     if (send_qty > actual_qty) {
         alert('amount can not greater than sales order QTY');
@@ -1400,6 +1511,60 @@ function net() {
     qty = parseFloat(qty);
     $('#total_qty').val(qty);
 }
+
+function deleteRow(btn) {
+    if(confirm("Are you sure to delete this row?")) {
+        $(btn).closest('tr').remove();
+        reIndexTable();
+        net();
+        sales_tax();
+    }
+}
+
+function reIndexTable() {
+    var count = 0;
+    $('#addMoreDemandsDetailRows_1 tbody tr').each(function() {
+        var row = $(this);
+        // Checking if it is a data row (has send_qty in it)
+        if (row.find('input[name^="send_qty"]').length > 0) {
+            count++;
+            row.find('td:first').text(count); // Update S.NO
+            
+            // Update all inputs/selects with index-based names
+            row.find('input, select, textarea').each(function() {
+                var name = $(this).attr('name');
+                if (name) {
+                    // Replace trailing digits with new count
+                    $(this).attr('name', name.replace(/\d+$/, count));
+                }
+                var id = $(this).attr('id');
+                if (id) {
+                    $(this).attr('id', id.replace(/\d+$/, count));
+                }
+                
+                // Update event handlers
+                var attrs = ['onclick', 'onkeyup', 'onblur', 'onchange'];
+                for (var i = 0; i < attrs.length; i++) {
+                    var attr = row.find('input, select, textarea').attr(attrs[i]); // Wait, this only gets first. Fixed below.
+                }
+            });
+
+            // Fixed re-indexing of attributes
+            var attrs = ['onclick', 'onkeyup', 'onblur', 'onchange'];
+            row.find('*').each(function() {
+                var element = $(this);
+                attrs.forEach(function(attr) {
+                    var val = element.attr(attr);
+                    if (val) {
+                        element.attr(attr, val.replace(/\d+/g, count));
+                    }
+                });
+            });
+        }
+    });
+    $('#count').val(count);
+}
+
 </script>
 
 <script>
@@ -1410,10 +1575,172 @@ function get_ntn() {
     $('#buyers_sales').val(ntn[2]);
     sales_tax();
 }
+
+function deleteRow(btn) {
+    if(confirm("Are you sure to delete this row?")) {
+        $(btn).closest('tr').remove();
+        reIndexTable();
+        net();
+        sales_tax();
+    }
+}
+
+function reIndexTable() {
+    var count = 0;
+    $('#addMoreDemandsDetailRows_1 tbody tr').each(function() {
+        var row = $(this);
+        // Checking if it is a data row (has send_qty in it)
+        if (row.find('input[name^="send_qty"]').length > 0) {
+            count++;
+            row.find('td:first').text(count); // Update S.NO
+            
+            // Update all inputs/selects with index-based names
+            row.find('input, select, textarea').each(function() {
+                var name = $(this).attr('name');
+                if (name) {
+                    // Replace trailing digits with new count
+                    $(this).attr('name', name.replace(/\d+$/, count));
+                }
+                var id = $(this).attr('id');
+                if (id) {
+                    $(this).attr('id', id.replace(/\d+$/, count));
+                }
+                
+                // Update event handlers
+                var attrs = ['onclick', 'onkeyup', 'onblur', 'onchange'];
+                for (var i = 0; i < attrs.length; i++) {
+                    var attr = row.find('input, select, textarea').attr(attrs[i]); // Wait, this only gets first. Fixed below.
+                }
+            });
+
+            // Fixed re-indexing of attributes
+            var attrs = ['onclick', 'onkeyup', 'onblur', 'onchange'];
+            row.find('*').each(function() {
+                var element = $(this);
+                attrs.forEach(function(attr) {
+                    var val = element.attr(attr);
+                    if (val) {
+                        element.attr(attr, val.replace(/\d+/g, count));
+                    }
+                });
+            });
+        }
+    });
+    $('#count').val(count);
+}
+
 </script>
 <script type="text/javascript">
 $('.select2').select2();
+
+function deleteRow(btn) {
+    if(confirm("Are you sure to delete this row?")) {
+        $(btn).closest('tr').remove();
+        reIndexTable();
+        net();
+        sales_tax();
+    }
+}
+
+function reIndexTable() {
+    var count = 0;
+    $('#addMoreDemandsDetailRows_1 tbody tr').each(function() {
+        var row = $(this);
+        // Checking if it is a data row (has send_qty in it)
+        if (row.find('input[name^="send_qty"]').length > 0) {
+            count++;
+            row.find('td:first').text(count); // Update S.NO
+            
+            // Update all inputs/selects with index-based names
+            row.find('input, select, textarea').each(function() {
+                var name = $(this).attr('name');
+                if (name) {
+                    // Replace trailing digits with new count
+                    $(this).attr('name', name.replace(/\d+$/, count));
+                }
+                var id = $(this).attr('id');
+                if (id) {
+                    $(this).attr('id', id.replace(/\d+$/, count));
+                }
+                
+                // Update event handlers
+                var attrs = ['onclick', 'onkeyup', 'onblur', 'onchange'];
+                for (var i = 0; i < attrs.length; i++) {
+                    var attr = row.find('input, select, textarea').attr(attrs[i]); // Wait, this only gets first. Fixed below.
+                }
+            });
+
+            // Fixed re-indexing of attributes
+            var attrs = ['onclick', 'onkeyup', 'onblur', 'onchange'];
+            row.find('*').each(function() {
+                var element = $(this);
+                attrs.forEach(function(attr) {
+                    var val = element.attr(attr);
+                    if (val) {
+                        element.attr(attr, val.replace(/\d+/g, count));
+                    }
+                });
+            });
+        }
+    });
+    $('#count').val(count);
+}
+
 </script>
 
-<script src="{{ URL::asset('assets/js/select2/js_tabindex.js') }}"></script>
+<script src="{{ URL::asset('assets/js/select2/js_tabindex.js') }}">
+function deleteRow(btn) {
+    if(confirm("Are you sure to delete this row?")) {
+        $(btn).closest('tr').remove();
+        reIndexTable();
+        net();
+        sales_tax();
+    }
+}
+
+function reIndexTable() {
+    var count = 0;
+    $('#addMoreDemandsDetailRows_1 tbody tr').each(function() {
+        var row = $(this);
+        // Checking if it is a data row (has send_qty in it)
+        if (row.find('input[name^="send_qty"]').length > 0) {
+            count++;
+            row.find('td:first').text(count); // Update S.NO
+            
+            // Update all inputs/selects with index-based names
+            row.find('input, select, textarea').each(function() {
+                var name = $(this).attr('name');
+                if (name) {
+                    // Replace trailing digits with new count
+                    $(this).attr('name', name.replace(/\d+$/, count));
+                }
+                var id = $(this).attr('id');
+                if (id) {
+                    $(this).attr('id', id.replace(/\d+$/, count));
+                }
+                
+                // Update event handlers
+                var attrs = ['onclick', 'onkeyup', 'onblur', 'onchange'];
+                for (var i = 0; i < attrs.length; i++) {
+                    var attr = row.find('input, select, textarea').attr(attrs[i]); // Wait, this only gets first. Fixed below.
+                }
+            });
+
+            // Fixed re-indexing of attributes
+            var attrs = ['onclick', 'onkeyup', 'onblur', 'onchange'];
+            row.find('*').each(function() {
+                var element = $(this);
+                attrs.forEach(function(attr) {
+                    var val = element.attr(attr);
+                    if (val) {
+                        element.attr(attr, val.replace(/\d+/g, count));
+                    }
+                });
+            });
+        }
+    });
+    $('#count').val(count);
+}
+
+</script>
 @endsection

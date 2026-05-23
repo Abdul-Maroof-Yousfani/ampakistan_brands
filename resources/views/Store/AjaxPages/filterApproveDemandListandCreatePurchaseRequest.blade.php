@@ -31,6 +31,7 @@ if(empty($paramOne)){
              ->where('b.status',1)
              ->where('a.quotation_status', '!=',2)
              ->where('c.quotation_status',2)
+             ->where('a.vendor', '!=',0)
              ->select('b.id','b.sub_item_id','c.comparative_number','c.voucher_no as quotation_no','d.demand_no','d.demand_date','a.vendor','b.qty','c.dept_id')
              ->orderBy('vendor')
             ->get()->toArray();
@@ -82,8 +83,7 @@ if(empty($paramOne)){
                                             </td>
                                             <td>{{ $counter++ }}</td>
                                             <td>{{ strtoupper($row->quotation_no) }}</td>
-                                            <td>{{ strtoupper($row->comparative_number) }}</td>
-                                            <td>{{ strtoupper($row->demand_no) }}</td>
+                                            <td>{{ \App\Helpers\CommonHelper::get_single_comparative_number($row->demand_no) }}</td>
                                             <td>{{ CommonHelper::changeDateFormat($row->demand_date) }}</td>
                                             <td>{{ CommonHelper::get_product_name($row->sub_item_id) }}</td>
                                             <td>{{ number_format($row->qty, 2) }}</td>
@@ -104,6 +104,8 @@ if(empty($paramOne)){
                 <?php echo Form::close();?>
                 <?php ?>
                 <div class="lineHeight">&nbsp;</div>
+
+                 @if (!empty($data))
                 <script type="text/javascript">
                     $(document).ready(function() {
                         $(".checkedAll_<?php echo $row->id?>").change(function(){
@@ -132,6 +134,7 @@ if(empty($paramOne)){
                         });
                     });
                 </script>
+                @endif
 
                 <?php ?>
             </div>

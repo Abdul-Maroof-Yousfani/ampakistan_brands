@@ -9,8 +9,7 @@
     @endif
     <div class="container-fluid">
         <div class="well_N">
-            <h1>Add Opening</h1>
-      
+            <h1>Opening Stock</h1>
             <div class="dp_sdw">
                 <div class="panel">
                     <div class="panel-body">
@@ -23,7 +22,7 @@
                                     <option>Select Item</option>
                                     @foreach (App\Helpers\CommonHelper::get_all_subitem() as $key => $value)
                                         <option value="{{ $value->id }}">
-                                            {{ $value->product_name }}
+                                            {{ $value->product_name  }}
                                         </option>
                                     @endforeach
                                 </select>

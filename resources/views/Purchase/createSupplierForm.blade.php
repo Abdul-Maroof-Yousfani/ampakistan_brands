@@ -1,6 +1,7 @@
 <?php
 use App\Helpers\PurchaseHelper;
 use App\Helpers\CommonHelper;
+use App\Helpers\ReuseableCode;
 
 $accType = Auth::user()->acc_type;
 if($accType == 'client'){
@@ -51,7 +52,7 @@ if($accType == 'client'){
 
                                                     <input type="hidden" name="account_head" value="2-281" />
                                                     <select onchange="get_nature_type()" 
-                                                        id="account_id" class="form-control requiredField select2" disabled>
+                                                        id="account_id" class="form-control requiredField select2" >
 
 
                                                         <option value="">Select Account</option>
@@ -347,9 +348,27 @@ if($accType == 'client'){
                                                                 <option value="1">Debit</option>
                                                             </select>
                                                         </div>
+                                                        <div class="col-lg-3 col-md-3 col-sm-3 col-xs-12">
+                                                            <label for="o_blnc">WithHolding Tax :</label>
+                                                           <select name="with_holding_tax" id="with_holding_tax"
+                                                                class="form-control select2"
+                                                               
+                                                               >
+                                                                <option value="">Select WithHolding</option>
+                                                                @foreach(ReuseableCode::get_all_sales_tax() as $row_tax)
+                                                                <option value="{{ $row_tax->id}}" data-rate="{{$row_tax->rate}}" >{{$row_tax->rate}} %
+                                                                </option>
+                                                                @endforeach
+                                                            </select>
+                                                        </div>
+
+   
+
+
+
                                                         <div class="col-lg-6 col-md-6 col-sm-6 col-xs-12">
                                                         </div>
-                                                        <div class="col-lg-6 col-md-6 col-sm-6 col-xs-12">
+                                                        <div class="col-lg-6 col-md-6 col-sm-6 col-xs-12 hide">
                                                             <label for="o_blnc">TaxPayer Status </label> <br>
                                                             <span>COMPANY</span> <input type="checkbox"
                                                                 name="company_status[]" id="COMPANY"
@@ -456,7 +475,7 @@ if($accType == 'client'){
                                                 <?php   //register income criteria ?>
                                                 <div class="lineHeight">&nbsp;</div>
                                                 <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12 ">
-                                                    <div class="row">
+                                                    <div class="row ">
                                                         <div class="col-lg-4 col-md-4 col-sm-4 col-xs-12 checkbox">
                                                             <label>
                                                                 <input tabindex="15" type="checkbox"
@@ -932,18 +951,51 @@ function ntn_cnic(id) {
     }
 }
 
-$('#regd_in_income_tax').change(function() {
-    if ($(this).is(':checked')) {
+// $('#regd_in_income_tax').change(function() {
+//     if ($(this).is(':checked')) {
+//         $('.income').prop('checked', false);
+//         document.getElementById("income_tax_div").style.display = "block";
+//     } else {
+//         document.getElementById("income_tax_div").style.display = "none";
+//         $("#cnic").css("display", "none");
+//         // $("#ntn").css("display", "none");
+//         $('#ntn').val("");
+//     }
+// });
+$('#regd_in_income_tax').change(function(){
+    if ($(this).is(':checked'))
+    {
         $('.income').prop('checked', false);
         document.getElementById("income_tax_div").style.display = "block";
+        
+        // Radio button selection ke hisab se required class add karo
+        // Initially jab check karo to koi radio selected nahi hai, isliye required class nahi add karo
+        // Required class tab add hogi jab radio select karega user
     } else {
         document.getElementById("income_tax_div").style.display = "none";
+        
+        // Sirf required class hatao, input field ko hide mat karo
+        $("#ntn").removeClass("requiredField");
+        $("#cnic").removeClass("requiredField");
+        
+        // Required class ka red border bhi hatao
+        $("#ntn").css('border-color', '#ccc');
+        $("#cnic").css('border-color', '#ccc');
+        
+        // Radio buttons ko unchecked karo
+        $('.income').prop('checked', false);
+        
+        // CNIC ko hide karo (kionke business individual select nahi hai)
         $("#cnic").css("display", "none");
-        // $("#ntn").css("display", "none");
-        $('#ntn').val("");
+        
+        // NTN ko visible rakho lekin required na ho
+        $("#ntn").css("display", "block");
+        
+        // Column layout reset karo
+        $("#amir").removeClass("col-lg-6 col-md-6 col-sm-6 col-xs-12");
+        $("#amir").addClass("col-lg-12 col-md-12 col-sm-12 col-xs-12");
     }
 });
-
 
 $('#regd_in_sales_tax').change(function() {
     if ($(this).is(':checked')) {

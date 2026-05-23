@@ -40,10 +40,25 @@ table.dataTable thead .sorting:after,table.dataTable thead .sorting_asc:after,ta
                 <div class="well_N">
                     <div class="dp_sdw">
                         <div class="row">
-                            <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
-                                <div class="col-lg-6 col-md-6 col-sm-6 col-xs-12">
-                                    <span class="subHeadingLabelClass">View Sales Invoice List</span>
-                                </div>
+
+                        
+    <div class="row">
+  <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
+        <div class="col-lg-6 col-md-6 col-sm-6 col-xs-12">
+            <ul class="cus-ul">
+                <li>
+                    <h1>Sale</h1>
+                </li>
+                <li>
+                    <h3><span class="glyphicon glyphicon-chevron-right"></span> &nbsp; View Sales Invoice List</h3>
+                </li>
+            </ul>
+        </div>
+
+
+
+
+                               
                                 <div class="col-lg-6 col-md-6 col-sm-6 col-xs-12 text-right">
                                     <?php echo CommonHelper::displayPrintButtonInBlade('PrintEmpExitInterviewList', '', '1'); ?>
                                     <?php if($export == true):?>
@@ -77,7 +92,7 @@ table.dataTable thead .sorting:after,table.dataTable thead .sorting_asc:after,ta
                                                     <th class="text-center col-sm-1">Order Date</th>
                                                     <th class="text-center">Customer</th>
                                                     <th style="width: 80px;" class="text-center">Amount</th>
-                                                    <th  style="width: 75px;"class="text-center">SI Status</th>
+                                                    <th  style="width: 75px;"class="text-center">Payment Status</th>
                                                     <th class="text-center">Status</th>
 
                                                     <th style="width: 60px;" class="text-center">Action</th>
@@ -109,13 +124,13 @@ table.dataTable thead .sorting:after,table.dataTable thead .sorting_asc:after,ta
                                                         endif;
                                                         
                                                         if ($diffrence == $main_amount):
-                                                            $status = 'Open';
+                                                            $status = 'Pending';
                                                             $open++;
                                                         elseif ($main_amount != '' && $diffrence != 0):
-                                                            $status = 'partial';
+                                                            $status = 'Partial';
                                                             $parttial++;
                                                         elseif ($diffrence == 0):
-                                                            $status = 'Complete';
+                                                            $status = 'Clear';
                                                             $complete++;
                                                         endif;
                                                         
@@ -206,7 +221,8 @@ table.dataTable thead .sorting:after,table.dataTable thead .sorting_asc:after,ta
                                                                                         href="{{ route('edit.sales.tax.invoice', ['id' => $row->id, 'm' => $row->id]) }}">Edit</a>
                                                                                 @endif
 
-
+ <a target="_blank" class="btn btn-xs btn-primary"
+                                                                                        href="{{ route('edit.sales.tax.invoice', ['id' => $row->id, 'm' => $row->id]) }}">Edit</a>
 
                                                                         </li>
                                                                     </ul>
@@ -237,7 +253,7 @@ table.dataTable thead .sorting:after,table.dataTable thead .sorting_asc:after,ta
                                                     </tr>
                                                     <tr>
                                                         <td colspan="8"></td>
-                                                        <td colspan="1" style="font-size: 13px;"><strong>Open</strong>
+                                                        <td colspan="1" style="font-size: 13px;"><strong>Pending</strong>
                                                         </td>
                                                         <td style="font-size: 13px;"><strong><?php echo $open; ?></strong>
                                                         </td>
@@ -253,7 +269,7 @@ table.dataTable thead .sorting:after,table.dataTable thead .sorting_asc:after,ta
                                                     <tr>
                                                         <td colspan="8"></td>
                                                         <td colspan="1" style="font-size: 13px;">
-                                                            <strong>Complete</strong>
+                                                            <strong>Clear</strong>
                                                         </td>
                                                         <td style="font-size: 13px;"><strong><?php echo $complete; ?></strong>
                                                         </td>

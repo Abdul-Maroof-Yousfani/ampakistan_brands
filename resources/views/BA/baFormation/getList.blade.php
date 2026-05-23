@@ -19,20 +19,20 @@
                 <button type="button" class="btn btn-primary mb-4" data-bs-toggle="modal" data-bs-target="#editmodal{{ $BAFormation->id }}">
                     Edit
                 </button>
-                <div class="modal fade" id="editmodal{{ $BAFormation->id }}" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
-                    <div class="modal-dialog">
+                <div class="modal fade" id="editmodal{{ $BAFormation->id }}" aria-labelledby="exampleModalLabel" aria-hidden="true">
+                    <div class="modal-dialog modal-lg">
                         <div class="modal-content">
                             <div class="modal-header">
-                                <h5 class="modal-title" id="exampleModalLabel">Create BA Formation</h5>
+                                <h5 class="modal-title" id="exampleModalLabel">Edit BA Formation</h5>
                             </div>
                             <div class="modal-body">
-                                <form id="submitadv" action="{{ route('baFormation.update',$BAFormation->id) }}" method="POST">
+                                <form action="{{ route('baFormation.update',$BAFormation->id) }}" method="POST" class="underfieldvalidation">
                                     <input type="hidden" value="{{csrf_token()}}" name="_token">
                                     <input type="hidden" value="PUT" name="_method">
                                     <input type="hidden" id="listRefresh" value="{{ route('list.baFormation') }}">
                                     <div class="mb-3">
                                         <label for="customers" class="form-label">Customers</label>
-                                        <select  multiple class="form-select select2" id="customers" name="customer" style="width: 100%;">
+                                        <select class="form-select select2 requiredv" id="customers{{ $BAFormation->id }}" name="customer" style="width: 100%;" data-message="Customer">
                                             <option value="">Select Customers</option>
                                             @foreach(App\Helpers\SalesHelper::get_all_customer_only_distributors() as $row)
                                                 <option {{$BAFormation->customer_id == $row->id ? 'selected' : ''}} value="{{ $row->id }}">{{ $row->name }}</option>
@@ -41,7 +41,7 @@
                                     </div>
                                     <div class="mb-3">
                                         <label for="employee" class="form-label">Employee</label>
-                                        <select  multiple class="form-select select2" id="employee" name="employee" style="width: 100%;">
+                                        <select class="form-select select2 requiredv" id="employee{{ $BAFormation->id }}" name="employee" style="width: 100%;" data-message="Employee">
                                             <option value="">Select Employee</option>
                                             @foreach(App\Helpers\SalesHelper::get_all_employees() as $row)
                                                 <option {{$BAFormation->employee_id == $row->id ? 'selected' : ''}} value="{{ $row->id }}">{{ $row->name }}</option>
@@ -50,7 +50,7 @@
                                     </div>
                                     <div class="mb-3">
                                         <label for="brands" class="form-label">Brands</label>
-                                        <select multiple class="form-select select2" id="brands{{ $BAFormation->id }}" name="brands[]" style="width: 100%;">
+                                        <select multiple class="form-select select2 requiredv" id="brands{{ $BAFormation->id }}" name="brands[]" style="width: 100%;" data-message="Brands">
                                             @foreach(App\Helpers\CommonHelper::get_all_brand() as $item)
                                                 <option {{ in_array($item->id, json_decode($BAFormation->brands_ids, true) ?? []) ? 'selected' : '' }} value="{{ $item->id }}">{{ $item->name }}</option>
                                             @endforeach
@@ -58,12 +58,12 @@
                                     </div>
                                     <div class="mb-3">
                                         <label for="status" class="form-label">Status</label>
-                                        <select  multiple class="form-select select2" name="status" id="status" style="width: 100%;">
+                                        <select class="form-select select2 requiredv" name="status" id="status{{ $BAFormation->id }}" style="width: 100%;" data-message="Status">
                                             <option  {{$BAFormation->status == 1 ? 'selected' : ''}} value="1">Active</option>
                                             <option  {{$BAFormation->status == 0 ? 'selected' : ''}}  value="0">Inactive</option>
                                         </select>
                                     </div>
-                                    <button style="margin-top: 10px" type="submit" class="btn btn-primary my-2">Create</button>
+                                    <button style="margin-top: 10px" type="submit" class="btn btn-primary my-2">Update</button>
                                 </form>
                             </div>
                         </div>
@@ -83,7 +83,8 @@
         $('body').on('shown.bs.modal', '.modal', function () {
             $(this).find('.select2').select2({
                 width: '100%',
-                allowClear: true
+                allowClear: true,
+                dropdownParent: $(this)
             });
         });
     });
@@ -91,14 +92,37 @@
 
    <script>
 $("#TableExportToCsv").DataTable({
+    dom: 'Bfrtip',
+    buttons: [
+        {
+            extend: 'excelHtml5',
+            text: '<i class="fas fa-file-excel"></i> Excel',
+            title: 'BA Formation Report',
+            className: 'btn btn-success btn-sm mb-3',
+            exportOptions: {
+                columns: [0, 1, 2, 3]
+            }
+        },
+        {
+            extend: 'pdfHtml5',
+            text: '<i class="fas fa-file-pdf"></i> PDF',
+            title: 'BA Formation Report',
+            className: 'btn btn-danger btn-sm mb-3',
+            exportOptions: {
+                columns: [0, 1, 2, 3]
+            }
+        }
+    ],
     ordering: true,
     searching: true,
     paging: true,
     info: false,
     autoWidth: false,
+    order: [[0, 'desc']],   // 👈 column index + direction
     columnDefs: [
         { targets: 4, searchable: false } // Action column
     ]
 });
 
-</script>
+// Hide original DT buttons since we moved them to header
+$('.dt-buttons').hide();</script>

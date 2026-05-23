@@ -21,6 +21,7 @@ $export=ReuseableCode::check_rights(258);
 ?>
 @extends('layouts.default')
 @section('content')
+    @include('select2')
     <div class="panel-body">
         <div class="row">
             <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
@@ -43,21 +44,34 @@ $export=ReuseableCode::check_rights(258);
 
 
                     <div class="row">
-
+                        <div class="col-lg-2 col-md-2 col-sm-2 col-xs-12">
+                            <label>Customer / Store</label>
+                            <select id="customer_id" class="form-control select2">
+                                <option value="">All Customers</option>
+                                @foreach(\App\Models\Customer::where('status',1)->orderBy('name')->get() as $cust)
+                                    <option value="{{ $cust->id }}">{{ $cust->name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="col-lg-2 col-md-2 col-sm-2 col-xs-12">
+                            <label>Return No (CR No)</label>
+                            <input type="text" id="cr_no" class="form-control" placeholder="Search CR No" />
+                        </div>
+                        <div class="col-lg-2 col-md-2 col-sm-2 col-xs-12">
+                            <label>SI / Deliver No#</label>
+                            <input type="text" id="si_dn_no" class="form-control" placeholder="Search SI / DN No" />
+                        </div>
                         <div class="col-lg-2 col-md-2 col-sm-2 col-xs-12">
                             <label>From Date</label>
-                            <input type="Date" name="from" id="from"  value="<?php echo $currentMonthStartDate;?>" class="form-control" />
+                            <input type="Date" name="from" id="from" value="<?php echo $currentMonthStartDate;?>" class="form-control" />
                         </div>
-                        <div class="col-lg-2 col-md-2 col-sm-2 col-xs-12 text-center"><label>&nbsp;&nbsp;&nbsp;&nbsp;</label>
-                            <input type="text" readonly class="form-control text-center" value="Between" /></div>
                         <div class="col-lg-2 col-md-2 col-sm-2 col-xs-12">
                             <label>To Date</label>
-                            <input type="Date" name="to" id="to" max="<?php ?>" value="<?php echo $currentMonthEndDate;?>" class="form-control" />
+                            <input type="Date" name="to" id="to" value="<?php echo $currentMonthEndDate;?>" class="form-control" />
                         </div>
-
-
-                        <div class="col-lg-2 col-md-2 col-sm-2 col-xs-12 text-right">
-                            <input type="button" value="View Filter Data" class="btn btn-sm btn-primary" onclick="viewRangeWiseDataFilter();" style="margin-top: 32px;" />
+                        <div class="col-lg-2 col-md-2 col-sm-2 col-xs-12">
+                            <label>&nbsp;</label>
+                            <input type="button" value="View Filter Data" class="btn btn-sm btn-primary btn-block" onclick="viewRangeWiseDataFilter();" />
                         </div>
                     </div>
 
@@ -73,15 +87,13 @@ $export=ReuseableCode::check_rights(258);
                                             <thead>
                                             <th class="text-center col-sm-1">S.No</th>
                                             <th class="text-center col-sm-1">SO No</th>
+                                            <th class="text-center col-sm-1">SI / Deliver No</th>
                                             <th class="text-center col-sm-1">Type</th>
-                                            <th class="text-center col-sm-1">CR No</th>
-                                            <th class="text-center col-sm-1">CR Date</th>
-                                            <th class="text-center col-sm-2">Buyer</th>
+                                            <th class="text-center col-sm-1">Return No</th>
+                                            <th class="text-center col-sm-1">Date</th>
+                                            <th class="text-center col-sm-2">Customer / Buyer</th>
                                             <th class="text-center col-sm-2">Amount</th>
-                                            <th class="text-center col-sm-1">View</th>
-
-                                            {{--<th class="text-center">Edit</th>--}}
-                                            {{--<th class="text-center">Delete</th>--}}
+                                            <th class="text-center col-sm-1">Action</th>
                                             </thead>
                                             <tbody id="data">
                                             <?php $counter = 1;$total=0;
@@ -110,6 +122,7 @@ $export=ReuseableCode::check_rights(258);
                                                 <tr @if($row->type==3) style="background-color: lavenderblush" @endif title="" id="{{$row->id}}">
                                                     <td class="text-center">{{$counter++}}</td>
                                                     <td class="text-center"><?php if($row->type==3): echo strtoupper($pos_no); else: echo strtoupper($SoNo); endif?></td>
+                                                    <td class="text-center">-</td>
                                                     <td class="text-center">@if($row->type==1) DN @elseif($row->type==2) SI @else POS @endif</td>
                                                     <td title="{{$row->id}}" class="text-center">{{strtoupper($row->cr_no)}}</td>
                                                     <td class="text-center"><?php  echo CommonHelper::changeDateFormat($row->cr_date);?></td>
@@ -124,11 +137,11 @@ $export=ReuseableCode::check_rights(258);
                                                             <?php if($view == true):?>
                                                                 <button onclick="showDetailModelOneParamerter('sales/viewCreditNoteDetail','<?php echo $row->id ?>','View Sales Tax Invoice')"
                                                                         type="button" class="btn btn-success btn-xs">View</button>
-                                                                <a href="{{ route('sales.salereturn.edit', ['id'=> $row->id]) }}" type="button" class="btn btn-warning btn-xs">Edit</a>
+                                                                <!-- <a href="{{ route('sales.salereturn.edit', ['id'=> $row->id]) }}" type="button" class="btn btn-warning btn-xs">Edit</a> -->
                                                             <?php endif;?>
                                                             <?php if($edit == true):?>
                                                            
-                                                                <button onclick="delete_sales_return('{{$row->id}}','{{$row->cr_no}}')" type="button" class="btn btn-danger btn-xs">Delete</button>
+                                                                <!-- <button onclick="delete_sales_return('{{$row->id}}','{{$row->cr_no}}')" type="button" class="btn btn-danger btn-xs">Delete</button> -->
                                                             <?php endif;?>
                                                     
                                                     </td>
@@ -139,7 +152,7 @@ $export=ReuseableCode::check_rights(258);
 
                                             @endforeach
                                             <tr>
-                                                <td colspan="6"><strong>TOTAL</strong></td>
+                                                <td colspan="7"><strong>TOTAL</strong></td>
                                                 <td class="text-center"><?php echo number_format($OverAllTotal,2)?></td>
                                             </tr>
 
@@ -199,28 +212,38 @@ $export=ReuseableCode::check_rights(258);
         else{}
         }
 
+        $(document).ready(function() {
+            $('.select2').select2();
+            viewRangeWiseDataFilter();
+        });
+
         function viewRangeWiseDataFilter()
         {
-            //var BuyerId = $('#BuyerId').val();
-            var from= $('#from').val();
-            var to= $('#to').val();
-            var m = '<?php echo $m;?>';
-            $('#data').html('<tr><td colspan="13"><div class="row"><div class="col-lg-12 col-md-12 col-sm-12 col-xs-12"><div class="loader"></div></div></div></td><tr>');
+            var from        = $('#from').val();
+            var to          = $('#to').val();
+            var customer_id = $('#customer_id').val();
+            var cr_no       = $('#cr_no').val();
+            var si_dn_no    = $('#si_dn_no').val();
+            var m           = '<?php echo $m;?>';
+
+            $('#data').html('<tr><td colspan="9"><div class="row"><div class="col-lg-12"><div class="loader"></div></div></div></td></tr>');
 
             $.ajax({
-                url: '/sdc/getCustomerCreditNoteData',
-                type: 'Get',
-                data: {from: from,to:to,m:m},
-
-                success: function (response)
-                {
-
+                url: "{{ route('getCustomerCreditNoteData') }}",
+                // url: '/sdc/getCustomerCreditNoteData',
+                type: 'GET',
+                data: {
+                    from:        from,
+                    to:          to,
+                    m:           m,
+                    customer_id: customer_id,
+                    cr_no:       cr_no,
+                    si_dn_no:    si_dn_no
+                },
+                success: function (response) {
                     $('#data').html(response);
-
-
                 }
             });
-
         }
 
     </script>

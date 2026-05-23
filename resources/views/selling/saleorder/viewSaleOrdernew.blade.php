@@ -62,11 +62,11 @@ input.form-control.form-control2{margin:0!important;}
                                     <div class="row">
                                         <div class="col-lg-6 col-md-6 col-sm-6 col-xs-6">
                                             <div class="contr">
-                                                <h2 class="subHeadingLabelClass">AM Pakistan (Pvt) Ltd</h2>
-                                                <!-- <p>301-305, 3rd Floor, Kavish Crown Plaza
+                                                <h2 class="subHeadingLabelClass">Brands Unlimited (Pvt) Ltd</h2>
+                                                <p>301-305, 3rd Floor, Kavish Crown Plaza
                                                     Sharah-e-Faisal, karachi.</p>
                                                 <p>S.T.R.N #: 3277876156235</p>
-                                                <p>N.T.N #:5098058-8 </p> -->
+                                                <p>N.T.N #:5098058-8 </p>
                                                 <br>
                                                 <p style="margin-top:-13px;">Bill To:</p>
                                                 <br>
@@ -75,7 +75,8 @@ input.form-control.form-control2{margin:0!important;}
                                                     {{$buyer_detail->address}}<br>
                                                     {{ CommonHelper::get_all_country_by_id($buyer_detail->country)->name ?? '-'}}<br>
                                                     <!-- {{$buyer_detail->phone_1}}<br> -->
-                                                 
+                                                    N.T.N #:{{isset($buyer_detail->cnic_ntn) ? $buyer_detail->cnic_ntn : "-" }}<br>
+                                                    S.T.R.N #: {{isset($buyer_detail->strn) ? $buyer_detail->strn : "-"}}
                                                 </p>
                                               
                                             </div>
@@ -131,7 +132,7 @@ input.form-control.form-control2{margin:0!important;}
                                                             @endphp
                                                             <p>Warehouse: {{ $warehouse_name }}</p>
                                                             <p>Payment Terms: 30 Days</p>
-                                                            <p>Salesperson Mobile #</p>
+                                                            <p>Salesperson Mobile # {{ $salesman ? $salesman->phone_number : '' }}</p>
                                                         </div>
                                                     </div>
                                                     <div class="col-lg-3 col-md-3 col-sm-3 col-xs-3">
@@ -139,7 +140,7 @@ input.form-control.form-control2{margin:0!important;}
                                                             <p>SO #: {{$sale_order->so_no}}</p>
                                                             <p>GDN #:</p>
                                                             <p>Branch: {{$sale_order->branch}}</p>
-                                                            <p>Salesperson: {{$buyer_detail->SaleRep}}</p>
+                                                            <p>Salesperson: {{ $salesman ? $salesman->sub_department_name : ($sale_order->sales_person ?? $buyer_detail->SaleRep) }}</p>
                                                             <p><strong></strong></p>
                                                         </div>
                                                     </div>
@@ -234,7 +235,6 @@ input.form-control.form-control2{margin:0!important;}
                                                                 {{number_format($sale_order_item->amount)}}</td>
                                                         </tr>
                                                         @endforeach
-                                                        
                                                         <tr>
                                                             <th colspan="2" style="background: transparent; border-bottom: 1px solid #000 !important;  padding:0px 5px !important; margin:0 !important;font-size:13px!important;font-weight:400!important;">Sub Total</th>
                                                             <th style="background: transparent; border-bottom: 1px solid #000 !important;  padding:0px 5px !important; margin:0 !important;"></th>
@@ -298,7 +298,7 @@ input.form-control.form-control2{margin:0!important;}
                             <div class="sgnature2">
                                 <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12 text-center">
                                     <div class="row">
-                                        <!-- <div class="col-lg-4 col-md-4 col-sm4 col-xs-4">
+                                        <div class="col-lg-4 col-md-4 col-sm4 col-xs-4">
                                             <p><strong>Prepared By</strong> </p>
                                             <p><strong>{{$sale_order->username}}</strong> </p>
                                         </div>
@@ -309,7 +309,7 @@ input.form-control.form-control2{margin:0!important;}
                                         </div>
                                         <div class="col-lg-4 col-md-4 col-sm4 col-xs-4">
                                             <p><strong>Received By</strong> </p>
-                                        </div> -->
+                                        </div>
                                     </div>
                                     <br>
                                     <br>

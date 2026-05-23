@@ -48,7 +48,7 @@ use App\Helpers\ReuseableCode;
                                             @endforeach
                                         </select>
                                     </div>
-                                    <div class="col-lg-3 col-md-3 col-sm-3 col-xs-12">
+                                    <div class="col-lg-2 col-md-2 col-sm-2 col-xs-12">
                                         <label>Issued Status</label>
                                         <select name="amount_issued_status" id="amount_issued_status" class="form-control">
                                             <option value="">All</option>
@@ -56,9 +56,18 @@ use App\Helpers\ReuseableCode;
                                             <option value="0">Not Issued</option>
                                         </select>
                                     </div>
+                                    <div class="col-lg-2 col-md-2 col-sm-2 col-xs-12">
+                                        <label>Payment Mode</label>
+                                        <select name="pay_mode" id="pay_mode" class="form-control">
+                                            <option value="">All</option>
+                                            <option value="1">Cheque</option>
+                                            <option value="2">Cash</option>
+                                            <option value="3">Online Transfer</option>
+                                        </select>
+                                    </div>
                                    
-                                    <div class="col-lg-3 col-md-3 col-sm-3 col-xs-12 text-right">
-                                        <input type="button" value="View Range Wise Data Filter" class="btn btn-primary" onclick="filter_advance_list();" style="margin-top: 33px;" />
+                                    <div class="col-lg-2 col-md-2 col-sm-2 col-xs-12 text-right">
+                                        <input type="button" value="View range wise Filter" class="btn btn-primary" onclick="filter_advance_list();" style="margin-top: 33px;" />
                                     </div>
                                 </div>
 
@@ -79,13 +88,13 @@ use App\Helpers\ReuseableCode;
                                                                     <th class="text-center">Payment No</th>
                                                                     <th class="text-center">Cheque No</th>
                                                                     <th class="text-center">Customer Name</th>
-                                                                    <th class="text-center">Account Recieved Name</th>
-                                                                    <th class="text-center">Amount </th>
-                                                                    <th class="text-center">Advance Date </th>
-                                                                    <th class="text-center">Amount Recieved No</th>
-                                                                    <th class="text-center">Amount Issued No</th>
+                                                                    <th class="text-center">Account Name</th>
+                                                                    <th class="text-center">Amount</th>
+                                                                    <th class="text-center">Remaining Amount</th>
+                                                                    <th class="text-center">Advance Date</th>
+                                                                    <th class="text-center">Ref No</th>
                                                                     <th class="text-center">Description</th>
-                                                                    <th class="text-center">Issued Status</th>
+                                                                    <th class="text-center" style="width: 100px;">Status</th>
                                                                      <th class="text-center">Action</th> 
                                                                     </thead>
                                                                     <tbody id="data">
@@ -163,12 +172,18 @@ use App\Helpers\ReuseableCode;
         {
             $('#data').html('<tr><td colspan="14"><div class="row"><div class="col-lg-12 col-md-12 col-sm-12 col-xs-12"><div class="loader"></div></div></div></td><tr>');
 
-            let = customer_id = $('#customer_id').val();
-            let = amount_issued_status = $('#amount_issued_status').val();
+            let customer_id = $('#customer_id').val();
+            let amount_issued_status = $('#amount_issued_status').val();
+            let pay_mode = $('#pay_mode').val();
+            
             $.ajax({
                 url: '<?php echo url('/')?>/finance/viewadvancepayment',
                 type: 'Get',
-                data: {customer_id:customer_id,amount_issued_status:amount_issued_status},
+                data: {
+                    customer_id: customer_id,
+                    amount_issued_status: amount_issued_status,
+                    pay_mode: pay_mode
+                },
 
                 success: function (response)
                 {

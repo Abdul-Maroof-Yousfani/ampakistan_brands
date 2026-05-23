@@ -17,8 +17,11 @@ table.dataTable thead .sorting:after,table.dataTable thead .sorting_asc:after,ta
             <tr>
                  <th style="width:20px !important; text-align:center;" class="text-center sorting_asc">So No</th>
                 <th  style="width: 80px !important;" class="text-center sorting_asc">Order No</th>
+                <th  style="width: 90px !important;" class="text-center sorting_asc">Invoice No</th>
                 <th style="width: 300px !important;"  class="text-center ">Customer Name</th>
-                <th style="width: 100px !important;" class="text-center sorting_asc">Order Date</th>
+                <th style="width: 150px !important;"  class="text-center ">Sales Person</th>
+                <th style="width: 100px !important;" class="text-center sorting_asc">Creation Date</th>
+                <th style="width: 100px !important;" class="text-center sorting_asc">SO Date</th>
                 <th  style="width: 82px !important;" class="text-center ">Amount</th>
                 <th   style="width: 92px !important;" class="text-center ">Status</th>
                 <th style=" width:130px !important;" class="text-center ">Note</th>
@@ -34,7 +37,9 @@ table.dataTable thead .sorting:after,table.dataTable thead .sorting_asc:after,ta
                      <tr>
                          <td style="width:50px !important; text-align:center;" class="text-center">{{ $counter++ }}</td>
                          <td class="text-center">{{ $sale_order->so_no }}</td>
+                         <td class="text-center">{{ $sale_order->invoice_no ?? '-' }}</td>
                          <td><strong>{{ $sale_order->name }}</strong></td>
+                         <td>{{ $sale_order->sales_person }}</td>
                          <!-- <td class="text-center">{{ \Carbon\Carbon::parse($sale_order->so_date)->format('d-M-Y') }}
                          </td> -->
                         <!-- <td class="text-center">
@@ -48,6 +53,9 @@ table.dataTable thead .sorting:after,table.dataTable thead .sorting_asc:after,ta
                             {{ \Carbon\Carbon::parse($sale_order->timestamp)->format('d-M-Y') }}<br>
                             {{ \Carbon\Carbon::parse($sale_order->timestamp)->format('h:i:s A') }}
     
+                        </td>
+                        <td>
+                            {{ \Carbon\Carbon::parse($sale_order->so_date)->format("d-M-Y") }}
                         </td>
     
     
@@ -85,19 +93,20 @@ table.dataTable thead .sorting:after,table.dataTable thead .sorting_asc:after,ta
                                                     <a class="btn btn-xs btn-success" onclick="showDetailModelOneParamerter('selling/viewSaleOrderPrint/{{ $sale_order->id }}',{{ $sale_order->id }},'View Sale Order ')" target="_blank">
                                                         <i class="fa fa-eye" aria-hidden="true"></i> View
                                                     </a>
-                                                    {{-- <a class="btn btn-sm btn-infoo" href="{{route('saleOrderSectionA', $sale_order->id)}}" target="_blank">
-                                                    <i class="fa fa-eye" aria-hidden="true"></i> Section A / B
-                                                </a> --}}
+
+                                                    @if($sale_order->status != 1)
                                                     <a href="{{ route('editSaleOrder', $sale_order->id) }}" class="btn btn-xs btn-warning "
                                                         target="_blank"><i class="fa fa-pencil" aria-hidden="true"></i> Edit</a>
                         
-                                                    <!-- <a href="{{ route('deleteSaleOrder', $sale_order->id) }}" class="btn btn-xs btn-danger"><i class="fa fa-trash-o"
-                                                            aria-hidden="true"></i> Delete</a> -->
-                        
+                                                    <a href="{{ route('closeSaleOrder', $sale_order->id) }}" class="btn btn-xs btn-primary" onclick="return confirm('Are you sure you want to close this sale order?')">
+                                                        <i class="fa fa-close" aria-hidden="true"></i> Close
+                                                    </a>
+
                                                     <a href="{{ route('deleteSaleOrder', $sale_order->id) }}" class="btn btn-xs btn-danger"
                                                         onclick="return confirm('Are you sure you want to delete this sale order?')">
                                                         <i class="fa fa-trash-o" aria-hidden="true"></i> Delete
                                                     </a>
+                                                    @endif
     
                                             </li>
                                         </ul>

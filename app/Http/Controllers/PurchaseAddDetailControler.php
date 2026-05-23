@@ -31,6 +31,7 @@ use App\Models\PurchaseVoucher;
 use App\Models\PurchaseVoucherData;
 use App\Models\PurchaseVoucherThroughGrn;
 use App\Models\PurchaseVoucherThroughGrnData;
+use App\Models\Region;
 use App\Models\SalesTaxDepartmentAllocation;
 use App\Models\Stock;
 use App\Models\Subitem;
@@ -405,6 +406,7 @@ class PurchaseAddDetailControler extends Controller
             $vendor_code =   PurchaseHelper::generateVendorCode();
             $name =   Input::get('name');
             $company_name = Input::get('company_name');
+            $with_holding_tax = Input::get('with_holding_tax');
             $country = Input::get('country');
             $state = Input::get('state');
             $city = Input::get('city');
@@ -510,6 +512,7 @@ class PurchaseAddDetailControler extends Controller
             $data2['vendor_code'] = strip_tags($vendor_code);
             $data2['name'] = strip_tags($name);
             $data2['company_name'] = strip_tags($company_name);
+            $data2['with_holding_tax'] = strip_tags($with_holding_tax);
             $data2['country'] = strip_tags($country);
             $data2['province'] = strip_tags($state);
             $data2['city'] = strip_tags($city);
@@ -624,13 +627,12 @@ class PurchaseAddDetailControler extends Controller
         $m = $_GET['m'];
         $RegionCode = Input::get('region_code');
         $RegionName = Input::get('region_name');
-        $ClusterId = Input::get('cluster_id');
-
+      
 
 
         $data2['region_code'] = strip_tags($RegionCode);
         $data2['region_name'] = strip_tags($RegionName);
-       
+      
 
         $data2['status'] = 1;
 
@@ -863,6 +865,11 @@ class PurchaseAddDetailControler extends Controller
 
             }
 
+            $type = "Purchase Request";
+            \App\Helpers\CommonHelper::createNotification(
+                $type . " has been made with " . $demand_no . " is created by " . auth()->user()->name, 
+                $type . ""
+            );
 
             CommonHelper::reconnectMasterDatabase();
             CommonHelper::inventory_activity($demand_no,$demand_date,0,1,'Insert');
@@ -870,11 +877,7 @@ class PurchaseAddDetailControler extends Controller
 
            $subject = 'Purchase Request '.$demand_no;
            NotificationHelper::send_email('Purchase Request','Create',$sub_department_id,$demand_no,$subject,$v_type);
-            $type = "Purchase Request";
-            \App\Helpers\CommonHelper::createNotification(
-                $type . " has been made with " . $demand_no . " is created by " . auth()->user()->name, 
-                $type . ""
-            );
+
             DB::Connection('mysql2')->commit();
         }
         catch(\Exception $e)
@@ -1240,18 +1243,26 @@ class PurchaseAddDetailControler extends Controller
         $UpdateId = Input::get('edit_id');
         $RegionCode = Input::get('region_code');
         $RegionName = Input::get('region_name');
-        $ClusterId = Input::get('cluster_id');
         $UpdateData['region_code'] = $RegionCode;
         $UpdateData['region_name'] = $RegionName;
-        // $UpdateData['cluster_id'] = $ClusterId;
-
+       
         DB::Connection('mysql2')->table('region')->where('id',$UpdateId)->update($UpdateData);
         return Redirect::to('purchase/regionList?pageType=' . Input::get('pageType') . '&&parentCode=' . Input::get('parentCode') . '&&m=' . $CompanyId . '#SFR');
     }
 
+    public function deleteRegion(int $id) {
+        $region_id = $id;
+
+        $region = Region::find($region_id);
+
+        $region->delete();
+
+        return back()->with("message", "Region has been deleted!");
+    }
+
     public function addGoodsReceiptNoteDetail(Request $request)
     {
-        
+ 
         DB::Connection('mysql2')->beginTransaction();
         try {
             $m = $_GET['m'];
@@ -1386,9 +1397,8 @@ class PurchaseAddDetailControler extends Controller
             $type = "Goods Receipt Note";
             \App\Helpers\CommonHelper::createNotification($type . " with " . $grn_no . " is created by " . auth()->user()->name, $type . "");
      
-
-
             $Loop = Input::get('account_id');
+
 
             if($Loop !="")
             {
@@ -1511,12 +1521,14 @@ class PurchaseAddDetailControler extends Controller
          //   endforeach;
 
         }
-        catch(\Exception $e)
-        {
-            DB::Connection('mysql2')->rollback();
-            echo "EROOR"; //die();
-            dd($e->getMessage());
-        }
+      catch(\Exception $e)
+{
+    DB::Connection('mysql2')->rollback();
+    echo "ERROR: " . $e->getMessage();
+    echo "<br>Line: " . $e->getLine();
+    echo "<br>File: " . $e->getFile();
+    die();
+}
 
 
        Session::flash('dataInsert', 'Goods Receipt Note Successfully Saved.');
@@ -1801,14 +1813,6 @@ class PurchaseAddDetailControler extends Controller
         return Redirect::to('sales/surveylist?pageType=' . Input::get('pageType') . '&&parentCode=' . Input::get('parentCode') . '&&m=' . Input::get('m') . '#SFR');
     }
 
-    public function deleteRegion(int $id) {
-        $region_id = $id;
-
-        $region = DB::connection("mysql2")->table("region")->where("id", $region_id)->delete($region_id);
-
-
-        return back()->with("message", "Region has been deleted!");
-    }
     function updateSurveyDetail(Request $request)
     {
         $EditId = $request->EditId;
@@ -2489,11 +2493,11 @@ class PurchaseAddDetailControler extends Controller
         $territory_id = $request->territory_id;
         $warehouse = new Warehouse();
         $warehouse = $warehouse->SetConnection('mysql2');
-        $warehouse_count = $warehouse->where('status', 1)->where('name', $name)->count();
-        if ($warehouse_count > 0):
-            Session::flash('dataDelete', $name . ' ' . 'Already Exists.');
-            return Redirect::to('purchase/createWarehouseForm?pageType=add&&parentCode=82&&m=1#SFR');
-        else:
+        // $warehouse_count = $warehouse->where('status', 1)->where('name', $name)->count();
+        // if ($warehouse_count > 0):
+        //     Session::flash('dataDelete', $name . ' ' . 'Already Exists.');
+        //     return Redirect::to('purchase/createWarehouseForm?pageType=add&&parentCode=82&&m=1#SFR');
+        // else:
 
             $warehouse = DB::connection("mysql2")->table("warehouse")->where("id", $id)->update([
                 "name" => $name,
@@ -2506,7 +2510,7 @@ class PurchaseAddDetailControler extends Controller
           
             Session::flash('dataInsert', 'successfully saved.');
             return Redirect::to('purchase/viewWarehouseList?pageType=add&&parentCode=82&&m=1#SFR');
-        endif;
+        // endif;
 
     }
 
@@ -3099,6 +3103,8 @@ class PurchaseAddDetailControler extends Controller
 
     public function addPurchaseReturnDetail(Request $request)
     {
+
+        // dd($request->all());
         DB::Connection('mysql2')->beginTransaction();
         try {
         $str = DB::Connection('mysql2')->selectOne("select max(convert(substr(`pr_no`,3,length(substr(`pr_no`,3))-4),signed integer)) reg from `purchase_return` where substr(`pr_no`,-4,2) = " . date('m') . " and substr(`pr_no`,-2,2) = " . date('y') . "")->reg;
@@ -3110,6 +3116,7 @@ class PurchaseAddDetailControler extends Controller
         $GrnNo = $request->GrnNo;
         $GrnDate = $request->GrnDate;
         $Remarks = $request->Remarks;
+        $summary_withholding_tax = $request->summary_withholding_tax;
         $PurchaseReturnInsert['grn_id'] = $GrnId;
         $PurchaseReturnInsert['pr_no'] = $PurchaseReturnNo;
         $PurchaseReturnInsert['pr_date'] = $PurchaseReturnDate;
@@ -3120,6 +3127,11 @@ class PurchaseAddDetailControler extends Controller
         $PurchaseReturnInsert['created_date'] = date('Y-m-d');
         $PurchaseReturnInsert['status'] = 1;
         $PurchaseReturnInsert['username'] = Auth::user()->name;
+        $PurchaseReturnInsert['summary_withholding_tax'] = $summary_withholding_tax;
+
+
+         
+
 
             $count_invoice=   DB::Connection('mysql2')->table('new_purchase_voucher')->where('grn_id',$GrnId)->count();
             if ($count_invoice>0):
@@ -3134,7 +3146,7 @@ class PurchaseAddDetailControler extends Controller
             foreach($data as $key=>$row):
 
 
-                $amount=$request->input('Rate')[$row] *$request->input('ReturnQty')[$row];
+                $amount=$request->input('Rate')[$row] * $request->input('ReturnQty')[$row];
                 $dicount_percent=$request->input('discount_percent')[$row];
                 $dicount_amount=($amount/100)*$dicount_percent;
             $total=0;
@@ -3146,7 +3158,7 @@ class PurchaseAddDetailControler extends Controller
                     'sub_item_id'=>$request->input('SubItemId')[$row],
                     'description'=>$request->input('item_desc')[$row],
                     'warehouse_id'=>$request->input('WarehouseId')[$row],
-                    'batch_code'=>$request->input('BatchCode')[$row],
+                    // 'batch_code'=>$request->input('BatchCode')[$row],
                     'recived_qty'=>$request->input('PurchaseRecQty')[$row],
                     'rate'=>$request->input('Rate')[$row],
                     'amount'=>$amount,
@@ -3196,6 +3208,55 @@ class PurchaseAddDetailControler extends Controller
 
 
                 DB::Connection('mysql2')->table('stock')->insert($stock);
+
+
+                $data4=array
+                (
+                    'master_id'=>$master_data_id,
+                    'acc_id'=>1101,
+                    'acc_code'=>'1-2-1',
+                    // 'acc_id'=>$row1->acc_id,
+                    // 'acc_code'=>FinanceHelper::getAccountCodeByAccId($row1->acc_id),
+                    'cost_center'=>$request->input('SubItemId')[$row],
+                    'particulars'=>$PurchaseReturnNo,
+                    'opening_bal'=>0,
+                    'debit_credit'=>0,
+                    'amount'=>$amount,
+                    'voucher_no'=>$PurchaseReturnNo,
+                    'voucher_type'=>5,
+                    'v_date'=>$request->PurchaseReturnDate,
+                    'date'=>date('Y-m-d'),
+                    'action'=>'insert',
+                    'username'=>Auth::user()->name,
+                    'status'=>1
+                );
+                DB::Connection('mysql2')->table('transactions')->insertGetId($data4);
+
+
+                 $data5=array
+                (
+                    'master_id'=>$master_data_id,
+                    'acc_id'=>1708,
+                    'acc_code'=>'2-36-1',
+                    // 'acc_id'=>$row1->acc_id,
+                    // 'acc_code'=>FinanceHelper::getAccountCodeByAccId($row1->acc_id),
+                    'cost_center'=>$request->input('SubItemId')[$row],
+                    'particulars'=>$PurchaseReturnNo,
+                    'opening_bal'=>0,
+                    'debit_credit'=>1,
+                    'amount'=>$amount,
+                    'voucher_no'=>$PurchaseReturnNo,
+                    'voucher_type'=>5,
+                    'v_date'=>$request->PurchaseReturnDate,
+                    'date'=>date('Y-m-d'),
+                    'action'=>'insert',
+                    'username'=>Auth::user()->name,
+                    'status'=>1
+                );
+                DB::Connection('mysql2')->table('transactions')->insertGetId($data5);
+
+
+
                 //endif;
 
             endforeach;
@@ -3226,8 +3287,9 @@ class PurchaseAddDetailControler extends Controller
 
             $count_invoice=   DB::Connection('mysql2')->table('new_purchase_voucher')->where('grn_id',$GrnId)->count();
             if ($count_invoice>0):
+                $dataa= DB::Connection('mysql2')->select('select sum(a.net_amount)net_amount,a.amount,b.tax_amount,b.category_id ,d.acc_id
 
-                $dataa= DB::Connection('mysql2')->select('select sum(a.net_amount)net_amount,b.category_id ,d.acc_id
+                
                 from  purchase_return_data a
                 inner join
                 new_purchase_voucher_data b
@@ -3244,63 +3306,216 @@ class PurchaseAddDetailControler extends Controller
                 where a.master_id="'.$master_id.'"
                 group by d.acc_id');
                 $debit_amount=0;
+
+               
+
+
+$total_amount = 0;
+foreach($dataa as $cr_note) {
+    $total_amount += $cr_note->amount + $cr_note->tax_amount;
+   
+}
+
+
+
+
+                
+              $dataa1 = DB::connection('mysql2')->selectOne('
+    select gst.percent
+    from purchase_return_data a
+    inner join new_purchase_voucher_data b
+        on a.grn_data_id = b.grn_data_id
+    inner join new_purchase_voucher npv
+        on npv.id = b.master_id
+    inner join gst
+        on gst.id = npv.sales_tax_acc_id
+    where a.master_id = ?
+    limit 1
+', [$master_id]);
+
+
+$gst_percent = $dataa1->percent ?? 0;
+               
+$sales_tax_amount = ($total_amount/100)*$gst_percent;
+
+
+
+        //          $po_data= CommonHelper::get_goodreciptnotedata($GrnId,1);
+
+        //    $sales_tax_amount=$po_data->sales_tax_amount;
+
+
+
                 foreach($dataa as $cr_note):
 
+               
+                //     $transaction=new Transactions();
+                // $transaction=$transaction->SetConnection('mysql2');
+                // $transaction->voucher_no=$PurchaseReturnNo;
+                // $transaction->v_date=$PurchaseReturnDate;
+                // $transaction->acc_id=$cr_note->acc_id;
+                // $transaction->acc_code=FinanceHelper::getAccountCodeByAccId($cr_note->acc_id);
+                // $transaction->particulars=$Remarks;
+                // $transaction->opening_bal=0;
+                // $transaction->debit_credit=0;
+                // $transaction->amount=$cr_note->net_amount;
+                // $transaction->username=Auth::user()->name;
+                // $transaction->status=1;
+                // $transaction->voucher_type=5;
+                // $transaction->save();
+
+                //inventroy
                 $transaction=new Transactions();
                 $transaction=$transaction->SetConnection('mysql2');
                 $transaction->voucher_no=$PurchaseReturnNo;
                 $transaction->v_date=$PurchaseReturnDate;
-                $transaction->acc_id=$cr_note->acc_id;
-                $transaction->acc_code=FinanceHelper::getAccountCodeByAccId($cr_note->acc_id);
+                $transaction->acc_id = config('accounts.inventory.main.id');
+                $transaction->acc_code = config('accounts.inventory.main.code');
                 $transaction->particulars=$Remarks;
                 $transaction->opening_bal=0;
                 $transaction->debit_credit=0;
                 $transaction->amount=$cr_note->net_amount;
                 $transaction->username=Auth::user()->name;
                 $transaction->status=1;
-                $transaction->voucher_type=5;
+                $transaction->voucher_type=12;
                 $transaction->save();
+
                 $debit_amount+=$cr_note->net_amount;
-            endforeach;
-
-           $po_data= CommonHelper::get_goodreciptnotedata($GrnId,1);
-
-           $sales_tax_amount=$po_data->sales_tax_amount;
-
-
-            if ($sales_tax_amount>0):
-                $sales_tax_amount=($total/100)*17;
+                //grn clearing db
                 $transaction=new Transactions();
                 $transaction=$transaction->SetConnection('mysql2');
                 $transaction->voucher_no=$PurchaseReturnNo;
                 $transaction->v_date=$PurchaseReturnDate;
-                $transaction->acc_id=ReuseableCode::invoice_tax_acc_id($po_data->sales_tax);
-                $transaction->acc_code=ReuseableCode::invoice_tax_acc_id($po_data->sales_tax);
+                $transaction->acc_id = config('accounts.purchase.grn_clearing.id');
+                $transaction->acc_code = config('accounts.purchase.grn_clearing.code');
+                $transaction->particulars=$Remarks;
+                $transaction->opening_bal=0;
+                $transaction->debit_credit=1;
+                $transaction->amount=$cr_note->net_amount;
+                $transaction->username=Auth::user()->name;
+                $transaction->status=1;
+                $transaction->voucher_type=12;
+                $transaction->save();
+
+                $debit_amount+=$cr_note->net_amount;
+
+                //grn clearing cr
+
+                 $transaction=new Transactions();
+                $transaction=$transaction->SetConnection('mysql2');
+                $transaction->voucher_no=$PurchaseReturnNo;
+                $transaction->v_date=$PurchaseReturnDate;
+                $transaction->acc_id = config('accounts.purchase.grn_clearing.id');
+                $transaction->acc_code = config('accounts.purchase.grn_clearing.code');
                 $transaction->particulars=$Remarks;
                 $transaction->opening_bal=0;
                 $transaction->debit_credit=0;
+                $transaction->amount=$cr_note->net_amount;
+                $transaction->username=Auth::user()->name;
+                $transaction->status=1;
+                $transaction->voucher_type=12;
+                $transaction->save();
+
+                $debit_amount+=$cr_note->net_amount;
+
+                //input gst
+
+                 $transaction=new Transactions();
+                $transaction=$transaction->SetConnection('mysql2');
+                $transaction->voucher_no=$PurchaseReturnNo;
+                $transaction->v_date=$PurchaseReturnDate;
+                $transaction->acc_id = config('accounts.purchase.input_gst.id');
+                $transaction->acc_code = config('accounts.purchase.input_gst.code');
+                $transaction->particulars=$Remarks;
+                $transaction->opening_bal=0;
+                $transaction->debit_credit=0;
+                $transaction->amount=$cr_note->tax_amount;
+                $transaction->username=Auth::user()->name;
+                $transaction->status=1;
+                $transaction->voucher_type=12;
+                $transaction->save();
+
+                $debit_amount+=$cr_note->net_amount;
+
+
+                //supllier acc
+
+                 $transaction=new Transactions();
+                $transaction=$transaction->SetConnection('mysql2');
+                $transaction->voucher_no=$PurchaseReturnNo;
+                $transaction->v_date=$PurchaseReturnDate;
+                 $transaction->acc_id=$supp_id;
+                 $transaction->acc_code=FinanceHelper::getAccountCodeByAccId($supp_id);
+                $transaction->particulars=$Remarks;
+                $transaction->opening_bal=0;
+                $transaction->debit_credit=1;
+                $transaction->amount=$cr_note->net_amount - $sales_tax_amount ;
+                $transaction->username=Auth::user()->name;
+                $transaction->status=1;
+                $transaction->voucher_type=12;
+                $transaction->save();
+
+                $debit_amount+=$cr_note->net_amount;
+
+                //wht 
+                //  $transaction=new Transactions();
+                // $transaction=$transaction->SetConnection('mysql2');
+                // $transaction->voucher_no=$PurchaseReturnNo;
+                // $transaction->v_date=$PurchaseReturnDate;
+                // $transaction->acc_id=1710;
+                // $transaction->acc_code='2-36-2';
+                // $transaction->particulars=$Remarks;
+                // $transaction->opening_bal=0;
+                // $transaction->debit_credit=0;
+                // $transaction->amount=$cr_note->net_amount;
+                // $transaction->username=Auth::user()->name;
+                // $transaction->status=1;
+                // $transaction->voucher_type=5;
+                // $transaction->save();
+
+                // $debit_amount+=$cr_note->net_amount;
+
+
+            endforeach;
+
+         
+
+
+            if ($sales_tax_amount>0):
+                
+                $transaction=new Transactions();
+                $transaction=$transaction->SetConnection('mysql2');
+                $transaction->voucher_no=$PurchaseReturnNo;
+                $transaction->v_date=$PurchaseReturnDate;
+                // $transaction->acc_id=ReuseableCode::invoice_tax_acc_id($po_data->sales_tax);
+                // $transaction->acc_code=ReuseableCode::invoice_tax_acc_id($po_data->sales_tax);
+                 $transaction->acc_id = config('accounts.purchase.wht.id');
+                 $transaction->acc_code = config('accounts.purchase.wht.code');
+                $transaction->particulars=$Remarks;
+                $transaction->opening_bal=0;
+                $transaction->debit_credit=1;
                 $transaction->amount=$sales_tax_amount;
                 $transaction->username=Auth::user()->name;;
                 $transaction->status=1;
-                $transaction->voucher_type=5;
+                $transaction->voucher_type=12;
                 $transaction->save();
                 $debit_amount+=$sales_tax_amount;
                 endif;
 
-                $transaction=new Transactions();
-                $transaction=$transaction->SetConnection('mysql2');
-                $transaction->voucher_no=$PurchaseReturnNo;
-                $transaction->v_date=$PurchaseReturnDate;
-                $transaction->acc_id=$supp_id;
-                $transaction->acc_code=FinanceHelper::getAccountCodeByAccId($supp_id);
-                $transaction->particulars=$Remarks;
-                $transaction->opening_bal=0;
-                $transaction->debit_credit=1;
-                $transaction->amount=$debit_amount;
-                $transaction->username=Auth::user()->name;;
-                $transaction->status=1;
-                $transaction->voucher_type=5;
-                $transaction->save();
+                // $transaction=new Transactions();
+                // $transaction=$transaction->SetConnection('mysql2');
+                // $transaction->voucher_no=$PurchaseReturnNo;
+                // $transaction->v_date=$PurchaseReturnDate;
+                // $transaction->acc_id=$supp_id;
+                // $transaction->acc_code=FinanceHelper::getAccountCodeByAccId($supp_id);
+                // $transaction->particulars=$Remarks;
+                // $transaction->opening_bal=0;
+                // $transaction->debit_credit=1;
+                // $transaction->amount=$debit_amount;
+                // $transaction->username=Auth::user()->name;;
+                // $transaction->status=1;
+                // $transaction->voucher_type=5;
+                // $transaction->save();
 
                 endif;
 
@@ -3367,7 +3582,7 @@ class PurchaseAddDetailControler extends Controller
             foreach($data as $key=>$row):
 
 
-                $amount=$request->input('Rate')[$row] *$request->input('ReturnQty')[$row];
+                $amount=$request->input('Rate')[$row]*$request->input('ReturnQty')[$row];
                 $dicount_percent=$request->input('discount_percent')[$row];
                 $dicount_amount=($amount/100)*$dicount_percent;
 
@@ -3772,10 +3987,12 @@ class PurchaseAddDetailControler extends Controller
             DB::connection('mysql2')->commit();
 
             Session::flash('dataInsert', 'Stock Transfer Successfully Saved.');
+
             $type = "Stock Transfer Form";
 
             \App\Helpers\CommonHelper::createNotification($type . " with " . $uniq . " is created by " . auth()->user()->name, $type . "");
         
+
             return Redirect::to('store/stock_transfer_list?pageType=view&&parentCode=95&&m=' . $request->m . '#murtazaCorporation');
         } catch (\Exception $e) {
             DB::connection('mysql2')->rollBack();
@@ -3899,7 +4116,6 @@ class PurchaseAddDetailControler extends Controller
             $type = "Stock Transfer";
             \App\Helpers\CommonHelper::createNotification($type . " with " . $uniq . " is edited by " . auth()->user()->name, $type . "");
         
-
             DB::Connection('mysql2')->commit();
         }
         catch(\Exception $e)
@@ -3989,6 +4205,8 @@ class PurchaseAddDetailControler extends Controller
                 $NewPurchaseVoucherData->qty            = $request->input('actual_qty')[$key];
                 $NewPurchaseVoucherData->rate           = $request->input('rate')[$key];
                 $NewPurchaseVoucherData->amount         = $request->input('amount')[$key];
+                $NewPurchaseVoucherData->tax_rate       = $request->input('tax_per')[$key] ?? 0;
+                $NewPurchaseVoucherData->tax_amount     = $request->input('tax_amount')[$key] ?? 0;
                 $NewPurchaseVoucherData->discount_amount         = $request->input('discount_amount')[$key];
                 $NewPurchaseVoucherData->net_amount         = $request->input('after_dis_amount')[$key];
                 $TotAmount += $request->input('after_dis_amount')[$key];
@@ -4097,6 +4315,8 @@ class PurchaseAddDetailControler extends Controller
                 $NewPurchaseVoucherData->qty            = $request->input('actual_qty')[$key];
                 $NewPurchaseVoucherData->rate           = $request->input('rate')[$key];
                 $NewPurchaseVoucherData->amount         = $request->input('amount')[$key];
+                $NewPurchaseVoucherData->tax_rate       = $request->input('tax_per')[$key] ?? 0;
+                $NewPurchaseVoucherData->tax_amount     = $request->input('tax_amount')[$key] ?? 0;
                 $NewPurchaseVoucherData->discount_amount         = $request->input('discount_amount')[$key];
                 $NewPurchaseVoucherData->net_amount         = $request->input('after_dis_amount')[$key];
                 $NewPurchaseVoucherData->sub_department_id         = $sub_department_id;
@@ -4107,6 +4327,25 @@ class PurchaseAddDetailControler extends Controller
                 $NewPurchaseVoucherData->date           = date('Y-m-d');
                 $NewPurchaseVoucherData->save();
             endforeach;
+
+            $Loop = $request->input('account_id');
+            if($Loop !="")
+            {
+                $Counta = 0;
+                foreach($Loop as $LoopFil)
+                {
+                    $ExpData['pv_no'] = $pv_no;
+                    $ExpData['master_id'] = $master_id;
+                    $ExpData['category_id'] = $request->input('account_id')[$Counta];
+                    $ExpData['net_amount'] = $request->input('expense_amount')[$Counta];
+                    $ExpData['additional_exp'] = 1;
+                    $TotAmount += $request->input('expense_amount')[$Counta];
+                    $ExpData['username'] = Auth::user()->name;
+                    $ExpData['date'] = date('Y-m-d');
+                    $Counta++;
+                    DB::Connection('mysql2')->table('new_purchase_voucher_data')->insert($ExpData);
+                }
+            }
             // NotificationHelper::send_email('Purchase Invoice', 'Create', $dept_id, $voucher_no, $subject, $p_type);
             // ReuseableCode::approvedPVDetail($master_id);
             // CommonHelper::inventory_activity($pv_no, $purchase_date, $TotAmount, 5, 'Insert');
@@ -4118,5 +4357,159 @@ class PurchaseAddDetailControler extends Controller
         }
 
         return Redirect::to('purchase/viewPurchaseVoucherListThroughWithoutGrn?pageType=viewlist&&parentCode=82&&m=1#SFR');
+    }
+
+    public function addStockInDetail(Request $request)
+    {
+        DB::Connection('mysql2')->beginTransaction();
+        try {
+            $m = $request->m;
+            CommonHelper::companyDatabaseConnection($m);
+            $uniq = \App\Helpers\PurchaseHelper::get_unique_no_stock_in(date('y'), date('m'));
+            $master = [
+                'si_no' => $uniq,
+                'si_date' => $request->si_date,
+                'description' => $request->description,
+                'status' => 1,
+                'date' => date('Y-m-d'),
+                'username' => Auth::user()->name,
+                'user_id' => Auth::user()->id,
+            ];
+            $master_id = DB::Connection('mysql2')->table('stock_in')->insertGetId($master);
+
+            $TotAmount = 0;
+            foreach ($request->item_id as $key => $row) {
+                $sod_id = $request->stock_out_data_id[$key] ?? 0;
+                $qty_received = $request->qty[$key];
+                $warehouse_to = $request->main_warehouse_to; // default
+
+                if ($sod_id) {
+                    $sod_record = DB::connection('mysql2')->table('stock_out_data')->where('id', $sod_id)->first();
+                    if ($sod_record) {
+                        $new_total_received = $sod_record->received_qty + $qty_received;
+                        $si_status = ($new_total_received >= $sod_record->qty) ? 1 : 0;
+                        
+                        DB::connection('mysql2')->table('stock_out_data')
+                            ->where('id', $sod_id)
+                            ->update([
+                                'received_qty' => $new_total_received,
+                                'si_status' => $si_status
+                            ]);
+                        
+                        $warehouse_to = $request->warehouse_to[$key] ?? $sod_record->warehouse_to;
+                    }
+                }
+
+                $data2 = [
+                    'master_id' => $master_id,
+                    'stock_out_data_id' => $sod_id,
+                    'si_no' => $uniq,
+                    'warehouse_from' => $request->warehouse_from[$key] ?? 0,
+                    'stock_out_no' => $request->stock_out_no[$key] ?? "",
+                    'item_id' => $row,
+                    'warehouse_to' => $warehouse_to,
+                    'batch_code' => $request->batch_code[$key] ?? "",
+                    'qty' => $qty_received,
+                    'rate' => $request->rate[$key] ?? 0,
+                    'amount' => $request->amount[$key] ?? 0,
+                    'status' => 1,
+                    'desc' => $request->des ? $request->des[$key] : "",
+                ];
+                $master_data_id = DB::connection('mysql2')->table('stock_in_data')->insertGetId($data2);
+
+                $stock = [
+                    'main_id' => $master_id,
+                    'master_id' => $master_data_id,
+                    'voucher_no' => $uniq,
+                    'voucher_date' => $request->si_date,
+                    'voucher_type' => 1, // Stock In / Adjustment Add
+                    'sub_item_id' => $row,
+                    'qty' => $qty_received,
+                    'rate' => $request->rate[$key] ?? 0,
+                    'amount' => $request->amount[$key] ?? 0,
+                    'warehouse_id' => $warehouse_to,
+                    'batch_code' => $request->batch_code[$key] ?? "",
+                    'status' => 1,
+                    'username' => Auth::user()->name,
+                    'created_date' => date('Y-m-d'),
+                ];
+                DB::connection('mysql2')->table('stock')->insert($stock);
+                $TotAmount += ($request->amount[$key] ?? 0);
+            }
+
+            DB::Connection('mysql2')->commit();
+            Session::flash('dataInsert', 'Stock In Successfully Saved.');
+            return Redirect::to('store/stock_in_form?pageType=view&&parentCode=95&&m=' . $m);
+
+        } catch (\Exception $e) {
+            DB::Connection('mysql2')->rollBack();
+            dd($e->getMessage());
+        }
+    }
+
+    public function addStockOutDetail(Request $request)
+    {
+        DB::Connection('mysql2')->beginTransaction();
+        try {
+            $m = $request->m;
+            CommonHelper::companyDatabaseConnection($m);
+            $uniq = \App\Helpers\PurchaseHelper::get_unique_no_stock_out(date('y'), date('m'));
+            $master = [
+                'so_no' => $uniq,
+                'so_date' => $request->so_date,
+                'description' => $request->description,
+                'status' => 1,
+                'date' => date('Y-m-d'),
+                'username' => Auth::user()->name,
+                'user_id' => Auth::user()->id,
+            ];
+            $master_id = DB::Connection('mysql2')->table('stock_out')->insertGetId($master);
+
+            $TotAmount = 0;
+            foreach ($request->item_id as $key => $row) {
+                $data2 = [
+                    'master_id' => $master_id,
+                    'so_no' => $uniq,
+                    'item_id' => $row,
+                    'warehouse_from' => $request->main_warehouse_from,
+                    'warehouse_to' => $request->main_warehouse_to,
+                    'batch_code' => $request->batch_code[$key] ?? "",
+                    'qty' => $request->qty[$key],
+                    'rate' => $request->rate[$key] ?? 0,
+                    'amount' => $request->amount[$key] ?? 0,
+                    'status' => 1,
+                    'si_status' => 0,
+                    'desc' => $request->des ? $request->des[$key] : "",
+                ];
+                $master_data_id = DB::Connection('mysql2')->table('stock_out_data')->insertGetId($data2);
+
+                $stock = [
+                    'main_id' => $master_id,
+                    'master_id' => $master_data_id,
+                    'voucher_no' => $uniq,
+                    'voucher_date' => $request->so_date,
+                    'voucher_type' => 3, // Stock Out / Adjustment Remove
+                    'sub_item_id' => $row,
+                    'qty' => $request->qty[$key],
+                    'rate' => $request->rate[$key] ?? 0,
+                    'amount' => $request->amount[$key] ?? 0,
+                    'warehouse_id' => $request->main_warehouse_from,
+                    'batch_code' => $request->batch_code[$key] ?? "",
+                    'status' => 1,
+                    'username' => Auth::user()->name,
+                    'created_date' => date('Y-m-d'),
+                ];
+                DB::Connection('mysql2')->table('stock')->insert($stock);
+                $TotAmount += ($request->amount[$key] ?? 0);
+            }
+
+            DB::Connection('mysql2')->commit();
+            Session::flash('dataInsert', 'Stock Out Successfully Saved.');
+            return Redirect::to('store/stock_out_form?pageType=view&&parentCode=95&&m=' . $m);
+
+        } catch (\Exception $e) {
+            DB::Connection('mysql2')->rollBack();
+            dd($e->getMessage());
+        }
     }
 }

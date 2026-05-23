@@ -8,4 +8,5 @@ class Branch extends Model
 {
     protected $connection = "mysql2";
     protected $table = "branch";
+    // protected $guarded = ["id"];
 }

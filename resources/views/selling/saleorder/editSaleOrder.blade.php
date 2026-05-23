@@ -116,31 +116,28 @@
                                                     </div>
                                                 </div>
 
+                                                <div class="col-md-6 col-md-6 col-sm-12 col-xs-12">
+                                                    <div class="form-group">
+                                                        <label class="control-label" style="margin-bottom: 0;">Mode / Terms Of Payment</label>
+                                                        <input name="model_terms_of_payment" id="model_terms_of_payment" class="form-control" type="text" value="{{$sale_orders->model_terms_of_payment}}">
+                                                    </div>
+                                                </div>
+
 
                                                 <div class="col-md-6 col-md-6 col-sm-12 col-xs-12">
                                                     <div class="form-group">
                                                         <label class="control-label" style="margin-bottom: 0;">Sales Person </label>
-                                                       <input name="saleperson" id="saleperson" class="form-control"   value="{{$sale_orders->sales_person}}"
-                                                               type="text">
+                                                        <select name="saleperson_id" id="saleperson_id" class="form-control select2">
+                                                            <option value="">Select Sales Person</option>
+                                                            @foreach($salesmen as $salesman)
+                                                                <option value="{{ $salesman->id }}" {{ $sale_orders->sales_person_id == $salesman->id ? 'selected' : '' }}>{{ $salesman->sub_department_name }}</option>
+                                                            @endforeach
+                                                        </select>
                                                     </div>
                                                 </div>
 
-                                                <div class="col-md-6 col-md-6 col-sm-12 col-xs-12">
-                                                    <div class="form-group">
-                                                        <label class="control-label" style="margin-bottom: 0;">Special Price Mappeds
-                                                        </label>
-                                                       <input readonly name="special_price_mapped" value="" class="form-control"
-                                                               id="special_price_mapped" type="text">
-                                                    </div>
-                                                </div>
-
-                                                <div class="col-md-6 col-sm-12 col-xs-12">
-                                                    <div class="form-group">
-                                                        <label class="control-label" style="margin-bottom: 0;">Remark</label>
-                                                                                                              <textarea name="remark" id="remark" class="form-control" rows="3">{{$sale_orders->remark}}</textarea>
-
-                                                    </div>
-                                                </div>
+                            
+                                             
                                                 @php
                                                     $buyer_detail = App\Helpers\CommonHelper::get_buyer_detail($sale_orders->buyers_id);
                                                 @endphp
@@ -156,17 +153,27 @@
                                                     </select>
                                                 </div>
 
+                    <div class="col-md-6 col-md-6 col-sm-12 col-xs-12">
+                                                    <div class="form-group">
+                                                        <label class="control-label" style="margin-bottom: 0;">Special Price Mapped
+                                                        </label>
+                                                       <input readonly name="special_price_mapped" value="" class="form-control"
+                                                               id="special_price_mapped" type="text">
+                                                    </div>
+                                                </div>
 
 
                                             </div>
 
                                             <div class="col-lg-6 col-md-6 col-sm-12 col-xs-12">
                                                 <label class="control-label" style="margin-bottom: 0;">Select Principal Groups</label>
-                                                <select style="wiidth: 100%;" id="principal_group"
-                                                        name="principal_group" onchange="get_brand_by_principal_group(this)" class="form-control select2 principal_group form-group">
-                                                    <option value="">Select Principal group</option>
+                                                <select style="width: 100%;" id="principal_group"
+                                                        name="principal_group[]" multiple="multiple" data-placeholder="Select Principal Groups" onchange="get_brand_by_principal_group(this)" class="form-control select2 principal_group">
+                                                    @php
+                                                        $selected_groups = explode(',', $sale_orders->principal_group_ids);
+                                                    @endphp
                                                     @foreach(CommonHelper::get_all_principal_groups() as $group)
-                                                        <option value="{{$group->id}}" {{ $sale_orders->principal_group_id == $group->id ? 'selected' : '' }}>{{$group->products_principal_group}}</option>
+                                                        <option value="{{$group->id}}" {{ in_array($group->id, $selected_groups) ? 'selected' : '' }}>{{$group->products_principal_group}}</option>
                                                     @endforeach
                                                 </select>
                                             </div>
@@ -274,7 +281,7 @@
                                                         <select style="width: 150px;" onChange="item_change(this); getCustomerAssignedWarehouse(this)"
                                                                 name="product_id[]" class="form-control itemsclass select2"
                                                                 id="product_id{{ $key }}">
-                                                            {!! CommonHelper::getSubItemByBrand($item->brand_id,$item->item_id)!!}
+                                                            {!! CommonHelper::getSubItemByBrand_new($item->brand_id,$item->item_id)!!}
                                                         </select>
                                                     </td>
                                                     <td class="hide">
@@ -374,7 +381,7 @@
                                                            value="" type="text"  readonly>
                                                 </li>
                                                     <li></li><li></li>
-                                                <li>Sale Tax </li>
+                                                <li>Advance Tax </li>
                                               <li class="text-left">
                                             <!-- <select name="sale_taxes_id" class="form-control" onchange="applySaleTax(this)">
                                                 <option value="">Select</option>
@@ -391,7 +398,7 @@
                                                        @foreach(CommonHelper::get_table_data('sale_taxes') as $item)
                                                     <option value="{{ $item->id }}" 
                                                             {{ $sale_orders->sale_taxes_id == $item->id ? 'selected' : '' }}>
-                                                        {{ $item->name }} - {{ $item->discount_percentage }}%
+                                                        {{ $item->name }}
                                                     </option>
                                                 @endforeach
                                                     </select>
@@ -417,30 +424,50 @@
                                                                              type="text"  readonly></li>
                                             </ul>
                                         
-                                             <ul class="sale-l sale-l2">
+                                            <ul class="sale-l sale-l2">
                                                 <li>Net Amount</li>
                                                 <li class="text-left"><input
-                                                            name="total_amount_after_sale_tax"
-                                                            id="total_amount_after_sale_tax" style="background: white !important;"
-                                                            class="form-control form-control2"  value="{{ $sale_orders->total_amount_after_sale_tax }}"
-                                                            type="text" readonly></li>
+                                                             name="total_amount_after_sale_tax"
+                                                             id="total_amount_after_sale_tax" style="background: white !important;"
+                                                             class="form-control form-control2"  value="{{ $sale_orders->total_amount_after_sale_tax }}"
+                                                             type="text" readonly></li>
                                             </ul>
                                             <ul class="sale-l sale-l2">
-                                                <li>Sale Tax Amount</li>
+                                                <li>Advance Tax Amount</li>
                                                 <li class="text-left"><input
-                                                            name="sale_taxes_amount_total"
-                                                            id="total_amount_after_sale_tax_apply_persentage" style="background: white !important;"
-                                                            class="form-control form-control2" value="{{ $sale_orders->total_amount_after_sale_tax + $sale_orders->sale_taxes_amount_rate }}"
-                                                            type="text" readonly></li>
+                                                             name="sale_taxes_amount_rate"
+                                                             id="tax_amount_calculated" style="background: white !important;"
+                                                             class="form-control form-control2" value="{{ $sale_orders->sale_taxes_amount_rate }}"
+                                                             type="text" readonly></li>
+                                            </ul> 
+                                            <ul class="sale-l sale-l2">
+                                                <li>Grand Total</li>
+                                                <li class="text-left"><input
+                                                             name="sale_taxes_amount_total"
+                                                             id="total_amount_after_sale_tax_apply_persentage" style="background: white !important;"
+                                                             class="form-control form-control2" value="{{ $sale_orders->total_amount_after_sale_tax + $sale_orders->sale_taxes_amount_rate }}"
+                                                             type="text" readonly></li>
                                             </ul> 
                                                 <ul class="hide sale-l sale-l2">
                                          
-                                                <li> sale Tax Amount</li>
-                                                <input type="text" class="form-control" name="sale_taxes_amount_rate" value="{{$sale_orders->sale_taxes_amount_rate }}" id="tax_amount_calculated" readonly>
+                                                <li> Advance Tax Amount</li>
+                                                <input type="text" class="form-control" name="sale_taxes_amount_rate_hidden" value="{{$sale_orders->sale_taxes_amount_rate }}" id="tax_amount_calculated_hidden" readonly>
                                             </ul>
                                           </div>
                                     </div>
+
+
+
+                                      
                                 </div>
+
+                                 <div class="col-md-6 col-sm-12 col-xs-12">
+                                                    <div class="form-group">
+                                                        <label class="control-label" style="margin-bottom: 0;">Remark</label>
+                                                                                                              <textarea name="remark" id="remark" class="form-control" rows="3">{{$sale_orders->remark}}</textarea>
+
+                                                    </div>
+                                                </div>
                                 <div class="col-md-12 padtb text-right">
                                     <div class=" my-lab">
                                         <button type="submit" class="btn btn-primary mr-1"
@@ -514,7 +541,15 @@ function applySaleTax(selectElement) {
 <script type="text/javascript">
 
 
+let allSalesmen = [];
 jQuery(document).ready(function($) {
+    // Store all original salepersons
+    $('#saleperson_id option').each(function() {
+        if ($(this).val() != "") {
+            allSalesmen.push({ id: $(this).val(), text: $(this).text() });
+        }
+    });
+
     $("#customer_name").trigger("change");
     var docBody = $(document.body);
     var shiftPressed = false;
@@ -1152,65 +1187,210 @@ $(document).on('keydown', '.next-total', function (event) {
         $('.hideon3').hide();
     });
 
-    function getCustomer(element) {
-        var id = element.value;
-        var selectedOption = $(element).find('option:selected');
-        var stockValue = selectedOption.data('type');
-        if(stockValue == 3){
-            $('.hideon3').show();
-        }else{
-            $('.hideon3').hide();
-        }
-        $.ajax({
-            url: '{{ url("stad/getCustomerById") }}',
-            type: 'GET',
-            data: {
-                id: id,
-            },
-            success: function(response) {
-                warehouses = response.warehouse_from.split(",");
+    // function getCustomer(element) {
+    //     var id = element.value;
+    //     var selectedOption = $(element).find('option:selected');
+    //     var stockValue = selectedOption.data('type');
+    //     if(stockValue == 3){
+    //         $('.hideon3').show();
+    //     }else{
+    //         $('.hideon3').hide();
+    //     }
+    //     $.ajax({
+    //         url: '{{ url("stad/getCustomerById") }}',
+    //         type: 'GET',
+    //         data: {
+    //             id: id,
+    //         },
+    //         success: function(response) {
+    //             warehouses = response.warehouse_from.split(",");
                 
-                $(".warehouse_from").each((index, element) => {
-                    $(element).select2({
-                        matcher: function(params, data) {
-                            // Exclude 'all' option from dropdown
+    //             $(".warehouse_from").each((index, element) => {
+    //                 $(element).select2({
+    //                     matcher: function(params, data) {
+    //                         // Exclude 'all' option from dropdown
     
-                            if(warehouses.includes("all")) return data;
-                            if (!warehouses.includes(data.id)) {
-                            return null;
-                            }
-                            return data;
-                        }
-                    });
-                })
+    //                         if(warehouses.includes("all")) return data;
+    //                         if (!warehouses.includes(data.id)) {
+    //                         return null;
+    //                         }
+    //                         return data;
+    //                     }
+    //                 });
+    //             })
 
-                $('#opening_balance').val(response.balance_amount);
-                $('#amount_limit').val(response.creditLimit);
-                $('#current_balance_due').val(response.balance_amount);
-                $('#address').val(response.address);
-                $('#saleperson').val(response.SaleRep);
-                $('#phone_no').val(response.phone_1);
-                // $('#salepersonmobile').val(response.salepersonmobile);
-                if(response.cnic_ntn != ""){
-                    $('#NTN_No').val(response.cnic_ntn);
-                }else{
-                    $('#NTN_No').val("-");
-                }
-                if(response.strn != ""){
-                    $('#ST_No').val(response.strn);
-                }else{
-                    $('#ST_No').val("-");
-                }
-                if (response.special_price_mapped == 1) {
-                    $('#special_price_mapped').val("yes");
-                } else {
-                    $('#special_price_mapped').val("no");
-                }
-            }
-        });
+    //             $('#opening_balance').val(response.balance_amount);
+    //             $('#amount_limit').val(response.creditLimit);
+    //             $('#current_balance_due').val(response.balance_amount);
+    //             $('#address').val(response.address);
+    //             $('#saleperson').val(response.SaleRep);
+    //             $('#phone_no').val(response.phone_1);
+    //             // $('#salepersonmobile').val(response.salepersonmobile);
+    //             if(response.cnic_ntn != ""){
+    //                 $('#NTN_No').val(response.cnic_ntn);
+    //             }else{
+    //                 $('#NTN_No').val("-");
+    //             }
+    //             if(response.strn != ""){
+    //                 $('#ST_No').val(response.strn);
+    //             }else{
+    //                 $('#ST_No').val("-");
+    //             }
+    //             if (response.special_price_mapped == 1) {
+    //                 $('#special_price_mapped').val("yes");
+    //             } else {
+    //                 $('#special_price_mapped').val("no");
+    //             }
+    //         }
+    //     });
+    // }
+
+  function getCustomer(element) {
+    var id = element.value;
+    var selectedOption = $(element).find('option:selected');
+    var stockValue = selectedOption.data('type');
+
+    if(stockValue == 3){
+        $('.hideon3').show();
+    }else{
+        $('.hideon3').hide();
     }
+    
+    if (!id) {
+        // Agar customer deselect kiya to fields clear karein
+        $('#opening_balance, #amount_limit, #current_balance_due, #address, #phone_no, #branch, #NTN_No, #ST_No, #special_price_mapped').val('');
+        
+        // Restore all salespersons
+        var $salepersonSelect = $('#saleperson_id');
+        $salepersonSelect.empty().append('<option value="">Select Sales Person</option>');
+        allSalesmen.forEach(function(person) {
+            $salepersonSelect.append(`<option value="${person.id}">${person.text}</option>`);
+        });
+        $salepersonSelect.trigger('change');
+        
+        return;
+    }
+    
+    $.ajax({
+        url: '{{ url("stad/getCustomerById") }}',
+        type: 'GET',
+        data: {
+            id: id,
+        },
+        success: function(response) {
+            console.log(response); // Debug ke liye
+            
+            // Warehouse handling
+            warehouses = response.warehouse_from ? response.warehouse_from.split(",") : [];
+            
+            $('#warehouse_from').select2({
+                matcher: function(params, data) {
+                    if(warehouses.includes("all")) return data;
+                    if (!warehouses.includes(data.id)) {
+                        return null;
+                    }
+                    return data;
+                }
+            });
 
+            // Basic fields
+            $('#opening_balance').val(response.balance_amount || '0.00');
+            $('#amount_limit').val(response.creditLimit || '0.00');
+            $('#current_balance_due').val(response.balance_amount || '0.00');
+            $('#address').val(response.address || '');
+            $('#phone_no').val(response.phone_1 || '');
+            
+            // YAHAN BRANCH NAME SET HO RAHA HAI
+            // Pehle check karein ke branch_name response mein hai ya nahi
+            if (response.branch_name) {
+                $('#branch').val(response.branch_name);
+                
+            } else if (response.branch_id) {
+                // Agar branch_name nahi hai to branch_id se fetch karna hoga
+                getBranchName(response.branch_id);
+            } else {
+                $('#branch').val('-');
+            }
+            
+            // NTN/STRN fields
+            $('#NTN_No').val(response.cnic_ntn && response.cnic_ntn != "" ? response.cnic_ntn : "-");
+            $('#ST_No').val(response.strn && response.strn != "" ? response.strn : "-");
+            
+            // Special price mapped
+            $('#special_price_mapped').val(response.special_price_mapped == 1 ? "yes" : "no");
 
+            // Auto populate and filter Sales Person
+            var salesPersonId = response.SaleRep || response.sale_person || response.sales_person_id;
+            var $salepersonSelect = $('#saleperson_id');
+            
+            // Empty the select first
+            $salepersonSelect.empty().append('<option value="">Select Sales Person</option>');
+            
+            if (salesPersonId && salesPersonId != 0) {
+                // Find matching salesperson from our stored list
+                var person = allSalesmen.find(p => p.id == salesPersonId);
+                if (person) {
+                    $salepersonSelect.append(`<option value="${person.id}" selected>${person.text}</option>`);
+                } else {
+                    // Fallback: if not in our list, use name from response if available
+                    var personName = response.sales_person_name || ('Sales Person ID: ' + salesPersonId);
+                    $salepersonSelect.append(`<option value="${salesPersonId}" selected>${personName}</option>`);
+                }
+            } else {
+                // If no specific salesperson for customer, show all options
+                allSalesmen.forEach(function(person) {
+                    $salepersonSelect.append(`<option value="${person.id}">${person.text}</option>`);
+                });
+            }
+            $salepersonSelect.trigger('change');
+        },
+        error: function(xhr, status, error) {
+            console.error('Error fetching customer data:', error);
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: 'Failed to load customer data. Please try again.'
+            });
+        }
+    });
+}
+
+// Agar branch_name response mein nahi aaya to alag se fetch karne ka function
+function getBranchName(branchId) {
+    if (!branchId) {
+        $('#branch').val('-');
+        return;
+    }
+    
+    $.ajax({
+        url: '{{ url("getBranchName") }}', // Ye route banana hoga
+        type: 'GET',
+        data: { id: branchId },
+        success: function(response) {
+            $('#branch').val(response.name || '-');
+        },
+        error: function() {
+            $('#branch').val('-');
+        }
+    });
+}
+    let isCheckingCustomer = false; // flag to prevent recursion
+
+    $(document).on('select2:selecting', '.brands', function(e) {
+        const warehouse = $("#warehouse_from").val();
+        console.log(warehouse);
+
+        // If no warehouse is selected, reject this customer selection
+        if (!warehouse) {
+            Swal.fire({
+                icon: 'error',
+                title: 'No Warehouse Selected',
+                text: 'Please select warehouse before choosing a customer.',
+            });
+
+            e.preventDefault(); // <-- stops this selection
+        }
+    });
     $(document).on('select2:selecting', '.brands', function(e) {
         const warehouse = $("#warehouse_from").val();
         console.log(warehouse);
@@ -1818,6 +1998,16 @@ function get_product_by_brand(element, number) {
 
         $('#customer').select2();
         $('#customer_name').select2();
+        $('#saleperson_id').select2();
+        try {
+            jQuery('#principal_group').select2({
+                placeholder: "Select Principal Groups",
+                allowClear: true,
+                width: '100%'
+            });
+        } catch (e) {
+            console.error("Select2 initialization failed for principal_group:", e);
+        }
     })
 
     $('body').on('click', '.removerow', function() {

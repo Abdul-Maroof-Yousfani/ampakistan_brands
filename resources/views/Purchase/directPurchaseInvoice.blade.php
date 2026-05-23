@@ -150,8 +150,8 @@ var counter = 1;
                                                 name="model_terms_of_payment" id="model_terms_of_payment" value="" />
                                         </div>
 
-                                        <div class="col-lg-3 col-md-3 col-sm-3 col-xs-12 hide">
-                                            <label class="sf-label">Warehouse / Region <span
+                                        <div class="col-lg-3 col-md-3 col-sm-3 col-xs-12">
+                                            <label class="sf-label">Warehouse <span
                                                     class="rflabelsteric"><strong>*</strong></span></label>
                                             <select onchange="get_address()" name="warehouse_id" id="warehouse_id"
                                                 class="form-control  select2">
@@ -179,6 +179,21 @@ var counter = 1;
                                             </select>
                                         </div>
                                     </div>
+                                    <div class="row">
+                                        <div class="col-lg-3 col-md-3 col-sm-3 col-xs-12">
+                                            <label class="sf-label"> <a href="#" onclick="showDetailModelOneParamerter('pdc/createCurrencyTypeForm')" class="">Currency</a></label>
+                                            <select onchange="get_rate(); claculation(1);" name="curren" id="curren" class="form-control select2 requiredField">
+                                                <option value="0,1"> PKR</option>
+                                                @foreach(\App\Helpers\CommonHelper::get_all_currency() as $currency)
+                                                    <option value="{{ $currency->id }},{{ $currency->rate }}">{{ $currency->name }}</option>
+                                                @endforeach
+                                            </select>
+                                        </div>
+                                        <div class="col-lg-3 col-md-3 col-sm-3 col-xs-12">
+                                            <label class="sf-label"> Currency Rate</label>
+                                            <input class="form-control" type="text" name="currency_rate" id="currency_rate" />
+                                        </div>
+                                    </div>
                                     <div class="lineHeight">&nbsp;</div>
                                 </div>
                                 <div class="col-lg-6 col-md-6 col-sm-6 col-xs-12">
@@ -196,18 +211,13 @@ var counter = 1;
                                     <div class="table-responsive">
                                         <table class="table table-bordered">
                                             <thead>
-                                                <tr class="text-center">
-                                                    <th colspan="6" class="text-center">Purchase Order Detail</th>
-                                                    <th colspan="2" class="text-center">
-                                                        <input type="button" class="btn btn-sm btn-primary"
-                                                            onclick="AddMoreDetails()" value="Add More Rows" />
-                                                    </th>
-                                                    <th class="text-center">
-                                                        <span class="badge badge-success" id="span">1</span>
-                                                    </th>
-                                                </tr>
                                                 <tr>
-                                                    <th class="text-center" style="width: 35%;">Product</th>
+                                                    <th style="width: 15rem" class="text-center">Brand</th>
+                                                    <th class="text-center" style="width: 25rem;">Product</th>
+                                                    <th class="text-center">Product Type</th>
+                                                    <th class="text-center">Product Barcode</th>
+                                                    <th class="text-center">Product Classification</th>
+                                                    <th class="text-center">Product Trend</th>
                                                     <th class="text-center">Uom<span
                                                             class="rflabelsteric"><strong>*</strong></span></th>
                                                     <th class="text-center"> QTY<span
@@ -216,27 +226,53 @@ var counter = 1;
                                                             class="rflabelsteric"><strong>*</strong></span></th>
                                                     <th class="text-center">Amount<span
                                                             class="rflabelsteric"><strong>*</strong></span></th>
+                                                    <th class="text-center">Tax %<span
+                                                            class="rflabelsteric"><strong>*</strong></span></th>
+                                                    <th class="text-center">Tax Amount<span
+                                                            class="rflabelsteric"><strong>*</strong></span></th>
                                                     <th class="text-center">Discount %<span
                                                             class="rflabelsteric"><strong>*</strong></span></th>
                                                     <th class="text-center">Discount Amount<span
                                                             class="rflabelsteric"><strong>*</strong></span></th>
                                                     <th class="text-center">Net Amount<span
                                                             class="rflabelsteric"><strong>*</strong></span></th>
-                                                    <th class="text-center">Delete<span
+                                                    <th class="text-center">Amount(PKR)<span
+                                                            class="rflabelsteric"><strong>*</strong></span></th>
+                                                    <th class="text-center">Add / Delete<span
                                                             class="rflabelsteric"><strong>*</strong></span></th>
                                                 </tr>
                                             </thead>
                                             <tbody id="AppnedHtml">
-                                                <tr title="1" class="AutoNo">
+                                                <tr id="RemoveRows1" title="1" class="AutoNo">
                                                     <td>
-                                                        <select name="item_id[]" id="sub_1" onchange="itemChange(1)" class="form-control select2" style=" width:200px !important;">                                                  <option value="">Select</option>
-                                                            @foreach (CommonHelper::get_all_subitem() as $item)
-                                                            <option value="{{ $item->id }}"
-                                                                data-uom="{{CommonHelper::get_uom($item->uom)}}">
-                                                                {{ $item->product_name != '' ? $item->product_name : $item->sub_ic }}
-                                                            </option>
+                                                        <select style="width: 15rem;" onChange="get_product_by_brand(this,1)" name="brand_id[]" class="form-control select2" id="brand_id1">
+                                                            <option value="">Select</option>
+                                                            @foreach(CommonHelper::get_all_brand() as $item)
+                                                            <option value="{{$item->id}}">{{$item->name}}</option>
                                                             @endforeach
                                                         </select>
+                                                    </td>
+                                                    <td>
+                                                        <select onChange="get_type_barcode_by_product('productName1')" name="item_id[]" id="productName1" class="form-control requiredField select2 itemsclass" style="width:25rem !important;">
+                                                                    <option value="">Select Products</option>
+                                                        </select>
+                                                    </td>
+
+                                                    <td>
+                                                        <input readonly type="text" class="form-control"
+                                                            name="product_type[]" id="product_type1">
+                                                    </td>
+                                                    <td>
+                                                        <input readonly type="text" class="form-control"
+                                                            name="product_barcode[]" id="product_barcode1">
+                                                    </td>
+                                                    <td>
+                                                        <input readonly type="text" class="form-control"
+                                                            name="classification_name[]" id="product_classification1">
+                                                    </td>
+                                                    <td>
+                                                        <input readonly type="text" class="form-control"
+                                                            name="product_trend[]" id="product_trend1">
                                                     </td>
 
                                                     <td>
@@ -257,8 +293,18 @@ var counter = 1;
                                                             id="rate1" placeholder="RATE" min="1" value="">
                                                     </td>
                                                     <td>
-                                                        <input type="text" class="form-control" name="amount[]"
-                                                            id="amount1" placeholder="AMOUNT" min="1" value="" readonly>
+                                                        <input type="text" class="form-control actual_amount" name="actual_amount[]"
+                                                            id="actual_amount1" placeholder="AMOUNT" min="1" value="" readonly>
+                                                    </td>
+                                                    <td>
+                                                        <input type="text" onkeyup="claculation('1')"
+                                                            class="form-control" name="tax_per[]"
+                                                            id="tax_per1" placeholder="TAX %" value="0">
+                                                    </td>
+                                                    <td>
+                                                        <input type="text" onkeyup="claculation('1')"
+                                                            class="form-control row_tax_amount" name="tax_amount[]"
+                                                            id="tax_amount1" placeholder="TAX AMOUNT" value="0" readonly>
                                                     </td>
                                                     <td>
                                                         <input type="text" onkeyup="discount_percent(this.id)"
@@ -268,7 +314,7 @@ var counter = 1;
                                                     </td>
                                                     <td>
                                                         <input type="text" onkeyup="discount_amount(this.id)"
-                                                            class="form-control requiredField" name="discount_amount[]"
+                                                            class="form-control requiredField row_discount_amount" name="discount_amount[]"
                                                             id="discount_amount1" placeholder="DISCOUNT" min="1"
                                                             value="0">
                                                     </td>
@@ -277,9 +323,14 @@ var counter = 1;
                                                             name="after_dis_amount[]" id="after_dis_amount1"
                                                             placeholder="NET AMOUNT" min="1" value="0.00" readonly>
                                                     </td>
-                                                    <td style="background-color: #ccc">
-                                                        <input onclick="view_history(1)" type="checkbox"
-                                                            id="view_history1">
+                                                    <td>
+                                                        <input type="text" class="form-control row_amount_pkr" name="amount[]"
+                                                            id="amount1" placeholder="AMOUNT(PKR)" min="1" value="" readonly>
+                                                    </td>
+                                                    <td class="text-center" style="display: flex; gap: 10px;">
+                                                        <input type="button" class="btn btn-sm btn-primary"
+                                                            onclick="AddMoreDetails()" value="+" />
+                                                        <button type="button" class="btn btn-sm btn-danger" onclick="RemoveSection(1)"> - </button>
                                                     </td>
                                                 </tr>
                                             </tbody>
@@ -288,8 +339,16 @@ var counter = 1;
                                                 <tr
                                                     style="background-color: darkgrey;font-size:large;font-weight: bold">
                                                     <td class="text-center" colspan="7">Total</td>
+                                                    <td><input readonly class="form-control" type="text" id="total_qty" /></td>
+                                                    <td></td>
+                                                    <td><input readonly class="form-control" type="text" id="total_amount" /></td>
+                                                    <td></td>
+                                                    <td><input readonly class="form-control" type="text" id="total_tax_amount" /></td>
+                                                    <td></td>
+                                                    <td><input readonly class="form-control" type="text" id="total_discount_amount" /></td>
                                                     <td id="" class="text-right" colspan="1"><input readonly
                                                             class="form-control" type="text" id="net" /> </td>
+                                                    <td><input readonly class="form-control" type="text" id="total_amount_pkr" /></td>
                                                     <td></td>
                                                 </tr>
                                             </tbody>
@@ -305,8 +364,8 @@ var counter = 1;
                                 <div class="col-lg-6 col-md-6 col-sm-6 col-xs-12" style="float: right;">
                                     <table class="table table-bordered sf-table-list">
                                         <thead>
-                                            <th class="text-center" colspan="3">Sales Tax Account Head</th>
-                                            <th class="text-center" colspan="3">Sales Tax Amount</th>
+                                            <th class="text-center" colspan="3">WithHolding Tax</th>
+                    <th class="text-center" colspan="3">WithHolding Tax Amount</th>
                                         </thead>
                                         <tbody>
                                             <tr>
@@ -408,93 +467,65 @@ var Counter = 1;
 
 function AddMoreDetails() {
     Counter++;
+    var previousBrandId = $('#brand_id' + (Counter - 1)).val();
 
-    $('#AppnedHtml').append('<tr id="RemoveRows' + Counter + '" class="AutoNo">' +
-        '<td class="AutoCounter" title="' + AutoCount + '">' +
-        '<select name="item_id[]" id="sub_' + Counter + '" onchange="itemChange(' + Counter + ')"' +
-        'class="form-control select2">' +
-        '<option value="">Select</option>' +
-        '@foreach (CommonHelper::get_all_subitem() as $item)' +
-        '<option value="{{ $item->id }}" data-uom="{{CommonHelper::get_uom($item->uom)}}">' +
-        '{{ $item->product_name != "" ? $item->product_name : $item->sub_ic }}' +
-        '</option>' +
-        '@endforeach' +
-        '</select>' +
-        '</td>' +
-        '<td>' +
-        '<input readonly type="text" class="form-control" name="uom_id[]" id="uom_id' + Counter + '" >' +
-        '</td>' +
-        '<td>' +
-        '<input type="text" onkeyup="claculation(' + Counter +
-        ')" onblur="claculation(' + Counter +
-        ')"  class="form-control requiredField ActualQty" name="actual_qty[]" id="actual_qty' + Counter +
-        '" placeholder="ACTUAL QTY">' +
-        '</td>' +
-        '<td>' +
-        '<input type="text" onkeyup="claculation(' + Counter +
-        ')" onblur="claculation(' + Counter +
-        ')" class="form-control requiredField ActualRate" name="rate[]" id="rate' + Counter +
-        '" placeholder="RATE">' +
-        '</td>' +
-        '<td>' +
-        '<input readonly type="text" class="form-control" name="amount[]" id="amount' + Counter +
-        '" placeholder="AMOUNT">' +
-        '</td>' +
-        '<td>' +
-        '<input type="text" onkeyup="discount_percent(this.id)" class="form-control requiredField" value="0" name="discount_percent[]" id="discount_percent' +
-        Counter + '" placeholder="DISCOUNT">' +
-        '</td>' +
-        '<td>' +
-        '<input type="text" onkeyup="discount_amount(this.id)" class="form-control requiredField" value="0" name="discount_amount[]" id="discount_amount' +
-        Counter + '" placeholder="DISCOUNT">' +
-        '</td>' +
-        '<td>' +
-        '<input readonly type="text" class="form-control net_amount_dis" name="after_dis_amount[]" id="after_dis_amount' +
-        Counter + '" placeholder="NET AMOUNT">' +
-        '</td>' +
-        '<td class="text-center">' +
-        '<input onclick="view_history(' + Counter + ')" type="checkbox" id="view_history' + Counter +
-        '">&nbsp;' +
-        '<button type="button" class="btn btn-sm btn-danger" id="BtnRemove' + Counter +
-        '" onclick="RemoveSection(' + Counter + ')"> - </button>' +
-        '</td>' +
-        '</tr>');
+    $('#AppnedHtml').append(`
+        <tr id="RemoveRows${Counter}" class="AutoNo">
+            <td>
+                <select style="width: 15rem;" onChange="get_product_by_brand(this, ${Counter})" name="brand_id[]" class="form-control select2 brand-select" id="brand_id${Counter}">
+                    <option value="">Select</option>
+                    @foreach (CommonHelper::get_all_brand() as $item)
+                        <option value="{{ $item->id }}">{{ $item->name }}</option>
+                    @endforeach
+                </select>
+            </td>
+            <td>
+                <select name="item_id[]" id="productName${Counter}" onchange="get_type_barcode_by_product('productName${Counter}')"
+                        class="form-control select2 product-select itemsclass" style="width: 25rem !important;">
+                    <option value="">Select Products</option>
+                </select>
+            </td>
+            <td><input readonly type="text" class="form-control" name="product_type[]" id="product_type${Counter}"></td>
+            <td><input readonly type="text" class="form-control" name="product_barcode[]" id="product_barcode${Counter}"></td>
+            <td><input readonly type="text" class="form-control" name="classification_name[]" id="product_classification${Counter}"></td>
+            <td><input readonly type="text" class="form-control" name="product_trend[]" id="product_trend${Counter}"></td>
+            <td>
+                <input readonly type="text" class="form-control" name="uom_id[]" id="uom_id${Counter}">
+                <input readonly type="hidden" class="form-control mainIcId" name="cat_id[]" id="mainIcId_${Counter}">
+            </td>
+            <td><input type="text" onkeyup="claculation(${Counter})" class="form-control requiredField ActualQty" name="actual_qty[]" id="actual_qty${Counter}" placeholder="QTY"></td>
+            <td><input type="text" onkeyup="claculation(${Counter})" class="form-control requiredField ActualRate" name="rate[]" id="rate${Counter}" placeholder="RATE"></td>
+            <td><input readonly type="text" class="form-control actual_amount" name="actual_amount[]" id="actual_amount${Counter}" placeholder="AMOUNT"></td>
+            <td><input type="text" onkeyup="claculation(${Counter})" class="form-control" value="0" name="tax_per[]" id="tax_per${Counter}" placeholder="Tax %"></td>
+            <td><input  readonly type="text" class="form-control row_tax_amount" value="0" name="tax_amount[]" id="tax_amount${Counter}" placeholder="Tax Amount"></td>
+            <td><input type="text" onkeyup="discount_percent(this.id)" class="form-control requiredField" value="0" name="discount_percent[]" id="discount_percent${Counter}"></td>
+            <td><input type="text" onkeyup="discount_amount(this.id)" class="form-control requiredField row_discount_amount" value="0" name="discount_amount[]" id="discount_amount${Counter}"></td>
+            <td><input readonly type="text" class="form-control net_amount_dis" name="after_dis_amount[]" id="after_dis_amount${Counter}" value="0.00"></td>
+            <td><input readonly type="text" class="form-control row_amount_pkr" name="amount[]" id="amount${Counter}" placeholder="AMOUNT(PKR)"></td>
+            
+            <td class="text-center" style="display: flex; gap: 10px;">
+                <input type="button" class="btn btn-sm btn-primary" onclick="AddMoreDetails()" value="+" />
+                <button type="button" class="btn btn-sm btn-danger" onclick="RemoveSection(${Counter})"> - </button>
+            </td>
+        </tr>
+    `);
+
+    $('#brand_id' + Counter).select2();
+    if (previousBrandId) {
+        $('#brand_id' + Counter).val(previousBrandId).trigger('change');
+    }
+    $('#productName' + Counter).select2();
 
     var AutoNo = $(".AutoNo").length;
     $('#span').text(AutoNo);
-    $('.select2').select2();
-
-    var AutoCount = 1;;
-    $(".AutoCounter").each(function() {
-        AutoCount++;
-        $(this).prop('title', AutoCount);
-
-    });
-    $('.sam_jass').bind("enterKey", function(e) {
-
-
-        $('#items').modal('show');
-
-
-    });
-    $('.sam_jass').keyup(function(e) {
-        if (e.keyCode == 13) {
-            selected_id = this.id;
-            $(this).trigger("enterKey");
-
-
-        }
-
-    });
-
-
 }
 
 // Remove Row function from createDemandForm View
 
 function RemoveSection(Row) {
     //            alert(Row);
-    $('.RemoveRows' + Row).remove();
+    $('#RemoveRows1').find('#RemoveRows' + Row).remove();
+    $('#RemoveRows' + Row).remove();
     $(".AutoCounter").html('');
     var AutoCount = 1;
     $(".AutoCounter").each(function() {
@@ -503,6 +534,7 @@ function RemoveSection(Row) {
     });
     var AutoNo = $(".AutoNo").length;
     $('#span').text(AutoNo);
+    net_amount();
 }
 
 function get_sub_category_by_id(id) {
@@ -525,34 +557,46 @@ function get_sub_category_by_id(id) {
 
 }
 
-function get_product_by_id(id) {
+function get_product_by_brand(element, number, selected_brand_id = null) {
+    var value = element.value;
+    var $productSelect = $('#productName' + number);
+    $productSelect.empty().append('<option value="">Select Products</option>');
 
-    var sub_category = $('#' + id).val();
-    var index_val = id.replace("sub_category", "");
-    console.log('index value is ' + index_val);
-    $('#productName' + index_val).html('');
+    $.ajax({
+        url: '{{ url('/getSubItemByBrand') }}',
+        type: 'GET',
+        data: {
+            id: value
+        },
+        success: function(data) {
+            $productSelect.append(data);
+            if (selected_brand_id)
+                $productSelect.val(selected_brand_id).trigger("change");
+            $productSelect.select2();
+        }
+    });
+}
 
-    //  $('#productName').empty();
-    var category = $('#CategoryId').val();
-    //  var sub_category = $('#sub_category').val();
-    //  var item_master_id = $('#item_master').val();
-    if (sub_category > 0) {
+function get_type_barcode_by_product(id) {
+    var productName = $('#' + id).val();
+    var index_val = id.replace("productName", "");
+    if (productName > 0) {
         $.ajax({
-            url: '/pdc/get_product_by_id',
-            type: 'Get',
+            url: '{{ url("/pdc/get_type_barcode_by_product") }}',
+            type: 'GET',
             data: {
-                category: category,
-                sub_category: sub_category
+                productName: productName
             },
             success: function(response) {
-                $('#productName' + index_val).append(response);
-
+                $('#product_type' + index_val).val(response.product_type_id);
+                $('#product_barcode' + index_val).val(response.product_barcode);
+                $('#product_classification' + index_val).val(response.product_classification_id);
+                $('#product_trend' + index_val).val(response.product_trend_id);
+                $('#uom_id' + index_val).val(response.uom);
+                claculation(index_val);
             }
         });
-    } else {
-        $('#item_code').val('');
     }
-
 }
 
 // direct purchase invoice created before
@@ -630,18 +674,11 @@ function get_product_by_id(id) {
 // }
 
 function RemoveSection(Row) {
-    //            alert(Row);
     $('#RemoveRows' + Row).remove();
-    //   $(".AutoCounter").html('');
-    var AutoCount = 1;
-    var AutoCount = 1;;
-    $(".AutoCounter").each(function() {
-        AutoCount++;
-        $(this).prop('title', AutoCount);
-    });
     var AutoNo = $(".AutoNo").length;
     $('#span').text(AutoNo);
-    amount_calculation(1);
+    net_amount();
+    sales_tax('sales_taxx');
 }
 
 function get_po(id) {
@@ -737,45 +774,47 @@ function tax_by_amount(id) {
 }
 
 function net_amount() {
-    var amount = 0;
-    $('.net_amount_dis').each(function(i, obj) {
+    var total_qty = 0;
+    var total_amount_pkr = 0;
+    var total_amount = 0;
+    var total_tax_amount = 0;
+    var total_discount_amount = 0;
+    var total_net_amount = 0;
 
-        amount += +$('#' + obj.id).val();
+    $('.ActualQty').each(function() { total_qty += +$(this).val() || 0; });
+    $('.row_amount_pkr').each(function() { total_amount_pkr += +$(this).val() || 0; });
+    $('.actual_amount').each(function() { total_amount += +$(this).val() || 0; });
+    $('.row_tax_amount').each(function() { total_tax_amount += +$(this).val() || 0; });
+    $('.row_discount_amount').each(function() { total_discount_amount += +$(this).val() || 0; });
+    $('.net_amount_dis').each(function() { total_net_amount += +$(this).val() || 0; });
 
+    $('#total_qty').val(total_qty);
+    $('#total_amount_pkr').val(total_amount_pkr.toFixed(2));
+    $('#total_amount').val(total_amount.toFixed(2));
+    $('#total_tax_amount').val(total_tax_amount.toFixed(2));
+    $('#total_discount_amount').val(total_discount_amount.toFixed(2));
+    $('#net').val(total_net_amount.toFixed(2));
 
-    });
-    amount = parseFloat(amount);
-    $('#net').val(amount);
-    var sales_tax = parseFloat($('#sales_amount_td').val());
+    var sales_tax = parseFloat($('#sales_amount_td').val()) || 0;
 
-
-    var net = (amount + sales_tax).toFixed(2);
+    var net = (total_net_amount - sales_tax).toFixed(2);
     $('#net_after_tax').val(net);
     $('#d_t_amount_1').val(net);
     toWords(1);
-
 }
 
 
 
 function view_history(id) {
-
-    var v = $('#sub_' + id).val();
-
-
+    var v = $('#productName' + id).val();
     if ($('#view_history' + id).is(":checked")) {
-        if (v != null) {
+        if (v) {
             showDetailModelOneParamerter('pdc/viewHistoryOfItem_directPo?id=' + v);
         } else {
             alert('Select Item');
+            $('#view_history' + id).prop('checked', false);
         }
-
     }
-
-
-
-
-
 }
 
 
@@ -874,29 +913,20 @@ $(document).ready(function() {
 
 
 function claculation(number) {
-    var qty = $('#actual_qty' + number).val();
-    var rate = $('#rate' + number).val();
+    var qty = $('#actual_qty' + number).val() || 0;
+    var rate = $('#rate' + number).val() || 0;
+    var currency = $('#currency_rate').val() || 1;
 
-    var total = parseFloat(qty * rate).toFixed(2);
+    var actual = parseFloat(qty * rate).toFixed(2);
+    $('#actual_amount' + number).val(actual);
 
-    $('#amount' + number).val(total);
-
-    var amount = 0;
-    count = 1;
-    $('.net_amount_dis').each(function(i, obj) {
-
-        amount += +$('#' + obj.id).val();
-
-        count++;
-    });
-    amount = parseFloat(amount);
-
-
+    var tax_per = $('#tax_per' + number).val() || 0;
+    var tax_amount = (actual * tax_per / 100).toFixed(2);
+    $('#tax_amount' + number).val(tax_amount);
 
     discount_percent('discount_percent' + number);
     net_amount();
     sales_tax('sales_taxx');
-    //  toWords(1);
 }
 
 function sales_tax(id) {
@@ -918,22 +948,7 @@ function sales_tax(id) {
 }
 
 function total_amount() {
-    var amount = 0;
-
-    $('.net_amount_dis').each(function() {
-
-        amount += +$(this).val();
-
-    });
-    $('#net').val(amount);
-
-    var sales_tax = parseFloat($('#sales_amount_td').val());
-    var net = (amount + sales_tax).toFixed(2);
-
-    $('#net_after_tax').val(net);
-    console.log(net);
-
-
+    net_amount();
 }
 // function sales_tax(id) {
 
@@ -997,12 +1012,22 @@ function get_address() {
     calculate_due_date();
 }
 
-
 function get_rate() {
     var currency_id = $('#curren').val();
-    currency_id = currency_id.split(',');
-    $('#curren_rate').val(currency_id[1]);
+    if(currency_id) {
+        currency_id = currency_id.split(',');
+        $('#currency_rate').val(currency_id[1]);
+        
+        var count = 1;
+        $('.ActualQty').each(function() {
+            claculation(count);
+            count++;
+        });
+    }
 }
+
+
+
 </script>
 <script>
 function open_sales_tax(id) {
@@ -1014,33 +1039,26 @@ function open_sales_tax(id) {
 
 function discount_percent(id) {
     var number = id.replace("discount_percent", "");
-    var amount = $('#amount' + number).val();
-    var x = parseFloat($('#' + id).val());
+    var amount = parseFloat($('#actual_amount' + number).val()) || 0;
+    var tax_amount = parseFloat($('#tax_amount' + number).val()) || 0;
+    var total_with_tax = amount + tax_amount;
+
+    var x = parseFloat($('#' + id).val()) || 0;
     if (x > 100) {
         alert('Percentage Cannot Exceed by 100');
         $('#' + id).val(0);
         x = 0;
     }
-    x = x * amount;
-    var discount_amount = parseFloat(x / 100).toFixed(2);
+    var discount_amount = (total_with_tax * x / 100).toFixed(2);
     $('#discount_amount' + number).val(discount_amount);
-    var discount_amount = $('#discount_amount' + number).val();
-    if (isNaN(discount_amount)) {
-        $('#discount_amount' + number).val(0);
-        discount_amount = 0;
-    }
-    var amount_after_discount = amount - discount_amount;
+    
+    var amount_after_discount = (total_with_tax - discount_amount).toFixed(2);
     $('#after_dis_amount' + number).val(amount_after_discount);
-    var amount_after_discount = $('#after_dis_amount' + number).val();
-
-    if (amount_after_discount == 0) {
-        $('#after_dis_amount' + number).val(amount);
-        $('#net_amounttd_' + number).val(amount);
-        $('#net_amount' + number).val(amount_after_discount);
-    } else {
-        $('#net_amounttd_' + number).val(amount_after_discount);
-        $('#after_dis_amount' + number).val(amount_after_discount);
-    }
+    
+    var currency = $('#currency_rate').val() || 1;
+    $('#amount' + number).val((amount_after_discount * currency).toFixed(2));
+    
+    $('#net_amounttd_' + number).val(amount_after_discount);
     $('#cost_center_dept_amount' + number).text(amount_after_discount);
     $('#cost_center_dept_hidden_amount' + number).val(amount_after_discount);
     sales_tax('sales_taxx');
@@ -1049,10 +1067,13 @@ function discount_percent(id) {
 
 function discount_amount(id) {
     var number = id.replace("discount_amount", "");
-    var amount = parseFloat($('#amount' + number).val());
-    var discount_amount = parseFloat($('#' + id).val());
-    if (discount_amount > amount) {
-        alert('Amount Cannot Exceed by ' + amount);
+    var amount = parseFloat($('#actual_amount' + number).val()) || 0;
+    var tax_amount = parseFloat($('#tax_amount' + number).val()) || 0;
+    var total_with_tax = amount + tax_amount;
+
+    var discount_amount = parseFloat($('#' + id).val()) || 0;
+    if (discount_amount > total_with_tax) {
+        alert('Amount Cannot Exceed by ' + total_with_tax);
         $('#discount_amount' + number).val(0);
         discount_amount = 0;
     }
@@ -1060,10 +1081,14 @@ function discount_amount(id) {
         $('#discount_amount' + number).val(0);
         discount_amount = 0;
     }
-    var percent = (discount_amount / amount * 100).toFixed(2);
+    var percent = (discount_amount / total_with_tax * 100).toFixed(2);
     $('#discount_percent' + number).val(percent);
-    var amount_after_discount = amount - discount_amount;
+    var amount_after_discount = (total_with_tax - discount_amount).toFixed(2);
     $('#after_dis_amount' + number).val(amount_after_discount);
+    
+    var currency = $('#currency_rate').val() || 1;
+    $('#amount' + number).val((amount_after_discount * currency).toFixed(2));
+
     $('#net_amounttd_' + number).val(amount_after_discount);
     $('#net_amount_' + number).val(amount_after_discount);
     sales_tax('sales_taxx');

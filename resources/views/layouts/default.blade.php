@@ -66,12 +66,81 @@
 
     <style type="text/css" media="print">
         @media print {
+            /* General page setup - Use standard margins */
             @page {
-                margin-top: 0;
+                size: auto;
+                margin: 5mm;
             }
 
-            body {
-                padding-top: 72px;
+            /* Hide ONLY purely navigational and interactive UI */
+            .sidenavnr, .head-sh, .headerwrap, .navbar, .footer, .footer-section,
+            .btn, button, .modal-footer, .profile-admin, .pro-user, .user-name-drop,
+            .notification-count, .account-information, .tim, .bella, #button,
+            .removerow, .AddMoreDetails, .noprint, .no-print, .swal2-container {
+                display: none !important;
+            }
+
+            /* Reset body/html avoid cutting content */
+            html, body {
+                width: 100% !important;
+                height: auto !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                overflow: visible !important;
+                background: white !important;
+            }
+
+            /* REMOVE Sidebar Margins and Offsets - CRITICAL for Centering */
+            #mainSFContent, .container-fluid, .container, .well_N, .head-sh, .dp_sdw2, .panel, .panel-body {
+                width: 100% !important;
+                max-width: 100% !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                left: 0 !important;
+                display: block !important;
+                position: static !important;
+                float: none !important;
+            }
+
+            /* Form items styling */
+            input, select, textarea {
+                color: black !important;
+                background: transparent !important;
+                box-shadow: none !important;
+                border: none !important; 
+                font-size: 10pt !important;
+                width: 100% !important;
+            }
+
+            label {
+                font-weight: bold !important;
+                color: black !important;
+                margin-top: 5px;
+            }
+
+            /* Tables */
+            table {
+                width: 100% !important;
+                border-collapse: collapse !important;
+            }
+
+            th, td {
+                border: 1px solid #000 !important;
+                font-size: 9pt !important;
+                padding: 4px !important;
+                text-align: left !important;
+            }
+
+            /* Breadcrumbs hide */
+            .row.well_N.align-items-center, .well_N:first-child, .cus-ul, .cus-ul2 {
+                display: none !important;
+            }
+
+            /* Force standard print behaviors */
+            * {
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+                box-shadow: none !important;
             }
         }
     </style>
@@ -329,6 +398,39 @@
                 </div>
             @endif
             @if (Session::has('dataInsert'))
+                <script>
+                    document.addEventListener("DOMContentLoaded", function() {
+                        const Toast = Swal.mixin({
+                            toast: true,
+                            position: 'top-end',
+                            showConfirmButton: false,
+                            timer: 3000,
+                            timerProgressBar: true,
+                            didOpen: (toast) => {
+                                toast.addEventListener('mouseenter', Swal.stopTimer)
+                                toast.addEventListener('mouseleave', Swal.resumeTimer)
+                            }
+                        });
+                        Toast.fire({
+                            icon: 'success',
+                            title: `{!! session('dataInsert') !!}`
+                        });
+                        
+                        Swal.fire({
+                            title: 'Good job!',
+                            text: `{!! session('dataInsert') !!}`,
+                            icon: 'success',
+                            showClass: {
+                                popup: 'animate__animated animate__fadeInDown'
+                            },
+                            hideClass: {
+                                popup: 'animate__animated animate__fadeOutUp'
+                            },
+                            confirmButtonColor: '#4CAF50',
+                            confirmButtonText: 'Great!'
+                        });
+                    });
+                </script>
                 <div class="row">
                     <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12 text-center">
                         <div class="alert-success"><span class="glyphicon glyphicon-ok"></span> {!! session('dataInsert') !!}
@@ -338,6 +440,20 @@
             @endif
 
             @if (Session::has('message'))
+                <script>
+                    document.addEventListener("DOMContentLoaded", function() {
+                        Swal.fire({
+                            title: 'Success!',
+                            text: `{!! session('message') !!}`,
+                            icon: 'success',
+                            showClass: {
+                                popup: 'animate__animated animate__bounceIn'
+                            },
+                            confirmButtonColor: '#00c853',
+                            confirmButtonText: 'Done'
+                        });
+                    });
+                </script>
                 <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12 text-center alert alert-success center">
                     <strong>Success!</strong> {!! session('message') !!}
                 </div>

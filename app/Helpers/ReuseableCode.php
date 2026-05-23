@@ -112,8 +112,31 @@ public static function get_purchased_amount($id)
     {
         return $data=  DB::Connection('mysql2')->table('invoice_data_totals')->where('master_id',$id)->first();
     }
+  public static function get_total_stock($item_id) {
+            $total_stock = DB::Connection('mysql2')->table('ba_stock')
+            ->where("sub_item_id", $item_id)
+            ->sum('qty');
 
+        return $total_stock;
+    }
 
+	public static function get_ba_stock_quantities($product_id) {
+
+        $total_stock = DB::Connection('mysql2')->table('ba_stock')->where('sub_item_id', $product_id)
+            ->whereIn("voucher_type", [1, 9])
+            ->sum('qty');
+
+        $total_sale = DB::Connection('mysql2')->table('ba_stock')->where('sub_item_id', $product_id)
+            ->where('voucher_type', 50)
+            ->sum('qty');
+
+        $total_return = DB::Connection('mysql2')->table('ba_stock')->where('sub_item_id', $product_id)
+            ->where('voucher_type', 51)
+            ->sum('qty');
+
+        return [$total_stock, $total_sale, $total_return];
+
+    }
     public static function get_sum_stock($item,$from,$to)
     {
 
@@ -249,40 +272,84 @@ public static function get_purchased_amount($id)
 
     }
 
+    public static function get_ba_stock_wo_warehouse($item_id,$qty=null,$batch_code=null)
+    {
+            $item= $item_id;
+
+        $in= DB::Connection('mysql2')->table('ba_stock')->whereIn('status',array(1,3))
+            ->whereIn('voucher_type',[51,1,9])
+             ->where('sub_item_id',$item)
+            //  ->where('batch_code',$batch_code)
+            ->select(DB::raw('SUM(qty) As qty'),DB::raw('SUM(amount) As amount'))
+            ->first();
+
+        $oout=  DB::Connection('mysql2')->table('ba_stock')->whereIn('status',array(1,3))
+            ->whereIn('voucher_type',[50])
+             ->where('sub_item_id',$item)
+            // ->where('batch_code',$batch_code)
+            ->select(DB::raw('SUM(qty) As qty'),DB::raw('SUM(amount) As amount'))
+            ->first();
+
+            $out=$oout->qty+$qty;
+            return  abs($in->qty-$out);
+
+    }
+    public static function get_ba_stock_wo_warehouse_in($item_id,$qty=null,$batch_code=null)
+    {
+            $item= $item_id;
+
+        $in= DB::Connection('mysql2')->table('ba_stock')->whereIn('status',array(1,3))
+            ->whereIn('voucher_type',[51,1,9])
+             ->where('sub_item_id',$item)
+            //  ->where('batch_code',$batch_code)
+            ->select(DB::raw('SUM(qty) As qty'),DB::raw('SUM(amount) As amount'))
+            ->first();
+
+
+     
+
+          
+            return  abs($in->qty);
+    }
+
      public static function get_reserved_so($item_id, $custId)
     {
         // $warehouse= $warehouse_id;
     
         
 
-       $sumQty = DB::connection("mysql2")
-            ->table("sales_order_data")
-            ->where("item_id", $item_id)
-            ->select(DB::raw("SUM(CAST(qty AS DECIMAL(10,2))) as total_qty"))
-            ->join("sales_order", "sales_order.so_no", "=", "sales_order_data.so_no")
-            ->where("sales_order.buyers_id", $custId)
-            ->value("total_qty");
+    //    $sumQty = DB::connection("mysql2")
+    //         ->table("sales_order_data")
+    //         ->where("item_id", $item_id)
+    //         ->select(DB::raw("SUM(CAST(qty AS DECIMAL(10,2))) as total_qty"))
+    //         ->join("sales_order", "sales_order.so_no", "=", "sales_order_data.so_no")
+    //         ->where("sales_order.buyers_id", $custId)
+    //         ->value("total_qty");
 
-        return $sumQty;
+    //     return $sumQty;
 
-        // $in= DB::Connection('mysql2')->table('stock')->whereIn('status',array(1,3))
-        //     ->whereIn('voucher_type',[1,4,6,10,11])
-        //      ->where('sub_item_id',$item)
-        //     ->where('warehouse_id',$warehouse)
-        //     //  ->where('batch_code',$batch_code)
-        //     ->select(DB::raw('SUM(qty) As qty'),DB::raw('SUM(amount) As amount'))
-        //     ->first();
+$result = DB::connection("mysql2")
+    ->table("sales_order_data")
+    ->where("sales_order_data.item_id", $item_id)
+    ->join("sales_order", "sales_order.so_no", "=", "sales_order_data.so_no")
+    ->where("sales_order.buyers_id", $custId)
+    ->select(
+        DB::raw("SUM(CAST(sales_order_data.qty AS DECIMAL(10,2))) as ordered_qty"),
+        DB::raw("COALESCE(SUM(CAST(delivery_note_data.qty AS DECIMAL(10,2))), 0) as delivered_qty")
+    )
+    ->leftJoin("delivery_note", function($join) {
+        $join->on("delivery_note.so_no", "=", "sales_order.so_no")
+             ->where("delivery_note.status", "=", 1);  // Sirf status 0 wale delivery notes
+    })
+    ->leftJoin("delivery_note_data", function($join) use ($item_id) {
+        $join->on("delivery_note_data.gd_no", "=", "delivery_note.gd_no")
+             ->where("delivery_note_data.item_id", "=", $item_id);
+    })
+    ->first();
 
-        // $oout=  DB::Connection('mysql2')->table('stock')->whereIn('status',array(1,3))
-        //     ->whereIn('voucher_type',[2,5,3,9])
-        //      ->where('sub_item_id',$item)
-        //     // ->where('batch_code',$batch_code)
-        //     ->where('warehouse_id',$warehouse)
-        //     ->select(DB::raw('SUM(qty) As qty'),DB::raw('SUM(amount) As amount'))
-        //     ->first();
+return $result->ordered_qty - $result->delivered_qty;
 
-            // $out=$oout->qty+$qty;
-            // return  $in->qty-$out;
+       
 
     }
 
@@ -368,10 +435,10 @@ public static function get_stock_new($item_id, $warehouse_id, $qty = null, $batc
     }
 
 
-    public static function hit_ledger_vendor_opening($id)
+    public static function hit_ledger_vendor_opening($id, $VoDate = null)
     {
         $acc_id=CommonHelper::get_supplier_acc_id($id);
-
+       
 
         $vendor_oprning_data= DB::Connection('mysql2')->table('vendor_opening_balance')->where('vendor_id',$id)->
         select(DB::raw('sum(balance_amount) as bal'),DB::raw('sum(invoice_amount) as invoice_amount'))->first();
@@ -384,7 +451,6 @@ public static function get_stock_new($item_id, $warehouse_id, $qty = null, $batc
             $debit_credit=1;
         endif;
         $count=DB::Connection('mysql2')->table('transactions')->where('acc_id',$acc_id)->where('opening_bal',1)->count();
-
         $data =array
         (
             'acc_id'=>$acc_id,
@@ -395,13 +461,18 @@ public static function get_stock_new($item_id, $warehouse_id, $qty = null, $batc
             'amount'=>$vendor_oprning_data->bal,
             'username'=>'Amir Murshad@',
             'status'=>1,
+            'v_date'=>$VoDate[0],
         );
 
-        if($count>0):
-            DB::Connection('mysql2')->table('transactions')->where('acc_id',$acc_id)->where('opening_bal',1)->update($data);
-        else:
-            DB::Connection('mysql2')->table('transactions')->insert($data);
-        endif;
+        try {
+            if($count>0):
+                DB::connection('mysql2')->table('transactions')->where('acc_id',$acc_id)->where('opening_bal',1)->update($data);
+            else:
+                $is_inserted = DB::connection('mysql2')->table('transactions')->insert($data);
+            endif;
+        } catch(\Exception $e) {
+            
+        }
 
     }
 
@@ -752,6 +823,10 @@ $data = [
     {
       return  DB::Connection('mysql2')->table('purchase_request_data')->where('master_id',$id)->sum('net_amount');
     }
+    public static function get_po_sales_tax_amount($id)
+    {
+      return  DB::Connection('mysql2')->table('purchase_request')->where('id',$id)->sum('sales_tax_amount');
+    }
 
     public static function get_account_year_from_to($company_id)
     {
@@ -772,8 +847,9 @@ $data = [
         $to =date('Y-m-d', strtotime('-1 day', strtotime($from)));
         if ($from == $accyearfrom):
 
-            $in=  DB::Connection('mysql2')->selectOne('select sum(amount)amount,sum(qty)qty  from stock
-        where status=1 and voucher_type=1 and opening=1 and sub_item_id="'.$item_id.'"');
+            $in=  DB::Connection('mysql2')->selectOne('select sum(a.amount)amount,sum(a.qty)qty from stock as a
+        inner join warehouse as w on a.warehouse_id = w.id
+        where a.status=1 and a.voucher_type=1 and a.opening=1 and a.sub_item_id="'.$item_id.'" and w.is_virtual = 0');
             $data[0]=$in->qty;
             $data[1]=$in->amount;
 
@@ -782,14 +858,16 @@ $data = [
 
 
 
-        $in=  DB::Connection('mysql2')->selectOne('select sum(amount)amount,sum(qty)qty  from stock
-        where status=1 and voucher_type in (1,4,6) and sub_item_id="'.$item_id.'" and voucher_date between "'.$accyearfrom.'" and "'.$to.'"');
+        $in=  DB::Connection('mysql2')->selectOne('select sum(a.amount)amount,sum(a.qty)qty from stock as a
+        inner join warehouse as w on a.warehouse_id = w.id
+        where a.status=1 and a.voucher_type in (1,4,6) and a.sub_item_id="'.$item_id.'" and a.voucher_date between "'.$accyearfrom.'" and "'.$to.'" and w.is_virtual = 0');
 
         $purchase_amount=$in->amount;
         $purchase_qty=$in->qty;
 
-        $out=  DB::Connection('mysql2')->selectOne('select sum(amount)amount,sum(qty)qty  from stock
-        where status=1 and voucher_type in (5,2,3) and sub_item_id="'.$item_id.'" and voucher_date between "'.$accyearfrom.'" and "'.$to.'"');
+        $out=  DB::Connection('mysql2')->selectOne('select sum(a.amount)amount,sum(a.qty)qty from stock as a
+        inner join warehouse as w on a.warehouse_id = w.id
+        where a.status=1 and a.voucher_type in (5,2,3) and a.sub_item_id="'.$item_id.'" and a.voucher_date between "'.$accyearfrom.'" and "'.$to.'" and w.is_virtual = 0');
 
         $sales_qty=$out->qty;
         $sales_amount=$out->amount;
@@ -843,8 +921,9 @@ $data = [
 
     public static function get_stock_type_wise($from,$to,$item_id,$type)
     {
-        $in=  DB::Connection('mysql2')->selectOne('select sum(amount)amount,sum(qty)qty  from stock
-        where status=1 and voucher_type in ('.$type.') and sub_item_id="'.$item_id.'" and voucher_date between "'.$from.'" and "'.$to.'" and opening=0');
+        $in=  DB::Connection('mysql2')->selectOne('select sum(a.amount)amount,sum(a.qty)qty from stock as a
+        inner join warehouse as w on a.warehouse_id = w.id
+        where a.status=1 and a.voucher_type in ('.$type.') and a.sub_item_id="'.$item_id.'" and a.voucher_date between "'.$from.'" and "'.$to.'" and a.opening=0 and w.is_virtual = 0');
 
         $data[0]=$in->qty;
         $data[1]=$in->amount;
@@ -931,6 +1010,19 @@ $data = [
             ->first()
             ->net_amount;
     }
+
+public static function rerun_amount_summary_withholding_tax($grn_id, $type, $from, $to)
+{
+    $data = DB::connection('mysql2')->table('purchase_return as a')
+        ->select('summary_withholding_tax')
+        ->where('a.status', 1)
+        ->where('a.grn_id', $grn_id)
+        ->where('a.type', $type)
+        ->whereBetween('a.pr_date', [$from, $to])
+        ->first();
+
+    return $data ? $data->summary_withholding_tax : 0;
+}
 
 
     public static function get_main_sub_rights($user_id,$company_id)

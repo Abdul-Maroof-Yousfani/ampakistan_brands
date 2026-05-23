@@ -121,7 +121,7 @@ $grn_no = 'grn' . ($str + 1) . date('my');
     <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
         <div class="row">
             <div class="col-lg-3 col-md-3 col-sm-3 col-xs-12">
-                <label class="sf-label"> TRN</label>
+                <label class="sf-label"> STRN</label>
                 <input type="text" name="trn" id="trn" class="form-control" readonly
                        value="<?php echo $purchaseRequestDetail->trn?>">
 
@@ -180,6 +180,8 @@ $grn_no = 'grn' . ($str + 1) . date('my');
                     <th style="width: 110px"> Received Qty</th>
                     <th class="ShowHideRate" style="width: 110px;"> Rate</th>
                     <th class="ShowHideAmount" style="width: 110px;"> Amount</th>
+                    <th class="ShowHideTaxPercent" style="width: 110px;"> Tax %</th>
+                    <th class="ShowHideTaxAmountPercent" style="width: 110px;"> Tax Amount %</th>
                     <th class="ShowHideDiscountPercent" style="width: 110px;"> Discount %</th>
                     <th class="ShowHideDiscountAmount" style="width: 110px;"> Discount Amount</th>
                     <th class="ShowHideNetAmount" style="width: 110px;"> Net Amount</th>
@@ -289,17 +291,40 @@ $grn_no = 'grn' . ($str + 1) . date('my');
                         else:
                             $discount_amount=0;
                         endif; ?>
+<?php 
+// 1. Base Amount (Qty × Rate)
+$base_amount = $row->rate * $remaining_qty;
+
+// 2. Tax Amount (on base amount)
+$tax_amount = ($base_amount / 100) * $row->tax_rate;
+
+
+// 3. Discount Amount (on base amount)
+$discount_amount = ($base_amount / 100) * $row->discount_percent;
+
+// 4. NET AMOUNT = Base Amount + Tax - Discount
+$net_amount = $base_amount + $tax_amount - $discount_amount;
+
+// 5. Apply currency rate (if needed)
+$net_amount_with_currency = $net_amount * $row->currency_rate;
+?>
+                    <td class="ShowHideTaxPercent"><input type="text" class="form-control"
+                                                          name="tax_rate<?php echo $row->id?>" id="tax_rate<?php echo $row->id?>"
+                                                          value="<?php echo $row->tax_rate?>" readonly></td>
+                    <td class="ShowHideTaxAmountPercent"><input type="text" class="form-control"
+                                                              name="tax_amount_percent<?php echo $row->id?>" id="tax_amount_percent<?php echo $row->id?>"
+                                                              value="<?php echo  $tax_amount?>" readonly></td>
                     <td class="ShowHideDiscountPercent"><input type="text" onkeyup="discount_percent(this.id)"
                                                                class="form-control" name="discount_percent<?php echo $row->id?>"
                                                                id="discount_percent<?php echo $row->id?>"
                                                                value="<?php echo number_format($row->discount_percent,2)?>" readonly></td>
                     <td class="ShowHideDiscountAmount"><input type="text" class="form-control"
                                                               name="discount_amount<?php echo $row->id?>" id="discount_amount<?php echo $row->id?>"
-                                                              value="<?php echo $discount_amount?>" readonly></td>
+                                                              value="<?php echo $row->discount_amount?>" readonly></td>
                     <td class="ShowHideNetAmount"><input type="text" class="form-control net_amount_dis"
                                                          name="after_discount_amount<?php echo $row->id?>"
                                                          id="after_dis_amountt_<?php echo $row->id?>"
-                                                         value="<?php echo $amount-$discount_amount?>" readonly></td>
+                                                         value="<?php echo $net_amount_with_currency?>" readonly></td>
                         <?php $storeRowId = $row->id?>
                             <!-- Modal -->
                     <div class="modal fade" id="qrModal<?php echo $storeRowId?>" tabindex="-1" role="dialog" aria-labelledby="qrModalTitle"
@@ -315,22 +340,9 @@ $grn_no = 'grn' . ($str + 1) . date('my');
                                 <div class="modal-body">
                                     <div class="row">
                                         <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
-                                            <label class="sf-label">Scan Barcode</label>
-                                            <div class="input-group">
-                                                <input type="text" id="barcodeInput<?php echo $row->id;?>" class="form-control" placeholder="Scan or type barcode here">
-                                                <span class="input-group-btn">
-                                                    <button class="btn btn-primary" type="button" onclick="submitBarcode('<?php echo $row->id;?>')">Add</button>
-                                                </span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <hr>
-                                    <div class="row">
-                                        <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
-                                            <div id="barcodeListContainer<?php echo $row->id;?>" style="max-height: 400px; overflow-y: auto;">
-                                                <!-- Barcode list will be loaded here via AJAX -->
-                                                <p class="text-center">Loading barcodes...</p>
-                                            </div>
+                                            <label class="sf-label">QR / Barcode</label>
+                                            <textarea name="barcodes<?php echo $row->id;?>" id="barcodes<?php echo $row->id;?>" rows="4" cols="50"
+                                                      style="resize:none;" class="form-control"></textarea>
                                         </div>
                                     </div>
 
@@ -338,7 +350,6 @@ $grn_no = 'grn' . ($str + 1) . date('my');
                                 <div class="modal-footer">
                                     <button type="button" class="btn btn-secondary"
                                             data-dismiss="modal">Close</button>
-                                    <button type="button" class="btn btn-primary" data-dismiss="modal">Save changes</button>
                                 </div>
                             </div>
                         </div>
@@ -358,7 +369,7 @@ $grn_no = 'grn' . ($str + 1) . date('my');
                     </td>
 
 
-                    <td> <button type="button" data-toggle="modal" data-target="#qrModal<?php echo $storeRowId?>" class="btn btn-info" onclick="loadBarcodeList('<?php echo $storeRowId?>')"> + <span id="barcodeCountRow<?php echo $storeRowId?>"></span>
+                    <td> <button type="button" data-toggle="modal" data-target="#qrModal<?php echo $storeRowId?>" class="btn btn-info"> +
                         </button> </td>
 
 
@@ -420,6 +431,8 @@ $grn_no = 'grn' . ($str + 1) . date('my');
     $(document).ready(function() {
         $('.ShowHideRate').fadeOut();
         $('.ShowHideAmount').fadeOut();
+            $('.ShowHideTaxPercent').fadeOut();
+            $('.ShowHideTaxAmountPercent').fadeOut();
         $('.ShowHideDiscountPercent').fadeOut();
         $('.ShowHideDiscountAmount').fadeOut();
         $('.ShowHideNetAmount').fadeOut();
@@ -451,6 +464,8 @@ $grn_no = 'grn' . ($str + 1) . date('my');
             $('.ShowHideRate').fadeIn();
             $('.ShowHideDesc').fadeIn();
             $('.ShowHideAmount').fadeIn();
+                $('.ShowHideTaxPercent').fadeIn();
+                $('.ShowHideTaxAmountPercent').fadeIn();
             $('.ShowHideDiscountPercent').fadeIn();
             $('.ShowHideDiscountAmount').fadeIn();
             $('.ShowHideNetAmount').fadeIn();
@@ -458,6 +473,8 @@ $grn_no = 'grn' . ($str + 1) . date('my');
         } else if ($(this).prop("checked") == false) {
             $('.ShowHideRate').fadeOut();
             $('.ShowHideAmount').fadeOut();
+                $('.ShowHideTaxPercent').fadeOut();
+                $('.ShowHideTaxAmountPercent').fadeOut();
             $('.ShowHideDiscountPercent').fadeOut();
             $('.ShowHideDiscountAmount').fadeOut();
             $('.ShowHideNetAmount').fadeOut();
@@ -592,58 +609,48 @@ $grn_no = 'grn' . ($str + 1) . date('my');
         $('.per_item_cost_' + number).text(total);
     }
 
+function discount_percent(id) {
+    var number = id.replace("discount_percent", "");
+    
+    // Get values and parse to float
+    var amount = parseFloat($('#amount' + number).val()) || 0; // Base amount (qty × rate)
+    var tax_amount = parseFloat($('#tax_amount_percent' + number).val()) || 0;
+    var discount_amount = parseFloat($('#discount_amount' + number).val()) || 0;
+    var discount_percent = parseFloat($('#' + id).val()) || 0;
 
-    function discount_percent(id) {
-        var number = id.replace("discount_percent", "");
-        var amount = $('#amount' + number).val();
-
-        var x = parseFloat($('#' + id).val());
-
-        if (x > 100) {
-            alert('Percentage Cannot Exceed by 100');
-            $('#' + id).val(0);
-            x = 0;
-        }
-
-        x = x * amount;
-        var discount_amount = parseFloat(x / 100).toFixed(2);
-        $('#discount_amount' + number).val(discount_amount);
-        var discount_amount = $('#discount_amount' + number).val();
-
-        if (isNaN(discount_amount)) {
-
-            $('#discount_amount' + number).val(0);
-            discount_amount = 0;
-        }
-
-        var amount_after_discount = amount - discount_amount;
-
-        $('#after_dis_amountt_' + number).val(amount_after_discount);
-        var amount_after_discount = $('#after_dis_amountt_' + number).val();
-
-        //        if (amount_after_discount==0)
-        //        {
-        //            $('#net_amount'+number).val(amount);
-        //            $('#net_amounttd_'+number).val(amount);
-        //            $('#net_amount_'+number).val(amount_after_discount);
-        //        }
-        //
-        //        else
-        //        {
-        //            $('#net_amounttd_'+number).val(amount_after_discount);
-        //            $('#net_amount_'+number).val(amount_after_discount);
-        //        }
-        //
-        //        $('#cost_center_dept_amount'+number).text(amount_after_discount);
-        //        $('#cost_center_dept_hidden_amount'+number).val(amount_after_discount);
-
-
-        //sales_tax('sales_taxx');
-
-        //toWords(1);
-
-
+    // Validate discount percent
+    if (discount_percent > 100) {
+        alert('Discount Percentage Cannot Exceed 100%');
+        $('#' + id).val(0);
+        discount_percent = 0;
     }
+
+    // Calculate discount amount based on base amount (not amount + tax)
+   // var discount_amount = (amount * discount_percent) / 100;
+    discount_amount = isNaN(discount_amount) ? 0 : parseFloat(discount_amount.toFixed(2));
+    
+    // Update discount amount field
+    $('#discount_amount' + number).val(discount_amount);
+
+    // Calculate final amount: Base Amount + Tax - Discount
+    var final_amount = amount + tax_amount - discount_amount;
+    final_amount = isNaN(final_amount) ? 0 : parseFloat(final_amount.toFixed(2));
+
+    // Update final amount field
+    $('#after_dis_amountt_' + number).val(final_amount);
+    
+    // Optional: Update any other fields if needed
+    // $('#net_amount_' + number).val(final_amount);
+    
+    // Log for debugging (remove in production)
+    console.log('Calculation for item ' + number + ':', {
+        base_amount: amount,
+        tax_amount: tax_amount,
+        discount_percent: discount_percent + '%',
+        discount_amount: discount_amount,
+        final_amount: final_amount
+    });
+}
 
     function calculation(number) {
         //  var number=  id.replace("carton_", "");
@@ -703,100 +710,6 @@ $grn_no = 'grn' . ($str + 1) . date('my');
             $('.' + id).fadeOut(500);
         }
     }
-
-    function loadBarcodeList(rowId) {
-        var voucherNo = $('#grn_no').val();
-        var productId = $('#subItemId_' + rowId).val();
-        var voucherItemCount = $('#rec_qty_' + rowId).val();
-        var container = $('#barcodeListContainer' + rowId);
-
-        container.html('<p class="text-center">Loading barcodes...</p>');
-
-        $.ajax({
-            url: '{{route('getBarcodeListAgainstProduct')}}',
-            type: 'POST',
-            data: {
-                _token: '{{ csrf_token() }}',
-                voucher_no: voucherNo,
-                product: productId,
-                type: 'grn',
-                voucherItemCount: voucherItemCount,
-                skip_check: 1
-            },
-            success: function(response) {
-                container.html(response);
-                // Update the count on the main table button
-                var scannedCount = $(response).find('.scanned').first().text();
-                var remainingCount = $(response).find('.remaining_qty').first().text();
-                if (scannedCount !== "") {
-                    $('#barcodeCountRow' + rowId).text(' (' + scannedCount + ')');
-                    // Change button color if complete
-                    var $btn = $('#barcodeCountRow' + rowId).closest('button');
-                    if (parseInt(remainingCount) === 0) {
-                        $btn.removeClass('btn-info').addClass('btn-success');
-                    } else {
-                        $btn.removeClass('btn-success').addClass('btn-info');
-                    }
-                }
-            },
-            error: function() {
-                container.html('<p class="text-danger text-center">Error loading barcodes.</p>');
-            }
-        });
-    }
-
-    function submitBarcode(rowId) {
-        var barcode = $('#barcodeInput' + rowId).val();
-        var voucherNo = $('#grn_no').val();
-        var productId = $('#subItemId_' + rowId).val();
-        var voucherItemCount = $('#rec_qty_' + rowId).val();
-
-        if (!barcode) {
-            alert('Please enter a barcode.');
-            return;
-        }
-
-        // Check against existing barcodes if they are loaded in the view
-        // The view "getBarcodeListAgainstProduct" sets existingBarcodes in localStorage
-        var existingBarcodes = JSON.parse(localStorage.getItem('existingBarcodes') || '[]');
-        if (existingBarcodes.includes(barcode)) {
-            alert('This barcode has already been scanned.');
-            return;
-        }
-
-        if (existingBarcodes.length >= parseInt(voucherItemCount)) {
-            alert('All items have already been scanned.');
-            return;
-        }
-
-        $.ajax({
-            url: '{{route('stockBarcode.store')}}',
-            type: 'POST',
-            data: {
-                _token: '{{ csrf_token() }}',
-                product_id: productId,
-                voucher_no: voucherNo,
-                voucher_type: 'grn',
-                barcode: barcode
-            },
-            success: function(response) {
-                $('#barcodeInput' + rowId).val('');
-                loadBarcodeList(rowId);
-            },
-            error: function(xhr) {
-                alert('Error biological: ' + (xhr.responseJSON ? xhr.responseJSON.message : xhr.statusText));
-            }
-        });
-    }
-
-    // Handle Enter key in barcode input
-    $(document).on('keypress', '[id^="barcodeInput"]', function(e) {
-        if (e.which == 13) {
-            var rowId = $(this).attr('id').replace('barcodeInput', '');
-            submitBarcode(rowId);
-            return false;
-        }
-    });
 
     function Nancheck(value) {
 

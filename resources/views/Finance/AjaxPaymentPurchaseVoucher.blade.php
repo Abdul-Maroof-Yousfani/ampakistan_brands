@@ -48,12 +48,21 @@ $supplier_id = $_GET['supplier_id'];
                                 $PaymentAmount = CommonHelper::PaymentPurchaseAmountCheck($row1->id);
 
 
-                                $return_amount=  DB::Connection('mysql2')->table('purchase_return as a')
-                                ->join('purchase_return_data as b','a.id','b.master_id')
-                                ->where('a.status',1)
-                                ->where('a.type',2)
-                                ->where('grn_no',$row1->grn_no)
-                                ->sum('b.net_amount');
+                              
+
+
+                                
+                                $return = DB::connection('mysql2')->table('purchase_return as a')
+                                    ->join('purchase_return_data as b', 'a.id', 'b.master_id')
+                                    ->where('a.status', 1)
+                                    ->where('a.type', 2)
+                                    ->where('a.grn_no',$row1->grn_no)
+                                    ->select('a.summary_withholding_tax', DB::raw('SUM(b.net_amount) as total_net_amount'))
+                                    ->groupBy('a.id', 'a.summary_withholding_tax')
+                                    ->first();
+
+                                $return_amount = $return ? ($return->total_net_amount + $return->summary_withholding_tax) : 0;
+
 
 
                                 $po_no='';
@@ -103,9 +112,9 @@ $supplier_id = $_GET['supplier_id'];
                                     {{--<td class="text-center">< ?php if($row1->pv_status == 2){echo "Approved";} else{echo "Pending";}?></td>--}}
 
 
-                                    <td class="text-center hidden-print">
+                                    <!-- <td class="text-center hidden-print">
                                         <a onclick="showDetailModelOneParamerter('adjust_amount/<?php echo $row1->id;?>/{{$row1->supplier}}','','Adjust Amount','<?php echo $_GET['m']?>')" class="btn btn-sm btn-success"> AdJust Amount</a>
-                                    </td>
+                                    </td> -->
 
                                 </tr>
 
@@ -114,8 +123,8 @@ $supplier_id = $_GET['supplier_id'];
                                 }
                                 ?>
                                 <tr class="text-center" style="font-size: large;font-weight: bold">
-                                    <td colspan="8">Total</td>
-                                    <td colspan="1">{{number_format($total_paid_amount,2)}}</td>
+                                    <td colspan="10">Total</td>
+                                    <!-- <td colspan="1">{{number_format($total_paid_amount,2)}}</td> -->
                                     <td colspan="1">{{number_format($total_remaining_amount,2)}}</td>
                                     <td></td>
                                 </tr>
@@ -153,7 +162,7 @@ $supplier_id = $_GET['supplier_id'];
                                 ?>
 
                                 <tr>
-                                    <th colspan="10" class="text-center">xxxxx</th>
+                                    <th colspan="11" class="text-center">xxxxx</th>
                                 </tr>
                                 </tbody>
                             </table>

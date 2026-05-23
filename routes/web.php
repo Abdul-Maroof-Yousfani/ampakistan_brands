@@ -11,10 +11,11 @@
 */
 use App\Helpers\CommonHelper;
 use App\Http\Controllers\StoreController;
+use App\Models\Account;
 use App\Models\Branch;
-use App\Models\Employee;
 use App\Models\Stock;
 use App\Models\Subitem;
+use App\Models\Supplier;
 use App\User;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -22,22 +23,105 @@ use Illuminate\Support\Facades\DB;
 Route::auth();
 
 
-Route::get('testing', function () {
-    dd(Employee::all());
+Route::get('teste', function () {
+
+
+    $sales_order_data = DB::connection("mysql2")->table("sales_order_data")
+        ->where("item_id", 4258)
+        ->where('date', '>=', '2025-10-01')
+        ->where('date', '<=', '2025-10-31')
+        ->get();
+    dd($sales_order_data);
 });
 
-Route::get("privileges", function() {
+
+
+Route::get('/migrate-specific/{id}', function ($id) {
+    // Run a specific migration
+    $migrationPath = 'database/migrations/' . $id;
+    Artisan::call('migrate', [
+        '--path' => $migrationPath,
+    ]);
+
+    return 'Migration executed successfully.';
+});
+
+Route::get("privileges", function () {
     dd(\App\Helpers\CommonHelper::get_users_companies());
     // dd($privileges);
 });
 
-Route::get("delete-grn", function() {
-    $grn = DB::connection("mysql2")->table("goods_receipt_note")->delete();
-    dd("deleted");
+Route::get("link-to-master", function () {
+    $suppliers = DB::connection("mysql2")->table("supplier")->get();
+
+    foreach ($suppliers as $supplier) {
+        $account_id = $supplier->acc_id;
+
+        $account = DB::connection("mysql2")->table("accounts")->where("id", $account_id)->update([
+            'type' => 1
+        ]);
+    }
+});
+
+Route::get("add-head-account", function () {
+    $suppliers = DB::connection("mysql2")->table("supplier")->get();
+
+    $index = 1;
+    foreach ($suppliers as $supplier) {
+        $account_id = $supplier->acc_id;
+        $account = DB::connection("mysql2")->table("accounts")->where("id", $account_id)->first();
+        DB::connection("mysql2")->table("accounts")->where("id", $account_id)->update([
+            "parent_code" => "2-281",
+            "level2" => "281",
+            'level3' => $account->level2,
+            "code" => "2-281-" . $index++
+        ]);
+    }
 });
 
 
-Route::get("test", function() {
+
+Route::get('testing', function () {
+
+    $suppliers = Supplier::all();
+    $account = DB::connection("mysql2")
+        ->table("accounts")
+        ->where("level1", 2)
+        ->orderBy("level2", "desc")
+        ->first();
+
+    $latest_level = $account->level2;
+
+    DB::beginTransaction();
+    try {
+        foreach ($suppliers as $supplier) {
+            $level = $latest_level++;
+            $code = "2-$level";
+            $accountId = DB::connection("mysql2")->table("accounts")->insertGetId([
+                "code" => $code,
+                "parent_code" => 2,
+                "level1" => 2,
+                "level2" => $level,
+                "name" => $supplier->name,
+                "status" => 1,
+                "username" => "Amir",
+                "operational" => 1
+            ]);
+
+            $supplier->acc_id = $accountId;
+            $supplier->acc_code = $code;
+            $supplier->save();
+        }
+    } catch (Exception $e) {
+        DB::rollBack();
+        dd($e);
+    }
+
+    dd("COA created");
+
+});
+
+Route::get("test", function () {
     $branches = Branch::all();
     $mapper = [
         "Test" => "DELETE",
@@ -45,15 +129,15 @@ Route::get("test", function() {
         "Karachi head office" => "Karachi"
     ];
 
-    foreach($branches as $branch) {
-        if($mapper[$branch->branch_name] == "DELETE") {
+    foreach ($branches as $branch) {
+        if ($mapper[$branch->branch_name] == "DELETE") {
             $branch->delete();
         } else {
             $branch->update([
                 "branch_name" => $mapper[$branch->branch_name]
             ]);
         }
-    }  
+    }
 });
 
 
@@ -78,10 +162,11 @@ Route::get('migrate', function () {
 });
 
 
+
 Route::get('/abc', function () {
     $nexmo = app('Nexmo\Client');
     $nexmo->message()->send([
-        'to'   => '923368980737',
+        'to' => '923368980737',
         'from' => '923368980737',
         'text' => 'Using the instance to send a message.'
     ]);
@@ -97,9 +182,12 @@ Route::get('/', function () {
         return view('Visitor.visitorDashboard');
     }
 });
-Route::get('login', array('as' => 'login', function () {
-    return view('Visitor.visitorDashboard');
-}));
+Route::get('login', array(
+    'as' => 'login',
+    function () {
+        return view('Visitor.visitorDashboard');
+    }
+));
 /* Visitor Module Starts Here*/
 
 Route::group(['prefix' => 'visitor', 'before' => 'csrf'], function () {
@@ -122,7 +210,7 @@ Route::group(['prefix' => 'vad', 'before' => 'csrf'], function () {
 
 Route::get('/dMaster', 'MasterController@index');
 Route::get('/dClient', 'ClientController@index')->name('dClient');
-Route::get("markAllAsRead", function() {
+Route::get("markAllAsRead", function () {
     App\Helpers\CommonHelper::markAllAsRead();
     return response()->json("Marked all as read!");
 })->name("markAsRead");
@@ -227,29 +315,59 @@ Route::group(['prefix' => 'auth', 'middleware' => 'mysql2', 'before' => 'csrf'],
 Route::group(['prefix' => 'ba', 'middleware' => 'mysql2', 'before' => 'csrf'], function () {
     Route::resource('baFormation', 'BAFormationController');
     Route::post('listbaFormation', 'BAFormationController@getList')->name('list.baFormation');
+    Route::post('baFormation/import', 'BAFormationController@import')->name('baFormation.import');
     Route::post('/sync-employee', 'BAFormationController@syncEmployee')->name('syncEmployee');
 
     Route::resource('baUser', 'BAUserController');
     Route::post('listbaUser', 'BAUserController@getList')->name('list.baUser');
 
 
+    Route::get('baTargets/loadBaWise', 'BaTargetsController@loadBaWise')->name('baTargets.loadBaWise');
+    Route::post('baTargets/saveBaWise', 'BaTargetsController@saveBaWise')->name('baTargets.saveBaWise');
+    Route::get('baTargets/import', 'BaTargetsController@import')->name('baTargets.import');
+    Route::get('baTargets/exportTemplate', 'BaTargetsController@exportTemplate')->name('baTargets.exportTemplate');
+    Route::get('baTargetsList/export-pdf', 'BaTargetsController@exportPdf')->name('baTargets.exportPdf');
+    Route::post('baTargets/importExcel', 'BaTargetsController@importExcel')->name('baTargets.importExcel');
     Route::resource('baTargets', 'BaTargetsController');
+    Route::get("/ba/getCustomers", "BaTargetsController@getCustomers")->name("get.customers");
+    Route::post("/ba/insertTarget", "BaTargetsController@insertTarget")->name("insert.target");
+    Route::get('baTargetsList', 'BaTargetsController@listIndex')->name('baTargets.listIndex');
     Route::post('listbaTargets', 'BaTargetsController@getList')->name('list.baTargets');
+    Route::get("target-report", "BaTargetsController@targetReport")->name("target.report");
+
+    Route::get('ba-sales-report', 'BAReportingController@baSalesReport')->name('ba.sales_report');
+    Route::get('list-ba-sales-report', 'BAReportingController@listBaSalesReport')->name('list.ba_sales_report');
+
+    Route::get('stock-adjustment-report', 'BAReportingController@stockAdjustmentReport')->name('ba.stock_adjustment_report');
+    Route::get('list-stock-adjustment-report', 'BAReportingController@listStockAdjustmentReport')->name('list.stock_adjustment_report');
+
+    Route::get('return-stock-report', 'BAReportingController@returnStockReport')->name('ba.return_stock_report');
+    Route::get('list-return-stock-report', 'BAReportingController@listReturnStockReport')->name('list.return_stock_report');
+
+    Route::get('survey-report', 'BAReportingController@surveyReport')->name('ba.survey_report');
+    Route::get('list-survey-report', 'BAReportingController@listSurveyReport')->name('list.survey_report');
+
+    Route::get('merchandise-report', 'BAReportingController@merchandiseReport')->name('ba.merchandise_report');
+    Route::get('list-merchandise-report', 'BAReportingController@listMerchandiseReport')->name('list.merchandise_report');
+
+
+    Route::get('ba-attendance-report', 'BaAttendanceReportController@index')->name('ba.reports.attendance');
+    Route::post('ba-attendance-report-generate', 'BaAttendanceReportController@generateReport')->name('ba.reports.attendance.generate');
 
     Route::get("opening-inventory", "OpeningInventoryController@index");
-    Route::post("opening-inventory", "OpeningInventoryController@import")->name("baFormation.import");
+    Route::post("opening-inventory", "OpeningInventoryController@import")->name("openingInventory.import");
 });
 
 
 Route::group(['prefix' => 'branch', 'middleware' => 'mysql2', 'before' => 'csrf'], function () {
-    Route::get("/view", function() {
-        $branches=new Branch();
-        $branches=$branches->SetConnection('mysql2');
-        $branches=$branches->where('status',1)->get();
-        return view('Purchase.viewWarehouseList',compact('branches'));   
+    Route::get("/view", function () {
+        $branches = new Branch();
+        $branches = $branches->SetConnection('mysql2');
+        $branches = $branches->where('status', 1)->get();
+        return view('Purchase.viewWarehouseList', compact('branches'));
     });
 
-    Route::get("/create", function() {
+    Route::get("/create", function () {
         return view("Purchase.createBranchForm");
     });
 });
@@ -258,17 +376,18 @@ Route::group(['prefix' => 'branch', 'middleware' => 'mysql2', 'before' => 'csrf'
 Route::group(['prefix' => 'finance', 'middleware' => 'mysql2', 'before' => 'csrf'], function () {
     Route::resource('bank', 'BankController');
 
- Route::get('/createadvancepayment', 'FinanceController@createadvancepayment');
+    Route::get('/createadvancepayment', 'FinanceController@createadvancepayment');
     Route::get('/createadvancepaymentsupplier', 'FinanceController@createadvancepaymentsupplier');
     Route::get('/viewadvancepayment', 'FinanceController@viewadvancepayment');
 
-     Route::get('/showadvancepayment', 'FinanceDataCallController@showadvancepayment');
+    Route::get('/showadvancepayment', 'FinanceDataCallController@showadvancepayment');
     Route::get('/viewadvancepaymentsupplier', 'FinanceController@viewadvancepaymentsupplier');
     Route::get('/viewAdvanceDetail', 'FinanceController@viewAdvanceDetail');
     Route::post('/insertadvancepayment', 'FinanceController@insertadvancepayment');
     Route::post('/insertadvancepaymentsupplier', 'FinanceController@insertadvancepaymentsupplier');
 
-  Route::get('/viewChequeList', 'FinanceController@viewChequeList');
+    Route::get('/BankReconciliation', 'FinanceController@viewChequeList');
+    Route::post('/updateChequeStatus', 'FinanceController@updateChequeStatus');
 
     // Route::get('/viewBankEditForm', 'BankController@viewBankEditForm');
     Route::resource('bankFacility', 'BankFacilityController');
@@ -453,7 +572,7 @@ Route::group(['prefix' => 'finance', 'middleware' => 'mysql2', 'before' => 'csrf
     Route::get('/viewOutstanding_bills_through_jvs', 'FinanceController@viewOutstanding_bills_through_jvs');
     //for sales receipt voucher
     Route::post('/CreateReceiptVoucherForSales/{id?}', 'FinanceController@CreateReceiptVoucherForSales');
-    
+
     Route::post('/CreateReceiptVoucherForDebit/{id?}', 'FinanceController@CreateReceiptVoucherForDebit');
 
     // Route::get("createadvancepayment", )
@@ -592,6 +711,7 @@ Route::group(['prefix' => 'fdc', 'middleware' => 'mysql2', 'before' => 'csrf'], 
     Route::get('/trial_balance_other_format', 'FinanceDataCallController@trial_balance_other_format');
 
     Route::get('/receivablSummaryReport', 'FinanceDataCallController@receivablSummaryReport');
+    Route::get('/getCustomersByGroup', 'FinanceDataCallController@getCustomersByGroup');
     Route::get('/employeeSummaryReport', 'FinanceDataCallController@employeeSummaryReport');
 
 
@@ -656,7 +776,7 @@ Route::group(['prefix' => 'fdc', 'middleware' => 'mysql2', 'before' => 'csrf'], 
 
     Route::get('/filterPurchaseJournalVoucherList', 'FinanceDataCallController@filterPurchaseJournalVoucherList');
     Route::get('/filterSaleJournalVoucherList', 'FinanceDataCallController@filterSaleJournalVoucherList');
-    Route::get('/getJvsDateAndAccontWise', 'FinanceDataCallController@getJvsDateAndAccontWise');
+    Route::get('/getJvsDateAndAccontWise', 'FinanceDataCallController@getJvsDateAndAccontWise')->name('getJvsDateAndAccontWise');
     Route::get('/getGJVDateAndAccontWise', 'FinanceDataCallController@getGJVDateAndAccontWise');
     //    For Sales Start
     Route::get('/getRvsDateAndAccontWiseForSales', 'FinanceDataCallController@getRvsDateAndAccontWiseForSales');
@@ -692,10 +812,11 @@ Route::group(['prefix' => 'fdc', 'middleware' => 'mysql2', 'before' => 'csrf'], 
     Route::get('/getSummaryLedgerDetail', 'FinanceDataCallController@getSummaryLedgerDetail');
     Route::get('/getTrialBalanceDataAjax', 'FinanceDataCallController@getTrialBalanceDataAjax');
     Route::get('/deleteNewPv', 'FinanceDataCallController@deleteNewPv');
+    Route::get('/get_pending_stock_outputs', 'FinanceDataCallController@get_pending_stock_outputs');
 });
 //End Finance
 
-Route::group(['middleware' => 'mysql2','before' => 'csrf'], function () {
+Route::group(['middleware' => 'mysql2', 'before' => 'csrf'], function () {
     Route::get("debitNote/create", "DebitNoteController@create")->name("debitnote.create");
     Route::post("debitNote/create", "DebitNoteController@store")->name("debitnote.store");
     Route::get("debitNote/{debit}/update", "DebitNoteController@update")->name("debitnote.update");
@@ -709,12 +830,29 @@ Route::group(['middleware' => 'mysql2','before' => 'csrf'], function () {
     Route::get("creditNote/customer/showReceipt", "CreditNoteController@showReceipt")->name("creditNote.receipt.show");
     Route::get("creditNote/create", "CreditNoteController@create")->name("creditNote.create");
     Route::post("creditNote/create", "CreditNoteController@store")->name("creditNote.store");
-    Route::get("creditNote/{debit}/update", "CreditNoteController@update")->name("creditNote.update");
-    Route::post("debitNote/{debit}/update", "CreditNoteController@edit")->name("creditNote.edit");
+    Route::get("creditNote/{credit}/update", "CreditNoteController@update")->name("creditNote.update");
+    Route::post("creditNote/{credit}/update", "CreditNoteController@edit")->name("creditNote.edit");
     Route::get("creditNotes", "CreditNoteController@show")->name("creditNote.list");
-    Route::get("creditNote/{debit}/delete", "CreditNoteController@destroy")->name("creditNote.delete");
-    Route::get("creditNote/{debit}/approve", "CreditNoteController@approve")->name("creditNote.approve");
+    Route::get("creditNote/{credit}/delete", "CreditNoteController@destroy")->name("creditNote.delete");
+    Route::get("creditNote/{credit}/approve", "CreditNoteController@approve")->name("creditNote.approve");
     Route::get("creditNote/submit_receipt", "CreditNoteController@submitReceiptData")->name("creditNote.receipt.create");
+    Route::get("creditNote/accounting_preview", "CreditNoteController@getAccountingEntryPreview")->name("creditNote.accounting.preview");
+
+    // Vendor Debit Note
+    Route::get("vendorDebitNote/create", "VendorDebitNoteController@create")->name("vendordebitnote.create");
+    Route::post("vendorDebitNote/create", "VendorDebitNoteController@store")->name("vendordebitnote.store");
+    Route::get("vendorDebitNote", "VendorDebitNoteController@show")->name("vendordebitnote.list");
+    Route::get("vendorDebitNote/{vdebit}/delete", "VendorDebitNoteController@destroy")->name("vendordebitnote.delete");
+    Route::get("vendorDebitNote/{vdebit}/approve", "VendorDebitNoteController@approve")->name("vendordebitnote.approve");
+    Route::get("vendorDebitNote/view", "VendorDebitNoteController@view")->name("vendordebitnote.view");
+
+    // Vendor Credit Note
+    Route::get("vendorCreditNote/create", "VendorCreditNoteController@create")->name("vendorcreditnote.create");
+    Route::post("vendorCreditNote/create", "VendorCreditNoteController@store")->name("vendorcreditnote.store");
+    Route::get("vendorCreditNote", "VendorCreditNoteController@show")->name("vendorcreditnote.list");
+    Route::get("vendorCreditNote/{vcredit}/delete", "VendorCreditNoteController@destroy")->name("vendorcreditnote.delete");
+    Route::get("vendorCreditNote/{vcredit}/approve", "VendorCreditNoteController@approve")->name("vendorcreditnote.approve");
+    Route::get("vendorCreditNote/view", "VendorCreditNoteController@view")->name("vendorcreditnote.view");
 });
 
 
@@ -789,6 +927,8 @@ Route::group(['prefix' => 'purchase', 'middleware' => 'mysql2', 'before' => 'csr
 
     // opening stock eend
 
+    Route::get("purchase-traceability-report", "PurchaseTraceabilityReportController@index");
+
     Route::post('/createPurchaseVoucherFormThroughGrn', 'PurchaseController@createPurchaseVoucherFormThroughGrn');
     Route::get('/editPurchaseVoucherForm/{id?}', 'PurchaseController@editPurchaseVoucherForm');
 
@@ -820,7 +960,12 @@ Route::group(['prefix' => 'purchase', 'middleware' => 'mysql2', 'before' => 'csr
 
     Route::get('/createSubItemForm', 'PurchaseController@createSubItemForm');
     Route::get('/viewSubItemList', 'PurchaseController@viewSubItemList');
+    Route::get('/viewSubItemListWithoutEditing', 'PurchaseController@viewSubItemListWithoutEditing');
     Route::resource('specialPrice', 'SpecialPriceController');
+
+    Route::delete('/special-price/{id}', 'SpecialPriceController@destroy')->name('specialPrice.destroy');
+
+
     Route::resource('customerDiscount', 'CustomerDiscountController');
     Route::resource('stockBarcode', 'StockBarcodeController');
     Route::post('getBarcodeListAgainstProduct', 'StockBarcodeController@getBarcodeListAgainstProduct')->name('getBarcodeListAgainstProduct');
@@ -836,7 +981,7 @@ Route::group(['prefix' => 'purchase', 'middleware' => 'mysql2', 'before' => 'csr
     Route::resource('brands', 'BrandController');
     Route::get('/get_brand_by_principal_group', 'BrandController@get_brand_by_principal_group')->name('get_brand_by_principal_group');
 
-    Route::get("/get_subitems_against_brand_id", function() {
+    Route::get("/get_subitems_against_brand_id", function () {
         $brand_id = request()->brand_id;
         return CommonHelper::get_item_by_brand_id($brand_id);
     })->name("brand.subitems");
@@ -849,6 +994,7 @@ Route::group(['prefix' => 'purchase', 'middleware' => 'mysql2', 'before' => 'csr
 
     Route::get('/createUOMForm', 'PurchaseController@createUOMForm');
     Route::get('/viewUOMList', 'PurchaseController@viewUOMList');
+
 
     Route::get('/createDemandForm', 'PurchaseController@createDemandForm');
     Route::get('/viewDemandList', 'PurchaseController@viewDemandList');
@@ -904,7 +1050,16 @@ Route::group(['prefix' => 'purchase', 'middleware' => 'mysql2', 'before' => 'csr
     Route::get('/poReportPage', 'PurchaseController@poReportPage');
     Route::get('/directPurchaseInvoice', 'PurchaseController@directPurchaseInvoice');
     Route::get('/addOpeningAgainstVendorForm', 'PurchaseController@addOpeningAgainstVendorForm');
+    Route::get('/purchaseJournal', 'PurchaseController@purchaseJournal');
+    Route::get('/purchaseReportDashboard', 'PurchaseController@purchaseReportDashboard');
+    Route::get('/purchaseReturnReport', 'PurchaseController@purchaseReturnReport');
+    Route::get('/purchasePriceHistoryReport', 'PurchaseController@purchasePriceHistoryReport');
+    Route::get('/pendingPurchasePaymentReport', 'PurchaseController@pendingPurchasePaymentReport');
+    Route::get('/purchaseCreditNoteReport', 'PurchaseController@purchaseCreditNoteReport');
+    Route::get('/purchaseDebitNoteReport', 'PurchaseController@purchaseDebitNoteReport');
+    Route::get('/qrCodeHistoryReport', 'PurchaseController@qrCodeHistoryReport');
 });
+
 
 
 
@@ -1015,6 +1170,8 @@ Route::group(['prefix' => 'pad', 'middleware' => 'mysql2', 'before' => 'csrf'], 
 
     Route::post('/editPurchaseRequestVoucherDetail', 'PurchaseEditDetailControler@editPurchaseRequestVoucherDetail');
     Route::post('/addStockTransfer', 'PurchaseAddDetailControler@addStockTransfer');
+    Route::post('/addStockInDetail', 'PurchaseAddDetailControler@addStockInDetail');
+    Route::post('/addStockOutDetail', 'PurchaseAddDetailControler@addStockOutDetail');
     Route::post('/updateStockTransfer', 'PurchaseAddDetailControler@updateStockTransfer');
     Route::post('/updatePurchaseReturnDetail', 'PurchaseAddDetailControler@updatePurchaseReturnDetail');
 
@@ -1027,6 +1184,9 @@ Route::group(['prefix' => 'pad', 'middleware' => 'mysql2', 'before' => 'csrf'], 
 });
 Route::get('/set_user_db_id', 'PurchaseDataCallController@set_user_db_id');
 Route::group(['prefix' => 'pdc', 'middleware' => 'mysql2', 'before' => 'csrf'], function () {
+    Route::get('/get_warehouse_stock_bulk', 'PurchaseDataCallController@get_warehouse_stock_bulk');
+    Route::get('/getPurchaseDebitNoteAjax', 'PurchaseDataCallController@getPurchaseDebitNoteAjax')->name('getPurchaseDebitNoteAjax');
+    Route::get('/getQRCodeHistoryAjax', 'PurchaseDataCallController@getQRCodeHistoryAjax')->name('getQRCodeHistoryAjax');
 
     Route::get('/get_stock_location_wise', 'PurchaseDataCallController@get_stock_location_wise');
     Route::get('/getDupicate', 'PurchaseDataCallController@getDupicate');
@@ -1044,8 +1204,14 @@ Route::group(['prefix' => 'pdc', 'middleware' => 'mysql2', 'before' => 'csrf'], 
     Route::get('/getPendingApporvedMultiList', 'PurchaseDataCallController@getPendingApporvedMultiList');
     Route::get('/getPendingApporvedMultiListForSales', 'PurchaseDataCallController@getPendingApporvedMultiListForSales');
     Route::get('/getPendingApporvedMultiListForFinance', 'PurchaseDataCallController@getPendingApporvedMultiListForFinance');
-    Route::get('/vendor_outstanding_data', 'PurchaseDataCallController@vendor_outstanding_data');
+    Route::get('/vendor_outstanding_data', 'PurchaseDataCallController@vendor_outstanding_data')->name('vendor_outstanding_data');
     Route::get('/vendor_balance_ajax_data', 'PurchaseDataCallController@vendor_balance_ajax_data');
+    Route::get('/getPurchaseReportDashboardAjax', 'PurchaseDataCallController@getPurchaseReportDashboardAjax')->name('getPurchaseReportDashboardAjax');
+    Route::get('/getPurchaseJournalAjax', 'PurchaseDataCallController@getPurchaseJournalAjax')->name('getPurchaseJournalAjax');
+    Route::get('/getPurchaseReturnReportAjax', 'PurchaseDataCallController@getPurchaseReturnReportAjax')->name('getPurchaseReturnReportAjax');
+    Route::get('/getPurchasePriceHistoryAjax', 'PurchaseDataCallController@getPurchasePriceHistoryAjax')->name('getPurchasePriceHistoryAjax');
+    Route::get('/getPendingPurchasePaymentAjax', 'PurchaseDataCallController@getPendingPurchasePaymentAjax')->name('getPendingPurchasePaymentAjax');
+    Route::get('/getPurchaseCreditNoteAjax', 'PurchaseDataCallController@getPurchaseCreditNoteAjax')->name('getPurchaseCreditNoteAjax');
 
     Route::get('/getDetailReportAjax', 'PurchaseDataCallController@getDetailReportAjax');
 
@@ -1068,13 +1234,12 @@ Route::group(['prefix' => 'pdc', 'middleware' => 'mysql2', 'before' => 'csrf'], 
     Route::get('/get_grn_history', 'PurchaseDataCallController@get_grn_history');
     Route::get('/search/{categoryId?}/{subCategory_id?}', 'PurchaseDataCallController@search');
 
-     Route::get('/region/{id}/delete', 'PurchaseAddDetailControler@deleteRegion');
-   
-
     Route::get('/viewCategoryList', 'PurchaseDataCallController@viewCategoryList');
     Route::get('/viewRegionList', 'PurchaseDataCallController@viewRegionList');
+    Route::get('/region/{id}/delete', 'PurchaseAddDetailControler@deleteRegion');
     Route::get('/viewSubItemList', 'PurchaseDataCallController@viewSubItemList');
     Route::post('/viewSubItemListAjax', 'PurchaseDataCallController@viewSubItemListAjax')->name('viewSubItemListAjax');
+    Route::post('/viewSubItemListAjaxWithoutEditing', 'PurchaseDataCallController@viewSubItemListAjaxWithoutEditing')->name('viewSubItemListAjaxWithoutEditing');
 
     Route::get('/export-subitem/purchase/export-subitems', 'PurchaseDataCallController@exportSubitems')->name('export.subitems');
 
@@ -1104,7 +1269,7 @@ Route::group(['prefix' => 'pdc', 'middleware' => 'mysql2', 'before' => 'csrf'], 
     Route::get('/viewPurchaseVoucherDetailThroughGrn/{id?}', 'PurchaseDataCallController@viewPurchaseVoucherDetailThroughGrn');
     Route::get('/viewPurchaseVoucherDetailAfterSubmit/{id?}', 'PurchaseDataCallController@viewPurchaseVoucherDetailAfterSubmit');
     Route::get('/purchase_voucher_list_ajax', 'PurchaseDataCallController@purchase_voucher_list_ajax');
-    Route::get('/get_data_debit_note_ajax', 'PurchaseDataCallController@get_data_debit_note_ajax');
+    Route::get('/get_data_debit_note_ajax', 'PurchaseDataCallController@get_data_debit_note_ajax')->name('get_data_debit_note_ajax');
     Route::get('/filterByClientAndRegionJobOrder', 'PurchaseDataCallController@filterByClientAndRegionJobOrder');
     Route::get('/filterByClientAndRegionJobOrderTwo', 'PurchaseDataCallController@filterByClientAndRegionJobOrderTwo');
     Route::get('/filterByCategoryAndRegionWiseStockOpening', 'PurchaseDataCallController@filterByCategoryAndRegionWiseStockOpening');
@@ -1156,11 +1321,13 @@ Route::group(['prefix' => 'pdc', 'middleware' => 'mysql2', 'before' => 'csrf'], 
 
     // for opening
     Route::get('/get_data_opening', 'PurchaseDataCallController@get_data_opening');
+    Route::get('/get_data_opening_single', 'PurchaseDataCallController@get_data_opening_single');
 
     // for  currency ajax
     Route::get('/createCurrencyTypeForm', 'PurchaseDataCallController@createCurrencyTypeForm');
     Route::Get('/addCurrency', 'PurchaseDataCallController@addCurrency');
     Route::Post('/addCurrencyForm', 'PurchaseDataCallController@addCurrencyForm');
+
 
 
     // for sub item ajax
@@ -1312,6 +1479,8 @@ Route::group(['prefix' => 'pmfal', 'middleware' => 'mysql2', 'before' => 'csrf']
 //Start Store
 Route::group(['prefix' => 'store', 'middleware' => 'mysql2', 'before' => 'csrf'], function () {
     Route::get('/st', 'StoreController@toDayActivity');
+
+    Route::get("/BAProductInformation", "StoreController@productInformation")->name("ba.product-information");
     Route::get('/average_cost', 'StoreController@average_cost');
     Route::get('/inventoryActivityPage', 'StoreController@inventoryActivityPage');
     Route::get('/inventoryActivityAjax', 'StoreController@inventoryActivityAjax');
@@ -1328,8 +1497,10 @@ Route::group(['prefix' => 'store', 'middleware' => 'mysql2', 'before' => 'csrf']
     Route::get("/unit_report", "UnitActivityListController@show")->name("unit_activity.view");
     Route::get("/product_wise_sales_report", "ProductWiseSalesReportController@show")->name("product_wise_sales_report.view");
     Route::get("/sales_return_view", "SalesReturnReportController@show")->name("sales_return_report.view");
+    Route::get("BASaleReturn", "SalesReturnReportController@show_ba");
     Route::get("/stock_report_view", "StockReportController@show")->name("stock_report.view");
     Route::get("/sale_return_journal_report", "SaleReturnJournalReportController@show")->name("sale_return.view");
+    Route::get("/sale_return_journal_report_v2", "SaleReturnJournalV2ReportController@show")->name("sale_return_v2.view");
     Route::get("/custom_sales_tax_report", "CustomSalesTaxReportController@show")->name('sales_tax_report.view');
     Route::get("/store_brand_tertiary_summary", "StoresBrandTertialSummaryController@show")->name('stores_brand_tertiary_summary.view');
     Route::get("/inventory_sheet", "InventorySheetController@show")->name('inventory_sheet.view');
@@ -1338,14 +1509,22 @@ Route::group(['prefix' => 'store', 'middleware' => 'mysql2', 'before' => 'csrf']
     Route::get("/recovery_report_view", "RecoveryReportController@show")->name("recovery_report.view");
     Route::get("/stock_in_report", "StockInReportController@index")->name("stock_in.view");
     Route::get("/stock_out_report", "StockOutReportController@index")->name("stock_out.view");
+    Route::get('/qty_adjustment_form', 'StoreController@qty_adjustment_form');
+    Route::get('/qty_adjustment_list', 'StoreController@qty_adjustment_list');
+    Route::get("/stock_transfer_report", "StockTransferReportController@show")->name("stock_transfer_report.view");
 
 
 
     Route::get('/add_opening', 'StoreController@add_opening');
     Route::get('/add_opening_import', 'StoreController@add_opening_import');
+    Route::get('/download_opening_template', 'StoreController@download_opening_template')->name('download_opening_template');
     Route::post('/add_opening_import_post', 'StoreController@add_opening_import_post')->name('add_opening_import_post');
     Route::get('/createIssuanceForm', 'StoreController@createIssuanceForm');
     Route::get('/editIssuanceForm', 'StoreController@editIssuanceForm');
+
+
+    Route::get('/add_opening_single_item', 'StoreController@add_opening_single_item');
+
 
     Route::get('/issuanceList', 'StoreController@issuanceList');
 
@@ -1384,15 +1563,16 @@ Route::group(['prefix' => 'store', 'middleware' => 'mysql2', 'before' => 'csrf']
     Route::get('/stockReportView', 'StoreController@stockReportView');
     Route::get("/outstanding-again-report", "OutstandingAgainController@show");
     Route::get('/closingReportView', 'StoreController@closingReportView')->name('closingReportView');
-    
+
     Route::get('/BAclosingReport', 'StoreController@BAclosingReportView')->name('baClosingReportView');
-    
+    Route::get('/stores-product-stock', 'StoreController@BAclosingReportViewClone')->name('baClosingReportViewClone');
+
     // Route::get('/ajax/search-product', 'StoreController@searchProduct')->name('ajax.search.product');
     Route::get('/ajax/search-product', 'StoreController@searchProduct')->name('ajax.search.product');
-Route::get('/ajax/get-warehouses-by-territory','StoreController@getWarehousesByTerritory')->name('ajax.get.warehouses');
-Route::get('/ajax/get-warehouses-by-territory-stock','StoreController@getWarehousesByTerritory_stocktasfer')->name('ajax.get.warehouses.stocktarasfer');
-Route::get('/ajax/get-warehouses-by-other-territory-stock','StoreController@getWarehousesByOtherTerritories')->name('ajax.get.warehouses.other.stocktarasfer');
-Route::get('/ajax/get-brands-by-warehouse', 'StoreController@getBrandsByWarehouse')->name('ajax.get.brands');
+    Route::get('/ajax/get-warehouses-by-territory', 'StoreController@getWarehousesByTerritory')->name('ajax.get.warehouses');
+    Route::get('/ajax/get-warehouses-by-territory-stock', 'StoreController@getWarehousesByTerritory_stocktasfer')->name('ajax.get.warehouses.stocktarasfer');
+    Route::get('/ajax/get-warehouses-by-other-territory-stock', 'StoreController@getWarehousesByOtherTerritories')->name('ajax.get.warehouses.other.stocktarasfer');
+    Route::get('/ajax/get-brands-by-warehouse', 'StoreController@getBrandsByWarehouse')->name('ajax.get.brands');
 
 
     Route::get('/stockReportBatchWiseView', 'StoreController@stockReportBatchWiseView');
@@ -1416,8 +1596,14 @@ Route::get('/ajax/get-brands-by-warehouse', 'StoreController@getBrandsByWarehous
     Route::get('/getCheckPurchasingDataAjax', 'StoreController@getCheckPurchasingDataAjax');
     Route::get('/stock_transfer_form', 'StoreController@stock_transfer_form');
     Route::get('/stock_transfer_list', 'StoreController@stock_transfer_list');
+    Route::get('/stock_in_list', 'StoreController@stock_in_list');
+    Route::get('/stock_out_list', 'StoreController@stock_out_list');
+    Route::get('/delete_stock_out', 'StoreDataCallController@delete_stock_out');
     Route::get('/editStockTransferForm/{id}/{TrNo}', 'StoreController@editStockTransferForm');
     Route::get('/itemWiseOpening', 'StoreController@itemWiseOpening');
+    Route::get('/itemWiseOpeningSingle', 'StoreController@itemWiseOpeningSingle');
+    Route::get('/stock_in_form', 'StoreController@stock_in_form');
+    Route::get('/stock_out_form', 'StoreController@stock_out_form');
     Route::get('/inventory_movement', 'StoreController@inventory_movement');
     Route::get('/inventory_movement_test', 'StoreController@inventory_movement_test');
     Route::get('/inventory_movement_fi', 'StoreController@inventory_movement_fi');
@@ -1426,6 +1612,12 @@ Route::get('/ajax/get-brands-by-warehouse', 'StoreController@getBrandsByWarehous
     Route::get('/stock_movemnetAjaxMoreData', 'StoreController@stock_movemnetAjaxMoreData');
 
     Route::get('/internal_consumtion_list', 'StoreController@internal_consumtion_list');
+
+    // Item Conversion Routes
+    Route::get('/item-conversion', 'ItemConversionController@index');
+    Route::get('/item-conversion/list', 'ItemConversionController@list');
+    Route::post('/item-conversion/save', 'ItemConversionController@save');
+    Route::get('/item-conversion/get-stock', 'ItemConversionController@getStock');
 });
 
 Route::group(['prefix' => 'stad', 'middleware' => 'mysql2', 'before' => 'csrf'], function () {
@@ -1443,9 +1635,11 @@ Route::group(['prefix' => 'stad', 'middleware' => 'mysql2', 'before' => 'csrf'],
     Route::post('/updateDirectPurchaseOrder', 'StoreAddDetailControler@updateDirectPurchaseOrder')->name('updateDirectPurchaseOrder');
 
     Route::post('/insert_opening_data', 'StoreAddDetailControler@insert_opening_data');
+    Route::post('/insert_opening_data_single', 'StoreAddDetailControler@insert_opening_data_single');
     Route::get('/getSupplierDiscounts', 'StoreDataCallController@getSupplierDiscounts');
     Route::get('/getCustomerDiscounts', 'StoreDataCallController@getCustomerDiscounts');
     Route::get('/getCustomerById', 'StoreDataCallController@getCustomerById');
+    Route::get('/getBranchName', 'MobileApplicationController@getBranchName');
 
 
     Route::post('/createPurchaseRequestDetailForm', 'StoreDataCallController@createPurchaseRequestDetailForm');
@@ -1458,6 +1652,7 @@ Route::group(['prefix' => 'stad', 'middleware' => 'mysql2', 'before' => 'csrf'],
 
     Route::post('/createStoreChallanReturnDetailForm', 'StoreDataCallController@createStoreChallanReturnDetailForm');
     Route::post('/addStoreChallanReturnDetail', 'StoreAddDetailControler@addStoreChallanReturnDetail');
+    Route::post('/addQtyAdjustmentDetail', 'StoreAddDetailControler@addQtyAdjustmentDetail');
     Route::post('/editStoreChallanReturnDetail', 'StoreEditDetailControler@editStoreChallanReturnDetail');
 
     Route::get('/Email_Sent', 'StoreAddDetailControler@Email_Sent');
@@ -1470,6 +1665,9 @@ Route::group(['prefix' => 'stad', 'middleware' => 'mysql2', 'before' => 'csrf'],
 
 Route::group(['prefix' => 'stdc', 'middleware' => 'mysql2', 'before' => 'csrf'], function () {
     Route::get('/filterDemandVoucherList', 'StoreDataCallController@filterDemandVoucherList');
+    Route::get('/viewIssuanceDetail', 'StoreDataCallController@viewIssuanceDetail');
+    Route::get('/filterQtyAdjustmentList', 'StoreDataCallController@filterQtyAdjustmentList');
+    Route::get('/viewQtyAdjustmentDetail', 'StoreDataCallController@viewQtyAdjustmentDetail');
     Route::get('/get_work_order_data', 'StoreDataCallController@get_work_order_data');
     Route::get('/approve_transfer', 'StoreDataCallController@approve_transfer');
     Route::get('/approveIssuance', 'StoreDataCallController@approveIssuance');
@@ -1501,6 +1699,8 @@ Route::group(['prefix' => 'stdc', 'middleware' => 'mysql2', 'before' => 'csrf'],
     Route::get('/filterViewDateWiseStockInventoryReport', 'StoreDataCallController@filterViewDateWiseStockInventoryReport');
     Route::get('/viewStockInventorySummaryDetail', 'StoreDataCallController@viewStockInventorySummaryDetail');
     Route::get('/viewStockTransferDetail', 'StoreDataCallController@viewStockTransferDetail');
+    Route::get('/viewStockOutDetail', 'StoreDataCallController@viewStockOutDetail');
+    Route::get('/viewStockInDetail', 'StoreDataCallController@viewStockInDetail');
     Route::get('/getBuyerWiseOpeningData', 'StoreDataCallController@getBuyerWiseOpeningData');
     Route::get('/getVendorWiseOpeningData', 'StoreDataCallController@getVendorWiseOpeningData');
     Route::get('/UpdateBuyerOpening', 'StoreDataCallController@UpdateBuyerOpening');
@@ -1537,11 +1737,6 @@ Route::group(['prefix' => 'sales', 'middleware' => 'mysql2', 'before' => 'csrf']
     Route::get('/debtor_balance_page', 'SalesController@debtor_balance_page');
     Route::get('/commission_report_page', 'SalesController@commission_report_page');
 
-
-    Route::delete("/branch/{id}", "BranchController@destroy")->name("branch.delete");
-    Route::get("/branch/{id}/edit", "BranchController@edit")->name("branch.edit");
-    Route::put("/branch/{id}/edit", "BranchController@update")->name("branch.edit");
-    
     Route::post('/uploadCreditCustomer', 'SalesController@uploadCreditCustomer');
     Route::post('/uploadProduct', 'SalesController@uploadProduct');
 
@@ -1622,24 +1817,24 @@ Route::group(['prefix' => 'sales', 'middleware' => 'mysql2', 'before' => 'csrf']
 
     Route::get('/undertaking/{id?}', 'SalesController@undertaking');
 
-    Route::get("/getDropdown", function() {
+    Route::get("/getDropdown", function () {
         $brand_id = request()->brand_id;
         $items = App\Helpers\CommonHelper::get_item_by_brand_id($brand_id);
 
         $list = "";
 
-        foreach($items as $item) {
-            $list .= '<option data-brand="'.$item->brand_id.'" value="'.$item->id.'" data-cat="'.$item->main_ic_id.'">'.'('.$item->sku_code.') '.$item->product_name.'</option>';
-        } 
+        foreach ($items as $item) {
+            $list .= '<option data-brand="' . $item->brand_id . '" value="' . $item->id . '" data-cat="' . $item->main_ic_id . '">' . '(' . $item->sku_code . ') ' . $item->product_name . '</option>';
+        }
 
         $html = '
         <select style="width: 150px;" onChange="item_change(this); getCustomerAssignedWarehouse(this)"
             name="product_id[]" class="form-control itemsclass select2"
             id="">
-            ' 
-            . 
-                $list
-            . 
+            '
+            .
+            $list
+            .
             '
         </select>';
 
@@ -1689,6 +1884,9 @@ Route::group(['prefix' => 'sales', 'middleware' => 'mysql2', 'before' => 'csrf']
 
     Route::get('/createSurveyBy', 'SalesController@createSurveyBy');
     Route::get('/branchList', 'SalesController@branchList');
+    Route::delete("/branch/{id}", "BranchController@destroy")->name("branch.delete");
+    Route::get("/branch/{id}/edit", "BranchController@edit")->name("branch.edit");
+    Route::put("/branch/{id}/edit", "BranchController@update")->name("branch.edit");
 
     Route::get('/jobTrackingSheet', 'SalesController@jobTrackingSheet');
     Route::get('/jobTrackingSheetCopy', 'SalesController@jobTrackingSheetCopy');
@@ -1724,6 +1922,7 @@ Route::group(['prefix' => 'sales', 'middleware' => 'mysql2', 'before' => 'csrf']
     Route::match(['GET', 'POST'], '/createStoresCategory', 'SalesController@createStoresCategory');
     Route::match(['GET', 'POST'], '/editStoresCategory', 'SalesController@editStoresCategoryForm');
     Route::get('/storesCategoryList', 'SalesController@storesCategoryList');
+    Route::get('/storesCategoryListReadOnly', 'SalesController@storesCategoryListReadOnly');
     Route::get('/deleteStoresCategory', 'SalesController@deleteStoresCategory');
     // End Stores Category
     // Territory
@@ -1742,7 +1941,7 @@ Route::group(['prefix' => 'sales', 'middleware' => 'mysql2', 'before' => 'csrf']
     Route::match(['GET', 'POST'], '/assignDicount', 'SalesController@assignDicount');
     Route::match(['GET', 'POST'], '/editAssignDicount', 'SalesController@editAssignDicount');
     Route::get('/assignDicountList', 'SalesController@assignDicountList');
-    Route::get('/get-stores-by-territory', 'SalesController@getStoresByTerritory')->name('getStoresByTerritory');  
+    Route::get('/get-stores-by-territory', 'SalesController@getStoresByTerritory')->name('getStoresByTerritory');
     Route::get('/deleteAssignDicount', 'SalesController@deleteAssignDicount');
 
     Route::get('/import/discount', 'SalesController@showImportForm')->name('special-prices.import.form');
@@ -1787,7 +1986,7 @@ Route::group(['prefix' => 'sales', 'middleware' => 'mysql2', 'before' => 'csrf']
     Route::get('/soReportPage', 'SalesController@soReportPage');
     Route::get('/dnReportPage', 'SalesController@dnReportPage');
     Route::get('/dn_without_Sales', 'SalesController@dn_without_Sales');
-    Route::get('/cogs_si', 'SalesController@cogs_si');
+    Route::get('/cogs_si', 'SalesController@cogs_si')->name('cogs_si');
     Route::get('/add_point_of_sale', 'SalesController@add_point_of_sale');
     Route::get('/pos_list', 'SalesController@pos_list');
     Route::get('/po_detail', 'SalesController@po_detail');
@@ -1969,8 +2168,8 @@ Route::group(['prefix' => 'sdc', 'middleware' => 'mysql2', 'before' => 'csrf'], 
     Route::get('/getDataClientWise', 'SalesDataCallController@getDataClientWise');
     Route::get('/getRecieptDataClientWise', 'SalesDataCallController@getRecieptDataClientWise');
     Route::get('/getRecieptDataClientWise/create', 'SalesDataCallController@getRecieptDataClientWiseCreate');
-    Route::get('/getOutstandingReportAjax', 'SalesDataCallController@getOutstandingReportAjax');
-    Route::get('/get_debtor_balance_ajax', 'SalesDataCallController@get_debtor_balance_ajax');
+    Route::get('/getOutstandingReportAjax', 'SalesDataCallController@getOutstandingReportAjax')->name('getOutstandingReportAjax');
+    Route::get('/get_debtor_balance_ajax', 'SalesDataCallController@get_debtor_balance_ajax')->name('get_debtor_balance_ajax');
 
 
     Route::get('/TrackingDelete', 'SalesDataCallController@TrackingDelete');
@@ -1989,7 +2188,7 @@ Route::group(['prefix' => 'sdc', 'middleware' => 'mysql2', 'before' => 'csrf'], 
     Route::get('/getDeliveryChallanFilterWise', 'SalesDataCallController@getDeliveryChallanFilterWise');
     Route::get('/getSalesTaxInvoiceeFilterWise', 'SalesDataCallController@getSalesTaxInvoiceeFilterWise');
     Route::get('/getSalesTaxInvoiceeFilterWiseAjax', 'SalesDataCallController@getSalesTaxInvoiceeFilterWiseAjax');
-    Route::get('/getCustomerCreditNoteData', 'SalesDataCallController@getCustomerCreditNoteData');
+    Route::get('/getCustomerCreditNoteData', 'SalesDataCallController@getCustomerCreditNoteData')->name('getCustomerCreditNoteData');
     Route::get('/pos_delete', 'SalesDataCallController@pos_delete');
 
 
@@ -2257,7 +2456,7 @@ Route::group(['prefix' => '', 'middleware' => 'mysql2', 'before' => 'csrf'], fun
     Route::get('/approve_voucher', 'PaymentVoucherDetails@approve_voucher')->name('approve_voucher');
     Route::get("/approve_debit_note", "PaymentVoucherDetails@approve_credit_note")->name("approve_debit_note");
     // Route::get('/verify_voucher', 'PaymentVoucherDetails@verify_voucher');
-Route::get('/verify_voucher', 'PaymentVoucherDetails@verify_voucher')->name('verify_voucher');
+    Route::get('/verify_voucher', 'PaymentVoucherDetails@verify_voucher')->name('verify_voucher');
 
     Route::get('/DeletePVoucherActivity', 'PaymentVoucherDetails@DeletePVoucherActivity');
     Route::get('/payment_return', 'PaymentVoucherDetails@payment_return');
@@ -2289,6 +2488,11 @@ Route::get('/verify_voucher', 'PaymentVoucherDetails@verify_voucher')->name('ver
     Route::get('/approve_new_pv', 'PaymentVoucherDetails@approve_new_pv');
 });
 
+// Currency CRUD Routes
+Route::group(['middleware' => 'mysql2', 'before' => 'csrf'], function () {
+    Route::resource('currency', 'CurrencyController');
+});
+
 
 Route::group(['prefix' => 'ajax', 'middleware' => 'mysql2', 'before' => 'csrf'], function () {
     Route::get('get_data', 'AjaxController@get_data');
@@ -2299,11 +2503,22 @@ Route::get('finance/createPaymentVoucherForm', 'AllInOnePaymentVoucherController
 Route::get('finance/viewAllPaymentNewVoucherList', 'AllInOnePaymentVoucherController@viewAllPaymentNewVoucherList');
 Route::get('finance/editAllPaymentNew/{id?}', 'AllInOnePaymentVoucherController@editAllPaymentNew');
 Route::get('fdc/viewAllPaymentVoucherDetailPrint', 'AllInOnePaymentVoucherController@viewAllPaymentVoucherDetailPrint');
-Route::get('fdc/getAllpvsDateAccontWiseAndTypeWise', 'AllInOnePaymentVoucherController@getAllpvsDateAccontWiseAndTypeWise');
+Route::get('fdc/getAllpvsDateAccontWiseAndTypeWise', 'AllInOnePaymentVoucherController@getAllpvsDateAccontWiseAndTypeWise')->name('getAllpvsDateAccontWiseAndTypeWise');
 Route::post('/insertAllPayment', 'AllInOnePaymentVoucherController@insertAllPayment');
-Route::get('/get_pv_merge_chunk', 'AllInOnePaymentVoucherController@get_pv_merge_chunk');
-Route::get('/pv_acount_head_po_pi_chunk', 'AllInOnePaymentVoucherController@pv_acount_head_po_pi_chunk');
+Route::get('/get_pv_merge_chunk', 'AllInOnePaymentVoucherController@get_pv_merge_chunk')->name('get_pv_merge_chunk');
+Route::get('/pv_acount_head_po_pi_chunk', 'AllInOnePaymentVoucherController@pv_acount_head_po_pi_chunk')->name('pv_acount_head_po_pi_chunk');
 
+// Customer bank details routing
+Route::get('sales/addCustomerBank', 'SalesAddDetailControler@addCustomerBank');
+Route::post('sales/submitCustomerBank', 'SalesAddDetailControler@submitCustomerBank');
+Route::get('sales/viewCustomerBank', 'SalesAddDetailControler@viewCustomerBank');
+Route::get('sales/editCustomerBank/{id}', 'SalesAddDetailControler@editCustomerBank');
+Route::post('sales/updateCustomerBank/{id}', 'SalesAddDetailControler@updateCustomerBank');
+
+// Admin side Reseller SO Requests
+Route::get('sales/reseller-so-requests', 'AdminResellerSoController@index')->name('admin.reseller_so.index');
+Route::get('sales/reseller-so-requests/{id}', 'AdminResellerSoController@show')->name('admin.reseller_so.show');
+Route::post('sales/reseller-so-requests/{id}/approve', 'AdminResellerSoController@approve')->name('admin.reseller_so.approve');
 
 require('Production/Production.php');
 require('InventoryMaster/InventoryMaster.php');
@@ -2314,3 +2529,24 @@ require('modules/selectlist.php');
 require('modules/users.php');
 require('modules/shah.php');
 require('modules/assets.php');
+
+// Reseller Portal Routes
+Route::prefix('reseller')->group(function () {
+    Route::get('/login', 'ResellerLoginController@showLoginForm')->name('reseller.login');
+    Route::post('/login', 'ResellerLoginController@login')->name('reseller.login.submit');
+
+    Route::middleware(['auth:reseller'])->group(function () {
+        Route::get('/dashboard', 'ResellerLoginController@dashboard')->name('reseller.dashboard');
+        Route::get('/logout', 'ResellerLoginController@logout')->name('reseller.logout');
+
+        // SO Requests
+        Route::get('/so-requests/create', 'ResellerPortalController@createSoRequest')->name('reseller.so.create');
+        Route::get('/so-requests/get-products-by-brand', 'ResellerPortalController@getProductsByBrand')->name('reseller.so.get_products');
+        Route::post('/so-requests/store', 'ResellerPortalController@storeSoRequest')->name('reseller.so.store');
+        Route::get('/so-requests', 'ResellerPortalController@soRequestList')->name('reseller.so.list');
+        Route::get('/so-requests/{id}', 'ResellerPortalController@showSoRequest')->name('reseller.so.show');
+
+        // Inventory
+        Route::get('/inventory/stock', 'ResellerPortalController@myStock')->name('reseller.inventory.stock');
+    });
+});

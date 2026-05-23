@@ -12,8 +12,7 @@ class SalesTaxInvoice extends Model{
     protected $primaryKey = 'id';
     public $timestamps = false;
 
-
-    protected static function boot() {
+     protected static function boot() {
         parent::boot();
 
         $type = "Sale Tax Invoice";
@@ -49,6 +48,7 @@ class SalesTaxInvoice extends Model{
             \App\Helpers\CommonHelper::createNotification($type . " with " . $st_invoice->{$reference_number} . " is deleted by " . auth()->user()->name, $type . "");
         });
     }
+
 
         public function currencyRelation()
         {

@@ -232,13 +232,19 @@ use App\Helpers\ReuseableCode;
                                             <table id="" class="table table-bordered">
                                                 <thead>
                                                     <tr>
+                                                                <th style="width: 100px" class="text-center">SKU Code<span
+                                                                class="rflabelsteric"><strong>*</strong></span></th>
 
                                                         <th style="width: 150px;" class="text-center hidden-print"><a
                                                                 tabindex="-1" href="#"
                                                                 onclick="showDetailModelOneParamerter('pdc/createSubItemFormAjax')"
                                                                 class="">Product</a>
+                                                    <th style="width: 100px" class="text-center">Barcode<span
+                                                                class="rflabelsteric"><strong>*</strong></span></th>
+
                                                         <th style="width: 100px" class="text-center">UOM <span
                                                                 class="rflabelsteric"><strong>*</strong></span></th>
+
                                                         <th style="width: 200px;" class="text-center">Qty. <span
                                                                 class="rflabelsteric"><strong>*</strong></span></th>
                                                         <th style="width: 200px;" class="text-center">Return Qty. <span
@@ -282,7 +288,14 @@ use App\Helpers\ReuseableCode;
                                                     <input type="hidden" name="grn_data_id_{{$sales_tax_count}}_{{$count}}"
                                                         id="grn_data_id_{{$sales_tax_count}}_{{$count}}" value="{{$row1->grn_data_id}}" />
                                                     <tr>
-
+<td>
+                                                             <?php
+                                                                    
+                                                                    
+                                                                    echo CommonHelper::get_product_sku($row1->sub_item);
+                                                                    
+                                                                    ?>
+                                                        </td>
                                                         <td title="{{CommonHelper::get_product_name($row1->sub_item)}}"
                                                             class="text-center" style="width: 30%;">
                                                             <input type="hidden"
@@ -295,6 +308,16 @@ use App\Helpers\ReuseableCode;
                                                                     $sub_ic_detail= explode(',',$sub_ic_detail);
                                                                     
                                                                     echo CommonHelper::get_product_name($row1->sub_item);
+                                                                    
+                                                                    ?>
+                                                        </td>
+
+                                                        
+                                                        <td>
+                                                             <?php
+                                                                    
+                                                                    
+                                                                    echo CommonHelper::product_barcode($row1->sub_item);
                                                                     
                                                                     ?>
                                                         </td>
@@ -360,25 +383,34 @@ use App\Helpers\ReuseableCode;
                                                     </tr>
                                                     <?php  $count++; ?>
                                                     @endforeach
+                                                      <tr class="text-center">
+                                                        <td class="text-center" colspan="9"></td>
+                                                        <td class="text-center" colspan="2">TOTAL</td>
+                                                        <td><input type="text" maxlength="15"
+                                                                class="form-control text-right" name="Totalamount"
+                                                                value="<?php echo number_format($TotalNetWithTax, 2); ?>"
+                                                                id="Totalamount<?php echo $sales_tax_count?>" readonly="">
+                                                        </td>
+                                                    </tr>
                                                      <input type="hidden" name="Totalamount"
                                                                 value="<?php echo number_format($TotalNetWithTax, 2); ?>"
                                                                 id="Totalamount<?php echo $sales_tax_count?>">
                                                     <tr class="text-center" style="background: gainsboro">
-                                                        <td class="text-center" colspan="5"></td>
+                                                        <td class="text-center" colspan="7"></td>
                                                         <?php
                                                             $SalesTaxAccId = $NewPurchaseVoucher->sales_tax_acc_id;
                                                             $SalesTaxAmount = $NewPurchaseVoucher->sales_tax_amount;
                                                             ?>
-                                                        <td colspan="1">WithHolding Taxes</td>
-                                                        <td colspan="3">
+                                                        <td colspan="2">WithHolding Tax</td>
+                                                        <td colspan="2">
 
                                                             <select name="SalesTaxesAccId<?php echo $sales_tax_count?>"
                                                                 class="form-control select2"
                                                                 id="SalesTaxesAccId<?php echo $sales_tax_count?>"
                                                                 onchange="sales_tax_calc('<?php echo $sales_tax_count?>')">
-                                                                <option value="">Select Head</option>
+                                                                <option value="">Select</option>
                                                                 @foreach(ReuseableCode::get_all_sales_tax() as $row_tax)
-                                                                <option value="{{ $row_tax->id}}" {{ $SalesTaxAccId == $row_tax->id ? 'selected' : '' }}>{{$row_tax->rate}} %
+                                                                <option value="{{ $row_tax->id}}" data-rate="{{$row_tax->rate}}" {{ $SalesTaxAccId == $row_tax->id ? 'selected' : '' }}>{{$row_tax->rate}} %
                                                                 </option>
                                                                 @endforeach
                                                             </select>
@@ -393,13 +425,13 @@ use App\Helpers\ReuseableCode;
                                                                 ></td>
                                                     </tr>
                                                     <tr>
-                                                        <td id="rupees{{$main_count}}" class="text-center" colspan="7">
+                                                        <td id="rupees{{$main_count}}" class="text-center" colspan="9">
                                                         </td>
-                                                        <td class="text-center" colspan="1">Net Total</td>
+                                                        <td class="text-center" colspan="1">Grand Total</td>
                                                         <td colspan="2"><input type="text" name="NetTotal"
                                                                 id="NetTotal<?php echo $sales_tax_count?>"
                                                                 class="form-control number_form" readonly
-                                                                value="<?php echo number_format($TotalNetWithTax + $SalesTaxAmount, 2); ?>"></td>
+                                                                value="<?php echo number_format($TotalNetWithTax - $SalesTaxAmount, 2); ?>"></td>
                                                     </tr>
                                                 </tbody>
                                             </table>
@@ -578,19 +610,24 @@ function calculation_amount(id, count, SectionIndex) {
 }
 
 function sales_tax_calc(SectionIndex) {
-    var SalesTaxAmount = parseFloat($('#SalesTaxAmount' + SectionIndex).val()) || 0;
     var NetAmount = parseFloat($('#Totalamount' + SectionIndex).val()) || 0;
     var AccId = $('#SalesTaxesAccId' + SectionIndex).val();
+    var rate = $('#SalesTaxesAccId' + SectionIndex).find(':selected').data('rate') || 0;
+    
+    var SalesTaxAmount = 0;
     
     if (AccId != '') {
         $('#SalesTaxAmount' + SectionIndex).prop('disabled', false);
+        SalesTaxAmount = (NetAmount * rate) / 100;
+        $('#SalesTaxAmount' + SectionIndex).val(SalesTaxAmount.toFixed(2));
     } else {
         $('#SalesTaxAmount' + SectionIndex).prop('disabled', true);
         SalesTaxAmount = 0;
         $('#SalesTaxAmount' + SectionIndex).val(0);
     }
 
-    $('#NetTotal' + SectionIndex).val(parseFloat(NetAmount + SalesTaxAmount).toFixed(2));
+    $('#NetTotal' + SectionIndex).val(parseFloat(NetAmount - SalesTaxAmount).toFixed(2));
+    toWordss(SectionIndex);
 }
 
 </script>

@@ -14,16 +14,36 @@ class BrandController extends Controller
     //     return view('Purchase.Brand.brand_list', compact('brands'));
     // }
 
-
- public function index()
+public function index()
 {
-    $brands = Brand::with('principalGroup')
-                   ->where('status', 1)
-                   ->orderBy('id', 'desc') // latest first
-                   ->get();
+    if(request()->ajax()) {
+        // return view();
+    
+        $groups = request()->principal_group;
+     
+         $brands = Brand::with('principalGroup')
+                    ->where('status', 1)
+                    ->orderBy('id', 'desc') // latest first
+                    ->when(isset($groups), function($query) use ($groups) {
+                        $query->whereIn("principal_group_id", $groups);
+                    })
+                    ->get();
 
-    return view('Purchase.Brand.brand_list', compact('brands'));
+        return view('Purchase.Brand.brand_list_ajax', compact('brands'));
+    }
+
+    return view('Purchase.Brand.brand_list');
 }
+
+//  public function index()
+// {
+//     $brands = Brand::with('principalGroup')
+//                    ->where('status', 1)
+//                    ->orderBy('id', 'desc') // latest first
+//                    ->get();
+
+//     return view('Purchase.Brand.brand_list', compact('brands'));
+// }
 
 
     public function create()
@@ -51,9 +71,15 @@ class BrandController extends Controller
     public function get_brand_by_principal_group(Request $request) {
     $principal_group_id = $request->principal_group_id;
 
-    $brands = Brand::where('principal_group_id', $principal_group_id)
-                   ->where('status', 1)
-                   ->get();
+    $query = Brand::where('status', 1);
+
+    if (is_array($principal_group_id)) {
+        $query->whereIn('principal_group_id', $principal_group_id);
+    } else {
+        $query->where('principal_group_id', $principal_group_id);
+    }
+
+    $brands = $query->get();
 
     $data = [];
 

@@ -119,13 +119,39 @@
                                                     </div>
                                                 </div>
 
+                                               
+
 
                                                 <div class="col-md-6 col-md-6 col-sm-12 col-xs-12">
                                                     <div class="form-group">
                                                         <label class="control-label" style="margin-bottom: 0;">Sales Person </label>
-                                                        <input name="saleperson" id="saleperson" class="form-control"
+                                                        <select name="saleperson_id" id="saleperson_id" class="form-control select2">
+                                                            <option value="">Select Sales Person</option>
+                                                            @foreach($salesmen as $salesman)
+                                                                <option value="{{ $salesman->id }}">{{ $salesman->sub_department_name }}</option>
+                                                            @endforeach
+                                                        </select>
+                                                    </div>
+                                                </div>
+                                                    <div class="col-md-6 col-md-6 col-sm-12 col-xs-12">
+                                                    <div class="form-group">
+                                                        <label class="control-label" style="margin-bottom: 0;">Mode / Terms Of Payment</label>
+                                                        <input name="model_terms_of_payment" id="model_terms_of_payment" class="form-control"
                                                                type="text">
                                                     </div>
+                                                </div>
+
+
+   
+                                                <div class="col-lg-6 col-md-6 col-sm-12 col-xs-12">
+                                                    <label class="control-label" style="margin-bottom: 0;">Warehouse</label>
+                                                    <select style="wiidth: 100%;" id="warehouse_from"
+                                                            name="warehouse" class="form-control select2 warehouse_from form-group">
+                                                        <option value="">Select Warehouse</option>
+                                                        @foreach(CommonHelper::get_all_warehouse() as $item)
+                                                            <option value="{{$item->id}}">{{$item->name}}</option>
+                                                        @endforeach
+                                                    </select>
                                                 </div>
 
                                                 <div class="col-md-6 col-md-6 col-sm-12 col-xs-12">
@@ -138,23 +164,12 @@
                                                     </div>
                                                 </div>
 
-                                               
-                                                <div class="col-lg-6 col-md-6 col-sm-12 col-xs-12">
-                                                    <label class="control-label" style="margin-bottom: 0;">Warehouse</label>
-                                                    <select style="wiidth: 100%;" id="warehouse_from"
-                                                            name="warehouse" class="form-control select2 warehouse_from form-group">
-                                                        <option value="">Select Warehouse</option>
-                                                        @foreach(CommonHelper::get_all_warehouse() as $item)
-                                                            <option value="{{$item->id}}">{{$item->name}}</option>
-                                                        @endforeach
-                                                    </select>
-                                                </div>
+                                            
 
                                                 <div class="col-lg-6 col-md-6 col-sm-12 col-xs-12">
                                                     <label class="control-label" style="margin-bottom: 0;">Select Principal Groups</label>
-                                                    <select style="wiidth: 100%;" id="principal_group"
-                                                            name="principal_group" onchange="get_brand_by_principal_group(this)" class="form-control select2 principal_group form-group">
-                                                        <option value="">Select Principal group</option>
+                                                    <select style="width: 100%;" id="principal_group"
+                                                            name="principal_group[]" multiple data-placeholder="Select Principal Groups" onchange="get_brand_by_principal_group(this)" class="form-control select2 principal_group">
                                                         @foreach(CommonHelper::get_all_principal_groups() as $group)
                                                             <option value="{{$group->id}}">{{$group->products_principal_group}}</option>
                                                         @endforeach
@@ -267,13 +282,13 @@
                                                         <input style="width: 70px;" readonly name="s_stock[]" class="form-control s_stock" value="" type="text" id="s_stock" tabindex="-1">
                                                     </td>
                                                     <td>
-                                                         <input style="width: 70px;"  onkeyup="calculation_amount(); checkQtyStock(this); totalQty();" name="qty[]" class="form-control qty next-total" value="" type="text" id="qty" tabindex="0">
+                                                         <input style="width: 70px;"  onkeyup="calculation_amount(); checkQtyStock(this); totalQty();" name="qty[]" class="form-control qty" value="" type="text" id="qty" tabindex="0">
                                                     </td>
                                                     <td>
                                                         <input style="width: 65px;" onkeyup="calculation_amount()" name="foc[]" class="form-control" value="" type="text" id="foc" tabindex="-1">
                                                     </td>
                                                       <td>
-                                                        <input style="width: 80px;" name="rate[]" onkeyup="calculation_amount()" class="form-control" value="" type="text" id="sale_price" tabindex="-1">
+                                                        <input style="width: 80px;" name="rate[]" onkeyup="calculation_amount()" class="form-control next-total" value="" type="text" id="sale_price" tabindex="0">
                                                     </td>
                                                     <td>
                                                         <input style="width: 80px;" readonly name="mrp_price[]" class="form-control" value="" type="text" id="mrp_price" tabindex="-1">
@@ -343,9 +358,29 @@
                                                            class="form-control form-control2" id="total_item"
                                                            value="" type="text"  readonly>
                                                 </li>
-                                                   
+                                                    <li></li><li></li>
+                                                <li>Advance Tax </li>
+                                              <li class="text-left">
+                                            <!-- <select name="sale_taxes_id" class="form-control" onchange="applySaleTax(this)">
+                                                <option value="">Select</option>
+                                                @foreach(CommonHelper::get_table_data('sale_taxes') as $item)
+                                                    <option value="{{ $item->id }}">{{ $item->name }} - {{ $item->discount_percentage }}%</option>
+                                                @endforeach
+                                            </select> -->
+                                                    @php
+                                                        $taxes = CommonHelper::get_table_data('sale_taxes');
+                                                    @endphp
 
-                                            
+                                                    <select name="sale_taxes_id" class="form-control" onchange="applySaleTax(this)">
+                                                        <option value="">Select</option>
+                                                        @foreach($taxes as $index => $item)
+                                                            <option value="{{ $item->id }}" {{ $index == 0 ? 'selected' : '' }}>
+                                                                {{ $item->name }}
+                                                            </option>
+                                                        @endforeach
+                                                    </select>
+
+                                            </li>
                                             </ul>
                                         </div>
                                     </div>
@@ -358,15 +393,15 @@
                                                                              class="form-control form-control2" value=""
                                                                              type="text" readonly></li>
                                             </ul>
-                                            <ul class="sale-l sale-l2 hide">
-                                                <li>Tax Amount</li>
+                                            <ul class="sale-l sale-l2">
+                                                <li>GST Amount</li>
                                                 <li class="text-left"><input name="total_sales_tax"
                                                                              id="total_sales_tax" style="background: white !important;"
                                                                              class="form-control form-control2" value=""
                                                                              type="text"  readonly></li>
                                             </ul>
                                         
-                                             <ul class="sale-l sale-l2">
+                                            <ul class="sale-l sale-l2">
                                                 <li>Net Amount</li>
                                                 <li class="text-left"><input
                                                             name="total_amount_after_sale_tax"
@@ -374,18 +409,26 @@
                                                             class="form-control form-control2" value=""
                                                             type="text" readonly></li>
                                             </ul>
-                                            <ul class="sale-l sale-l2 hide">
-                                                <li>Sale Tax Amount</li>
+                                            <ul class="sale-l sale-l2">
+                                                <li>Advance Tax Amount</li>
+                                                <li class="text-left"><input
+                                                            name="sale_taxes_amount_rate"
+                                                            id="tax_amount_calculated" style="background: white !important;"
+                                                            class="form-control form-control2" value=""
+                                                            type="text" readonly></li>
+                                            </ul> 
+                                            <ul class="sale-l sale-l2">
+                                                <li>Grand Total</li>
                                                 <li class="text-left"><input
                                                             name="sale_taxes_amount_total"
                                                             id="total_amount_after_sale_tax_apply_persentage" style="background: white !important;"
                                                             class="form-control form-control2" value=""
                                                             type="text" readonly></li>
                                             </ul> 
-                                                <ul class="hide sale-l sale-l2 hide">
+                                                <ul class="hide sale-l sale-l2">
                                          
-                                                <li> sale Tax Amount</li>
-                                                <input type="text" class="form-control" name="sale_taxes_amount_rate" id="tax_amount_calculated" readonly>
+                                                <li> Advance Tax Amount</li>
+                                                <input type="text" class="form-control" name="sale_taxes_amount_rate_hidden" id="tax_amount_calculated_hidden" readonly>
                                             </ul>
                                           </div>
                                     </div>
@@ -473,99 +516,14 @@ function applySaleTax(selectElement) {
 
 let warehouses = [];
 
+let allSalesmen = [];
 jQuery(document).ready(function($) {
-    
-    var docBody = $(document.body);
-    var shiftPressed = false;
-    var clickedOutside = false;
-
-    // Track Shift key
-    docBody.on('keydown', function(e) {
-        if ((e.keyCode || e.which) === 16) { shiftPressed = true; }
-    });
-    docBody.on('keyup', function(e) {
-        if ((e.keyCode || e.which) === 16) { shiftPressed = false; }
-    });
-
-    // Detect click outside Select2
-    docBody.on('mousedown', function(e){
-        clickedOutside = !$(e.target).is('[class*="select2"]');
-    });
-
-    // Select2 state handlers
-    docBody.on('select2:opening', function(e) {
-        clickedOutside = false;
-        $(e.target).attr('data-s2open', 1);
-    });
-    docBody.on('select2:closing', function(e) {
-        $(e.target).removeAttr('data-s2open');
-    });
-
-    docBody.on('select2:close', function(e) {
-        var elSelect = $(e.target);
-        elSelect.removeAttr('data-s2open');
-
-        var currentForm = elSelect.closest('form');
-        var othersOpen = currentForm.find('[data-s2open]').length;
-
-        if (othersOpen === 0 && clickedOutside === false) {
-            // Filter valid inputs
-            var inputs = currentForm.find(':input:enabled:not([readonly], input:hidden, button:hidden, textarea:hidden)')
-                .not(function () {
-                    return $(this).parent().is(':hidden');
-                })
-                .not('.no-tab-focus'); // EXCLUDE .no-tab-focus inputs
-
-            var elFocus = null;
-            $.each(inputs, function (index) {
-                var elInput = $(this);
-                if (elInput.attr('id') === elSelect.attr('id')) {
-                    elFocus = shiftPressed ? inputs.eq(index - 1) : inputs.eq(index + 1);
-                    return false;
-                }
-            });
-
-            if (elFocus) {
-                var isSelect2 = elFocus.siblings('.select2').length > 0;
-                if (isSelect2) {
-                    elFocus.select2('open');
-                } else {
-                    elFocus.focus();
-                }
-            }
+    // Store all original salepersons
+    $('#saleperson_id option').each(function() {
+        if ($(this).val() != "") {
+            allSalesmen.push({ id: $(this).val(), text: $(this).text() });
         }
     });
-
-    // Focus on Select2 from its container
-    docBody.on('focus', '.select2', function(e) {
-        var elSelect = $(this).siblings('select');
-        if (!elSelect.is('[disabled]') && !elSelect.is('[data-s2open]') && $(this).has('.select2-selection--single').length > 0) {
-            elSelect.attr('data-s2open', 1);
-            elSelect.select2('open');
-        }
-    });
-
-    // Prevent tabbing out of last input (add row)
-    document.addEventListener('keydown', function (event) {
-        if (event.key === 'Tab') {
-            let activeElement = document.activeElement;
-            let lastRow = document.querySelector('table tr:last-child');
-            let lastInput = lastRow ? lastRow.querySelector('input:last-child') : null;
-
-            if (activeElement === lastInput) {
-                event.preventDefault();
-                AddMoreDetails();
-                getTableRowCount();
-
-                let newRow = document.querySelector('table tr:last-child');
-                if (newRow) {
-                    let firstInput = newRow.querySelector('input:not([readonly]):not(.no-tab-focus)');
-                    if (firstInput) firstInput.focus();
-                }
-            }
-        }
-    });
-
     // Initialize row count
     getTableRowCount();
 });
@@ -706,13 +664,13 @@ function AddMoreDetails() {
                     <input type="text" name="s_stock[]" class="form-control s_stock" id="s_stock" style="width:70px;" readonly tabindex="-1">
                 </td>
                 <td>
-                    <input type="text" name="qty[]" class="form-control qty next-total" id="qty" style="width:70px;" onkeyup="checkQtyStock(this);calculation_amount();totalQty();">
+                    <input type="text" name="qty[]" class="form-control qty" id="qty" style="width:70px;" onkeyup="checkQtyStock(this);calculation_amount();totalQty();" tabindex="0">
                 </td>
                 <td>
                     <input type="text" name="foc[]" class="form-control" id="foc" style="width:65px;" onkeyup="calculation_amount();" tabindex="-1">
                 </td>
                 <td>
-                    <input type="text" name="rate[]" class="form-control" id="sale_price" style="width:70px;" onkeyup="calculation_amount();" tabindex="-1">
+                    <input type="text" name="rate[]" class="form-control next-total" id="sale_price" style="width:70px;" onkeyup="calculation_amount();" tabindex="0">
                 </td>
                 <td>
                     <input type="text" name="mrp_price[]" class="form-control" id="mrp_price" style="width:70px;" readonly tabindex="-1">
@@ -886,6 +844,28 @@ function get_brand_by_principal_group(element) {
     //         }
     //     });
     // });
+
+    // Prevent form submission on Enter key press
+$(document).ready(function() {
+    $('#create-sale-order-form').on('keypress', function(e) {
+        // Check if the pressed key is Enter (key code 13)
+        if (e.which === 13) {
+            // Check if the active element is a textarea (allow Enter in textarea)
+            if ($(e.target).is('textarea')) {
+                return true; // Allow Enter in textarea for new lines
+            }
+            
+            // Check if the active element is a select2 input
+            if ($(e.target).hasClass('select2-search__field')) {
+                return true; // Allow Enter in select2 search
+            }
+            
+            // For all other inputs, prevent form submission
+            e.preventDefault();
+            return false;
+        }
+    });
+});
 
     $('#create-sale-order-form').on('submit', function(event) {
     event.preventDefault(); // Prevent default form submission
@@ -1112,64 +1092,311 @@ $(document).on('keydown', '.next-total', function (event) {
         $('.hideon3').hide();
     });
 
-    function getCustomer(element) {
-        var id = element.value;
-        var selectedOption = $(element).find('option:selected');
-        var stockValue = selectedOption.data('type');
+    // function getCustomer(element) {
+    //     var id = element.value;
+    //     var selectedOption = $(element).find('option:selected');
+    //     var stockValue = selectedOption.data('type');
 
 
-        if(stockValue == 3){
-            $('.hideon3').show();
-        }else{
-            $('.hideon3').hide();
-        }
-        $.ajax({
-            url: '{{ url("stad/getCustomerById") }}',
-            type: 'GET',
-            data: {
-                id: id,
-            },
-            success: function(response) {
-                console.log(response);
-                warehouses = response.warehouse_from.split(",");
+    //     if(stockValue == 3){
+    //         $('.hideon3').show();
+    //     }else{
+    //         $('.hideon3').hide();
+    //     }
+    //     $.ajax({
+    //         url: '{{ url("stad/getCustomerById") }}',
+    //         type: 'GET',
+    //         data: {
+    //             id: id,
+    //         },
+    //         success: function(response) {
+    //             console.log(response);
+    //             warehouses = response.warehouse_from.split(",");
                 
-                $('#warehouse_from').select2({
-                matcher: function(params, data) {
-                    // Exclude 'all' option from dropdown
+    //             $('#warehouse_from').select2({
+    //             matcher: function(params, data) {
+    //                 // Exclude 'all' option from dropdown
 
+    //                 if(warehouses.includes("all")) return data;
+    //                 if (!warehouses.includes(data.id)) {
+    //                 return null;
+    //                 }
+    //                 return data;
+    //             }
+    //             });
+
+    //             $('#opening_balance').val(response.balance_amount);
+    //             $('#amount_limit').val(response.creditLimit);
+    //             $('#current_balance_due').val(response.balance_amount);
+    //             $('#address').val(response.address);
+    //             $('#saleperson').val(response.SaleRep);
+    //             $('#phone_no').val(response.phone_1);
+    //             // $('#salepersonmobile').val(response.salepersonmobile);
+    //             if(response.cnic_ntn != ""){
+    //                 $('#NTN_No').val(response.cnic_ntn);
+    //             }else{
+    //                 $('#NTN_No').val("-");
+    //             }
+    //             if(response.strn != ""){
+    //                 $('#ST_No').val(response.strn);
+    //             }else{
+    //                 $('#ST_No').val("-");
+    //             }
+    //             if (response.special_price_mapped == 1) {
+    //                 $('#special_price_mapped').val("yes");
+    //             } else {
+    //                 $('#special_price_mapped').val("no");
+    //             }
+    //         }
+    //     });
+    // }
+//     function getCustomer(element) {
+//     var id = element.value;
+//     var selectedOption = $(element).find('option:selected');
+//     var stockValue = selectedOption.data('type');
+
+//     if(stockValue == 3){
+//         $('.hideon3').show();
+//     }else{
+//         $('.hideon3').hide();
+//     }
+    
+//     if (!id) {
+//         // Agar customer deselect kiya to fields clear karein
+//         $('#opening_balance, #amount_limit, #current_balance_due, #address, #phone_no, #branch, #NTN_No, #ST_No, #special_price_mapped').val('');
+        
+//         // Restore all salespersons
+//         var $salepersonSelect = $('#saleperson_id');
+//         $salepersonSelect.empty().append('<option value="">Select Sales Person</option>');
+//         allSalesmen.forEach(function(person) {
+//             $salepersonSelect.append(`<option value="${person.id}">${person.text}</option>`);
+//         });
+//         $salepersonSelect.trigger('change');
+        
+//         return;
+//     }
+    
+//     $.ajax({
+//         url: '{{ url("stad/getCustomerById") }}',
+//         type: 'GET',
+//         data: {
+//             id: id,
+//         },
+//         success: function(response) {
+//             console.log(response); // Debug ke liye
+            
+//             // Warehouse handling
+//             warehouses = response.warehouse_from ? response.warehouse_from.split(",") : [];
+            
+//             $('#warehouse_from').select2({
+//                 matcher: function(params, data) {
+//                     if(warehouses.includes("all")) return data;
+//                     if (!warehouses.includes(data.id)) {
+//                         return null;
+//                     }
+//                     return data;
+//                 }
+//             });
+
+//             // Basic fields
+//             $('#opening_balance').val(response.balance_amount || '0.00');
+//             $('#amount_limit').val(response.creditLimit || '0.00');
+//             $('#current_balance_due').val(response.balance_amount || '0.00');
+//             $('#address').val(response.address || '');
+//             $('#phone_no').val(response.phone_1 || '');
+            
+//             // YAHAN BRANCH NAME SET HO RAHA HAI
+//             // Pehle check karein ke branch_name response mein hai ya nahi
+//             if (response.branch_name) {
+//                 $('#branch').val(response.branch_name);
+                
+//             } else if (response.branch_id) {
+//                 // Agar branch_name nahi hai to branch_id se fetch karna hoga
+//                 getBranchName(response.branch_id);
+//             } else {
+//                 $('#branch').val('-');
+//             }
+            
+//             // NTN/STRN fields
+//             $('#NTN_No').val(response.cnic_ntn && response.cnic_ntn != "" ? response.cnic_ntn : "-");
+//             $('#ST_No').val(response.strn && response.strn != "" ? response.strn : "-");
+            
+//             // Special price mapped
+//             $('#special_price_mapped').val(response.special_price_mapped == 1 ? "yes" : "no");
+
+//             // Terms of Payment
+//             if (response.terms_of_payment) {
+//                 $('#model_terms_of_payment').val(response.terms_of_payment);
+//             }
+
+//             // Auto populate and filter Sales Person
+//             var salesPersonId = response.SaleRep || response.sale_person || response.sales_person_id;
+//             var $salepersonSelect = $('#saleperson_id');
+            
+//             // Empty the select first
+//             $salepersonSelect.empty().append('<option value="">Select Sales Person</option>');
+            
+//             if (salesPersonId && salesPersonId != 0) {
+//                 // Find matching salesperson from our stored list
+//                 var person = allSalesmen.find(p => p.id == salesPersonId);
+//                 if (person) {
+//                     $salepersonSelect.append(`<option value="${person.id}" selected>${person.text}</option>`);
+//                 } else {
+//                     // Fallback: if not in our list, use name from response if available
+//                     var personName = response.sales_person_name || ('Sales Person ID: ' + salesPersonId);
+//                     $salepersonSelect.append(`<option value="${salesPersonId}" selected>${personName}</option>`);
+//                 }
+//             } else {
+//                 // If no specific salesperson for customer, show all options
+//                 allSalesmen.forEach(function(person) {
+//                     $salepersonSelect.append(`<option value="${person.id}">${person.text}</option>`);
+//                 });
+//             }
+//             $salepersonSelect.trigger('change');
+//         },
+//         error: function(xhr, status, error) {
+//             console.error('Error fetching customer data:', error);
+//             Swal.fire({
+//                 icon: 'error',
+//                 title: 'Error',
+//                 text: 'Failed to load customer data. Please try again.'
+//             });
+//         }
+//     });
+// }
+
+
+function getCustomer(element) {
+    var id = element.value;
+    var selectedOption = $(element).find('option:selected');
+    var stockValue = selectedOption.data('type');
+
+    if(stockValue == 3){
+        $('.hideon3').show();
+    }else{
+        $('.hideon3').hide();
+    }
+    
+    if (!id) {
+        // Agar customer deselect kiya to fields clear karein
+        $('#opening_balance, #amount_limit, #current_balance_due, #address, #phone_no, #branch, #NTN_No, #ST_No, #special_price_mapped').val('');
+        
+        // Restore all salespersons
+        var $salepersonSelect = $('#saleperson_id');
+        $salepersonSelect.empty().append('<option value="">Select Sales Person</option>');
+        allSalesmen.forEach(function(person) {
+            $salepersonSelect.append(`<option value="${person.id}">${person.text}</option>`);
+        });
+        $salepersonSelect.trigger('change');
+        
+        return;
+    }
+    
+    $.ajax({
+        url: '{{ url("stad/getCustomerById") }}',
+        type: 'GET',
+        data: {
+            id: id,
+        },
+        success: function(response) {
+            console.log("Customer Response:", response); // Debug ke liye - check if balance_amount is coming
+            
+            // Warehouse handling
+            warehouses = response.warehouse_from ? response.warehouse_from.split(",") : [];
+            
+            $('#warehouse_from').select2({
+                matcher: function(params, data) {
                     if(warehouses.includes("all")) return data;
                     if (!warehouses.includes(data.id)) {
-                    return null;
+                        return null;
                     }
                     return data;
                 }
-                });
+            });
 
-                $('#opening_balance').val(response.balance_amount);
-                $('#amount_limit').val(response.creditLimit);
-                $('#current_balance_due').val(response.balance_amount);
-                $('#address').val(response.address);
-                $('#saleperson').val(response.SaleRep);
-                $('#phone_no').val(response.phone_1);
-                // $('#salepersonmobile').val(response.salepersonmobile);
-                if(response.cnic_ntn != ""){
-                    $('#NTN_No').val(response.cnic_ntn);
-                }else{
-                    $('#NTN_No').val("-");
-                }
-                if(response.strn != ""){
-                    $('#ST_No').val(response.strn);
-                }else{
-                    $('#ST_No').val("-");
-                }
-                if (response.special_price_mapped == 1) {
-                    $('#special_price_mapped').val("yes");
-                } else {
-                    $('#special_price_mapped').val("no");
-                }
+            // Basic fields - MAKE SURE THESE MATCH YOUR RESPONSE PROPERTIES
+            $('#opening_balance').val(response.balance_amount || '0.00');      // Changed from response.opening_balance
+            $('#amount_limit').val(response.creditLimit || '0.00');
+            $('#current_balance_due').val(response.balance_amount || '0.00'); // Changed from response.balance_amount
+            $('#address').val(response.address || '');
+            $('#phone_no').val(response.phone_1 || '');
+            
+            // Branch name
+            if (response.branch_name) {
+                $('#branch').val(response.branch_name);
+            } else if (response.branch_id) {
+                getBranchName(response.branch_id);
+            } else {
+                $('#branch').val('-');
             }
-        });
+            
+            // NTN/STRN fields
+            $('#NTN_No').val(response.cnic_ntn && response.cnic_ntn != "" ? response.cnic_ntn : "-");
+            $('#ST_No').val(response.strn && response.strn != "" ? response.strn : "-");
+            
+            // Special price mapped
+            $('#special_price_mapped').val(response.special_price_mapped == 1 ? "yes" : "no");
+
+            // Terms of Payment
+            if (response.terms_of_payment) {
+                $('#model_terms_of_payment').val(response.terms_of_payment);
+            }
+
+            // Auto populate and filter Sales Person
+            var salesPersonId = response.SaleRep || response.sale_person || response.sales_person_id;
+            var $salepersonSelect = $('#saleperson_id');
+            
+            // Empty the select first
+            $salepersonSelect.empty().append('<option value="">Select Sales Person</option>');
+            
+            if (salesPersonId && salesPersonId != 0) {
+                // Find matching salesperson from our stored list
+                var person = allSalesmen.find(p => p.id == salesPersonId);
+                if (person) {
+                    $salepersonSelect.append(`<option value="${person.id}" selected>${person.text}</option>`);
+                } else {
+                    // Fallback: if not in our list, use name from response if available
+                    var personName = response.sales_person_name || ('Sales Person ID: ' + salesPersonId);
+                    $salepersonSelect.append(`<option value="${salesPersonId}" selected>${personName}</option>`);
+                }
+            } else {
+                // If no specific salesperson for customer, show all options
+                allSalesmen.forEach(function(person) {
+                    $salepersonSelect.append(`<option value="${person.id}">${person.text}</option>`);
+                });
+            }
+            $salepersonSelect.trigger('change');
+        },
+        error: function(xhr, status, error) {
+            console.error('Error fetching customer data:', error);
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: 'Failed to load customer data. Please try again.'
+            });
+        }
+    });
+}
+
+// Agar branch_name response mein nahi aaya to alag se fetch karne ka function
+function getBranchName(branchId) {
+    if (!branchId) {
+        $('#branch').val('-');
+        return;
     }
+    
+    $.ajax({
+        url: '{{ url("getBranchName") }}', // Ye route banana hoga
+        type: 'GET',
+        data: { id: branchId },
+        success: function(response) {
+            $('#branch').val(response.name || '-');
+        },
+        error: function() {
+            $('#branch').val('-');
+        }
+    });
+}
     let isCheckingCustomer = false; // flag to prevent recursion
 
     $(document).on('select2:selecting', '.brands', function(e) {
@@ -1285,6 +1512,11 @@ $(document).on('keydown', '.next-total', function (event) {
 
             calculation_amount();
             get_discount();
+
+            // Automatically focus on the Qty field in the same row
+            setTimeout(function() {
+                row.find('.qty').focus();
+            }, 100);
         }
     });
 }
@@ -1804,6 +2036,16 @@ function get_product_by_brand(element, number) {
 
         $('#customer').select2();
         $('#customer_name').select2();
+        $('#saleperson_id').select2();
+        try {
+            jQuery('#principal_group').select2({
+                placeholder: "Select Principal Groups",
+                allowClear: true,
+                width: '100%'
+            });
+        } catch (e) {
+            console.error("Select2 initialization failed for principal_group:", e);
+        }
 
           $('#warehouse_from').select2({
             matcher: function(params, data) {

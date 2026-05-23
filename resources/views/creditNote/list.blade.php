@@ -65,11 +65,11 @@ $this->m = Session::get('run_company');
                                             <thead>
                                                 <th class="text-center col-sm-1">S.No</th>
                                                 <th class="text-center col-sm-1">Store</th>
-                                                <th class="text-center col-sm-2">Delivery Man</th>
+                                                
                                                 <th class="text-center col-sm-2">Description</th>
-                                                <th class="text-center">Credit</th>
-                                                <th class="text-center">On Record</th>
-                                                <th class="text-center">Voucher Type</th>
+                                                <th class="text-center">Debit Account</th>
+                                                
+                                                
                                                 <th class="text-center">Branch</th>
                                                 <th class="text-center">Status</th>
 
@@ -95,7 +95,7 @@ $this->m = Session::get('run_company');
         let is_confirmed = confirm("Are you sure?");
         if(is_confirmed) {
             $.ajax({
-                url: `debitNote/${id}/delete`, // empty = current URL (self)
+                url: `creditNote/${id}/delete`, // empty = current URL (self)
                 type: "get",
                 data: $(this).serialize(), // serialize form data
                 success: function(response) {
@@ -105,18 +105,7 @@ $this->m = Session::get('run_company');
             });
         }
     }
-    function approve(el, id) {
-        let is_confirmed = confirm("Are you sure?");
-        if(is_confirmed) {
-            $.ajax({
-                url: `debitNote/${id}/approve`, // empty = current URL (self)
-                type: "get",
-                success: function(response) {
-                    $(el).closest("tr").find(".approve").text("Approved");
-                },
-            });
-        }
-    }
+
     $.ajax({
         url: window.location.href, // empty = current URL (self)
         type: "get",

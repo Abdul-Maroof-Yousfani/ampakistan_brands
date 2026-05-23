@@ -1,11 +1,11 @@
 <?php
 $accType = Auth::user()->acc_type;
-if($accType == 'client'){
-    $m = $_GET['m'];
-}else{
+if ($accType == 'client') {
+    $m = $_GET['m'] ?? Auth::user()->company_id;
+} else {
     $m = Auth::user()->company_id;
 }
-$parentCode = $_GET['parentCode'];
+$parentCode = $_GET['parentCode'] ?? 0;
 
 use App\Helpers\CommonHelper;
 use App\Helpers\SalesHelper;
@@ -51,8 +51,7 @@ $currentMonthEndDate   = date('Y-m-t');
                             <input type="Date" name="to" id="to" max="<?php ?>" value="<?php echo $currentMonthEndDate;?>" class="form-control" />
                         </div>
                         <div class="col-lg-4 col-md-4 col-sm-4 col-xs-12" style="margin-top: 30px">
-                            <label class="radio-inline"><input type="radio" name="optradio" id="radio1" value="1" checked>Invoice Wise</label>
-                            <label class="radio-inline"><input type="radio" name="optradio" id="radio2" value="2">Item Wise</label>
+                            <label class="radio-inline"><input type="radio" name="optradio" id="radio2" value="2" checked>Item Wise</label>
                         </div>
 
                         <div class="col-lg-2 col-md-2 col-sm-2 col-xs-12">
@@ -100,9 +99,9 @@ $currentMonthEndDate   = date('Y-m-t');
             $('#data').html('<div class="row"><div class="col-lg-12 col-md-12 col-sm-12 col-xs-12"><div class="loader"></div></div></div>');
 
             $.ajax({
-                url: '/sdc/cogs_si',
+                url: "<?php echo url('sdc/cogs_si') ?>",
                 type: 'Get',
-                data: {from: from,to:to,radio:radio},
+                data: { from: from, to: to, radio: radio },
 
                 success: function (response)
                 {

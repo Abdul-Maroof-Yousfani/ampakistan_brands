@@ -104,19 +104,27 @@ endif;
                                                 @endforeach
                                             </select>
                                         </div>
-
                                     </div>
-
-
                                     <div class="row">
-
-
                                         <div class="col-lg-3 col-md-3 col-sm-3 col-xs-12">
                                             <label class="sf-label">Destination</label>
                                             <input style="text-transform: capitalize;" type="text" class="form-control"
                                                 placeholder="" name="destination" id="destination" value="" />
                                         </div>
-
+                                        <div class="col-lg-3 col-md-3 col-sm-3 col-xs-12">
+                                            <label class="sf-label">Department</label>
+                                            <input type="text" class="form-control" name="department" id="department" value="" />
+                                        </div>
+                                        <div class="col-lg-3 col-md-3 col-sm-3 col-xs-12">
+                                            <label class="sf-label">Supplier Type <span class="rflabelsteric"><strong>*</strong></span></label>
+                                            <select class="form-control requiredField" name="p_type" id="p_type">
+                                                @foreach(\App\Helpers\CommonHelper::get_types() as $item)
+                                                    <option value="{{ $item->id }}">
+                                                        {{ $item->name }}
+                                                    </option>
+                                                @endforeach
+                                            </select>
+                                        </div>
                                         <div class="col-lg-3 col-md-3 col-sm-3 col-xs-12">
                                             <label class="sf-label"> <a href="#"
                                                     onclick="showDetailModelOneParamerter('pdc/createSupplierFormAjax');"
@@ -125,10 +133,10 @@ endif;
                                             <select onchange="get_address(); get_discount();" name="supplier_id"
                                                 id="supplier_id" class="form-control requiredField select2">
                                                 <option value="">Select Vendor</option>
-
                                             </select>
                                         </div>
-
+                                    </div>
+                                    <div class="row">
                                         <div class="col-lg-3 col-md-3 col-sm-3 col-xs-12">
                                             <label class="sf-label"> <a href="#"
                                                     onclick="showDetailModelOneParamerter('pdc/createCurrencyTypeForm')"
@@ -137,24 +145,17 @@ endif;
                                             <select onchange="claculation(1);get_rate()" name="curren" id="curren"
                                                 class="form-control select2 requiredField">
                                                 <option value="0,1"> PKR</option>
+                                                @foreach(\App\Helpers\CommonHelper::get_all_currency() as $currency)
+                                                    <option value="{{ $currency->id }},{{ $currency->rate }}">{{ $currency->name }}</option>
+                                                @endforeach
                                             </select>
-
                                         </div>
-
                                         <div class="col-lg-3 col-md-3 col-sm-3 col-xs-12">
                                             <label class="sf-label"> Currency Rate</label>
                                             <span class="rflabelsteric"></span>
                                             <input class="form-control" type="text" name="currency_rate"
                                                 id="currency_rate" />
-
                                         </div>
-
-                                        <input type="hidden" name="curren_rate" id="curren_rate" value="1" />
-
-                                    </div>
-
-                                    <div class="lineHeight">&nbsp;</div>
-                                    <div class="row">
                                         <div class="col-lg-3 col-md-3 col-sm-3 col-xs-12">
                                             <label class="sf-label">Mode/ Terms Of Payment <span
                                                     class="rflabelsteric"></span></label>
@@ -168,23 +169,22 @@ endif;
                                             <input type="date" class="form-control" placeholder="" name="due_date"
                                                 id="due_date" value="" readonly />
                                         </div>
-                                        <div class="col-lg-6 col-md-6 col-sm-6 col-xs-12">
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-lg-3 col-md-3 col-sm-3 col-xs-12">
+                                            <label class="sf-label">Supplier's NTN</label>
+                                            <input readonly type="text" class="form-control" placeholder="Ntn"
+                                                name="ntn" id="ntn_id" value="" />
+                                        </div>
+                                        <div class="col-lg-9 col-md-9 col-sm-9 col-xs-12">
                                             <label class="sf-label">Supplier's Address</label>
                                             <input style="text-transform: capitalize;" readonly type="text"
                                                 class="form-control" placeholder="" name="address" id="addresss"
                                                 value="" />
                                         </div>
                                     </div>
-                                    <div class="lineHeight">&nbsp;</div>
-
                                     <div class="row">
-                                        <div class="col-lg-2 col-md-2 col-sm-2 col-xs-12">
-                                            <label class="sf-label">Supplier's NTN</label>
-                                            <input readonly type="text" class="form-control" placeholder="Ntn"
-                                                name="ntn" id="ntn_id" value="" />
-                                        </div>
-
-                                        <div class="col-lg-4 col-md-4 col-sm-4 col-xs-12">
+                                        <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
                                             <label class="sf-label">Remarks</label>
                                             <textarea name="Remarks" id="terms_and_condition" class="form-control"
                                                 placeholder="Remarks"></textarea>
@@ -235,18 +235,20 @@ endif;
                                                             class="rflabelsteric"><strong>*</strong></span></th>
                                                     <th class="text-center">Rate<span
                                                             class="rflabelsteric"><strong>*</strong></span></th>
-                                                    <th class="text-center">Amount(PKR)<span
-                                                            class="rflabelsteric"><strong>*</strong></span></th>
                                                     <th class="text-center"> Amount<span
                                                             class="rflabelsteric"><strong>*</strong></span></th>
                                                     <th class="text-center hide">Discount %<span
                                                             class="rflabelsteric"><strong>*</strong></span></th>
                                                     <th class="text-center hide">Discount Amount<span
                                                             class="rflabelsteric"><strong>*</strong></span></th>
+                                                    <th class="text-center">Tax %</th>
+                                                    <th class="text-center">Tax Amount</th>
                                                     <th class="text-center">Net Amount<span
                                                             class="rflabelsteric"><strong>*</strong></span></th>
-                                                    <th class="text-center">Delete<span
+                                                    <th class="text-center">Amount(PKR)<span
                                                             class="rflabelsteric"><strong>*</strong></span></th>
+                                                    <!-- <th class="text-center">Delete<span
+                                                            class="rflabelsteric"><strong>*</strong></span></th> -->
                                                     <th class="text-center">Add Row<span
                                                             class="rflabelsteric"><strong>*</strong></span></th>
                                                 </tr>
@@ -277,7 +279,7 @@ endif;
                                                     </td>
                                                     <td>
                                                         <input readonly type="text" class="form-control"
-                                                            name="classification_name[]" id="product_classification">
+                                                            name="classification_name[]" id="product_classification1">
                                                     </td>
                                                     <td>
                                                         <input readonly type="text" class="form-control"
@@ -302,10 +304,6 @@ endif;
                                                             id="rate1" placeholder="RATE" min="1" value="">
                                                     </td>
                                                     <td>
-                                                        <input type="text" class="form-control" name="amount[]"
-                                                            id="amount1" placeholder="AMOUNT" min="1" value="" readonly>
-                                                    </td>
-                                                    <td>
                                                         <input type="text" class="form-control actual_amount"
                                                             name="actual_amount[]" id="actual_amount1"
                                                             placeholder="AMOUNT" min="1" value="" readonly>
@@ -318,19 +316,29 @@ endif;
                                                     </td>
                                                     <td class="hide">
                                                         <input type="text" onkeyup="discount_amount(this.id)"
-                                                            class="form-control " name="discount_amount[]"
+                                                            class="form-control row_discount_amount" name="discount_amount[]"
                                                             id="discount_amount1" placeholder="DISCOUNT" min="1"
                                                             value="0">
+                                                    </td>
+                                                    <td>
+                                                        <input type="text" onkeyup="claculation(1)" class="form-control" name="tax_per[]" id="tax_per1" placeholder="Tax %" value="0">
+                                                    </td>
+                                                    <td>
+                                                        <input type="text" onkeyup="net_amount()" class="form-control row_tax_amount" name="tax_amount[]" id="tax_amount1" placeholder="Tax Amount" value="0">
                                                     </td>
                                                     <td>
                                                         <input type="text" class="form-control net_amount_dis"
                                                             name="after_dis_amount[]" id="after_dis_amount1"
                                                             placeholder="NET AMOUNT" min="1" value="0.00" readonly>
                                                     </td>
-                                                    <td style="background-color: #ccc">
+                                                    <td>
+                                                        <input type="text" class="form-control row_amount_pkr" name="amount[]"
+                                                            id="amount1" placeholder="AMOUNT(PKR)" min="1" value="" readonly>
+                                                    </td>
+                                                    <!-- <td style="background-color: #ccc">
                                                         <input onclick="view_history(1)" type="checkbox"
                                                             id="view_history1">
-                                                    </td>
+                                                    </td> -->
                                                     <td  class="text-center" >
                                                         <input style="width: inherit !important;" type="button" class="btn btn-sm btn-primary" onclick="AddMoreDetails()" value="+" />
                                                     </td>
@@ -338,11 +346,16 @@ endif;
                                             </tbody>
                                             <tbody>
                                                 <tr style="font-size:large;font-weight: bold">
-                                                    <td class="text-center" colspan="5">Total</td>
-                                                    <td class="text-right" colspan="1"><input readonlyclass="form-control" type="text" id="actual_net" /> </td>
-                                                    <td class="text-center" colspan="1"></td>
-                                                    <td class="text-center" colspan="1"><input type="text" readonly id="total_qty" /></td>
-                                                    <td class="text-right" colspan="1"><input readonlyclass="form-control" type="text" id="net" /> </td>
+                                                    <td class="text-center" colspan="7">Total</td>
+                                                    <td><input readonly class="form-control" type="text" id="total_qty" /></td>
+                                                    <td></td>
+                                                    <td><input readonly class="form-control" type="text" id="actual_net" /></td>
+                                                    <td class="hide"></td>
+                                                    <td class="hide"><input readonly class="form-control" type="text" id="total_discount_amount" /></td>
+                                                    <td></td>
+                                                    <td><input readonly class="form-control" type="text" id="total_tax_amount" /></td>
+                                                    <td class="text-right" colspan="1"><input readonly class="form-control" type="text" id="net" /> </td>
+                                                    <td class="text-right" colspan="1"><input readonly class="form-control" type="text" id="total_amount_pkr" /> </td>
                                                     <td></td>
                                                 </tr>
                                             </tbody>
@@ -355,8 +368,8 @@ endif;
                                 <div class="col-lg-6 col-md-6 col-sm-6 col-xs-12" style="float: right;">
                                     <table class="table table-bordered sf-table-list">
                                         <thead>
-                                            <th class="text-center" colspan="3">Sales Tax Account Head</th>
-                                            <th class="text-center" colspan="3">Sales Tax Amount</th>
+                                            <th class="text-center" colspan="3">WithHolding Tax</th>
+                                            <th class="text-center" colspan="3">WithHolding Tax Amount</th>
                                         </thead>
                                         <tbody>
                                             <tr>
@@ -488,21 +501,6 @@ endif;
 <!-- AddMoreDetails -->
 <script>
 
-        function sumAllActualQuantities() {
-    let sum = 0;
-
-                $('.ActualQty').each(function () {
-                    const value = parseFloat($(this).val()) || 0;
-                    sum += value;
-                });
-
-                $("#total_qty").val(sum);
-            
-        }
-            $(document).on('input', '.ActualQty', function () {
-                sumAllActualQuantities();
-            });
-    
 
 
             var Counter = 1;
@@ -570,13 +568,17 @@ function AddMoreDetails() {
             </td>
             <td><input type="text" onkeyup="claculation(${Counter})" class="form-control ActualQty" name="actual_qty[]" id="actual_qty${Counter}" placeholder="ACTUAL QTY"></td>
             <td><input type="text" onkeyup="claculation(${Counter})" class="form-control ActualRate" name="rate[]" id="rate${Counter}" placeholder="RATE"></td>
-            <td><input readonly type="text" class="form-control" name="amount[]" id="amount${Counter}" placeholder="AMOUNT"></td>
             <td><input readonly type="text" class="form-control actual_amount" name="actual_amount[]" id="actual_amount${Counter}" placeholder="AMOUNT"></td>
             <td class="hide"><input type="text" onkeyup="discount_percent(this.id)" class="form-control" value="0" name="discount_percent[]" id="discount_percent${Counter}" placeholder="DISCOUNT"></td>
-            <td class="hide"><input type="text" onkeyup="discount_amount(this.id)" class="form-control" value="0" name="discount_amount[]" id="discount_amount${Counter}" placeholder="DISCOUNT"></td>
+            <td class="hide"><input type="text" onkeyup="discount_amount(this.id)" class="form-control row_discount_amount" value="0" name="discount_amount[]" id="discount_amount${Counter}" placeholder="DISCOUNT"></td>
+            <td><input type="text" onkeyup="claculation(${Counter})" class="form-control" value="0" name="tax_per[]" id="tax_per${Counter}" placeholder="Tax %"></td>
+            <td><input type="text" onkeyup="net_amount()" class="form-control row_tax_amount" value="0" name="tax_amount[]" id="tax_amount${Counter}" placeholder="Tax Amount"></td>
             <td><input readonly type="text" class="form-control net_amount_dis" name="after_dis_amount[]" id="after_dis_amount${Counter}" placeholder="NET AMOUNT"></td>
-            <td><input onclick="view_history(${Counter})" type="checkbox" id="view_history${Counter}"></td>
-            <td class="text-center">
+            <td><input readonly type="text" class="form-control row_amount_pkr" name="amount[]" id="amount${Counter}" placeholder="AMOUNT(PKR)"></td>
+            
+            <td class="text-center" style="display: flex; gap: 10px;">
+                      <input style="width: inherit !important;" type="button" class="btn btn-sm btn-primary" onclick="AddMoreDetails()" value="+" />
+                                              
                 <button type="button" class="btn btn-sm btn-danger" onclick="RemoveSection(${Counter})"> - </button>
             </td>
         </tr>
@@ -815,7 +817,6 @@ $(document).ready(function(){
 
         net_amount();
         sales_tax('sales_taxx');
-        sumAllActualQuantities();
     }
 
     function get_po(id) {
@@ -953,62 +954,35 @@ $(document).ready(function(){
 <script>
     var x = 0;
     function tax_by_amount(id) {
-
-
-        var tax_percentage = $('#sales_taxx').val();
-
-
-
-        if (tax_percentage == 0) {
-
-            $('#' + id).val(0);
-        } else {
-            var tax_amount = parseFloat($('#' + id).val());
-
-            // highlight end
-
-            if (isNaN(tax_amount) == true) {
-                tax_amount = 0;
-            }
-            var count = 1;
-            var amount = 0;
-            $('.net_amount_dis').each(function() {
-
-
-                amount += +$('#after_dis_amountt_' + count).val();
-                count++;
-            });
-            var total = parseFloat(tax_amount + amount).toFixed(2);
-            $('#d_t_amount_1').val(total);
-
-
-        }
-        //            toWords(1);
-
-
-
+        total_amount();
     }
     function net_amount() {
-        var amount = 0;
-        var actual_amount = 0;
-        $('.net_amount_dis').each(function(i, obj) {
+        var total_qty = 0;
+        var total_amount_pkr = 0;
+        var total_amount = 0;
+        var total_tax_amount = 0;
+        var total_discount_amount = 0;
+        var total_net_amount = 0;
 
-            amount += +$('#' + obj.id).val();
-        });
-        $('.actual_amount').each(function(i, obj) {
+        $('.ActualQty').each(function() { total_qty += +$(this).val() || 0; });
+        $('.row_amount_pkr').each(function() { total_amount_pkr += +$(this).val() || 0; });
+        $('.actual_amount').each(function() { total_amount += +$(this).val() || 0; });
+        $('.row_tax_amount').each(function() { total_tax_amount += +$(this).val() || 0; });
+        $('.row_discount_amount').each(function() { total_discount_amount += +$(this).val() || 0; });
+        $('.net_amount_dis').each(function() { total_net_amount += +$(this).val() || 0; });
 
-            actual_amount += +$('#' + obj.id).val();
-        });
-        amount = parseFloat(amount);
-        actual_amount = parseFloat(actual_amount);
-        $('#net').val(amount);
-        $('#actual_net').val(actual_amount);
-        var sales_tax = parseFloat($('#sales_amount_td').val());
+        $('#total_qty').val(total_qty);
+        $('#total_amount_pkr').val(total_amount_pkr.toFixed(2));
+        $('#actual_net').val(total_amount.toFixed(2));
+        $('#total_tax_amount').val(total_tax_amount.toFixed(2));
+        $('#total_discount_amount').val(total_discount_amount.toFixed(2));
+        $('#net').val(total_net_amount.toFixed(2));
 
-        $('#net_after_tax').val(amount + sales_tax);
-        $('#d_t_amount_1').val(amount + sales_tax);
+        var sales_tax = parseFloat($('#sales_amount_td').val()) || 0;
+
+        $('#net_after_tax').val((total_net_amount - sales_tax).toFixed(2));
+        $('#d_t_amount_1').val((total_net_amount - sales_tax).toFixed(2));
         toWords(1);
-
     }
     function view_history(id) {
 
@@ -1114,76 +1088,142 @@ $(document).ready(function(){
         //            toWords(1);
     });
 
+    // function claculation(number) {
+    //     var qty = $('#actual_qty' + number).val();
+    //     var rate = $('#rate' + number).val();
+    //     var currency = $('#currency_rate').val();
+    //     var actual = parseFloat(qty * rate).toFixed(2);
+
+    //     if (currency == '') {
+    //         currency = 1;
+    //     }
+
+    //     var total = parseFloat(qty * rate * currency).toFixed(2);
+
+    //     $('#amount' + number).val(total);
+    //     $('#actual_amount' + number).val(actual);
+
+
+    //     var amount = 0;
+    //     count = 1;
+    //     $('.net_amount_dis').each(function(i, obj) {
+
+    //         amount += +$('#' + obj.id).val();
+
+    //         count++;
+    //     });
+    //     amount = parseFloat(amount);
+
+
+
+    //     discount_percent('discount_percent' + number);
+    //     net_amount();
+    //     sales_tax('sales_taxx');
+    //     //  toWords(1);
+    // }
+
     function claculation(number) {
-        var qty = $('#actual_qty' + number).val();
-        var rate = $('#rate' + number).val();
-        var currency = $('#currency_rate').val();
-        var actual = parseFloat(qty * rate).toFixed(2);
+    var qty = $('#actual_qty' + number).val() || 0;
+    var rate = $('#rate' + number).val() || 0;
+    var currency = $('#currency_rate').val() || 1;
+    
+    var actual = parseFloat(qty * rate).toFixed(2); // Amount in selected currency
+    $('#actual_amount' + number).val(actual);
+    
+    var tax_per = $('#tax_per' + number).val() || 0;
+    var tax_amount = (actual * tax_per / 100).toFixed(2);
+    $('#tax_amount' + number).val(tax_amount);
+    
+    var total_with_tax = parseFloat(actual) + parseFloat(tax_amount);
+    
+    var discount_percent_val = $('#discount_percent' + number).val() || 0;
+    var discount_amount = (total_with_tax * discount_percent_val / 100).toFixed(2);
+    $('#discount_amount' + number).val(discount_amount);
+    
+    var net_amount_val = (total_with_tax - discount_amount).toFixed(2);
+    $('#after_dis_amount' + number).val(net_amount_val);
+    
+    var amount_pkr = (net_amount_val * currency).toFixed(2);
+    $('#amount' + number).val(amount_pkr); // Amount(PKR) = Currency rate * Net Amount
+    
+    // Update all totals
+    net_amount();
+    sales_tax('sales_taxx');
+}
 
-        if (currency == '') {
-            currency = 1;
-        }
+    // function sales_tax(id) {
+    //     var sales_tax = 0;
+    //     var sales_tax_per_value = $('#sales_taxx').val();
+    //     sales_tax_per_value = sales_tax_per_value.split("@")[0];
 
-        var total = parseFloat(qty * rate * currency).toFixed(2);
+    //     if (sales_tax_per_value != '0') {
+    //         var net = $('#net').val();
 
-        $('#amount' + number).val(total);
-        $('#actual_amount' + number).val(actual);
+    //         var sales_tax = (net / 100) * sales_tax_per_value;
 
+    //     }
+    //     console.log(sales_tax)
+    //     $('#sales_amount_td').val(sales_tax);
 
-        var amount = 0;
-        count = 1;
-        $('.net_amount_dis').each(function(i, obj) {
+    //     total_amount();
 
-            amount += +$('#' + obj.id).val();
-
-            count++;
-        });
-        amount = parseFloat(amount);
-
-
-
-        discount_percent('discount_percent' + number);
-        net_amount();
-        sales_tax('sales_taxx');
-        //  toWords(1);
-    }
+    // }
 
     function sales_tax(id) {
-        var sales_tax = 0;
-        var sales_tax_per_value = $('#sales_taxx').val();
+    var sales_tax = 0;
+    var sales_tax_per_value = $('#sales_taxx').val();
+    
+    if (sales_tax_per_value && sales_tax_per_value != '0') {
         sales_tax_per_value = sales_tax_per_value.split("@")[0];
-
-        if (sales_tax_per_value != '0') {
-            var net = $('#net').val();
-
-            var sales_tax = (net / 100) * sales_tax_per_value;
-
-        }
-        console.log(sales_tax)
-        $('#sales_amount_td').val(sales_tax);
-
-        total_amount();
-
+        var net = parseFloat($('#net').val()) || 0;
+        sales_tax = (net / 100) * parseFloat(sales_tax_per_value);
     }
+    
+    $('#sales_amount_td').val(sales_tax.toFixed(2));
+    
+    // Call total_amount to update after tax
+    total_amount();
+}
+
+
+    // function total_amount() {
+    //     var amount = 0;
+
+    //     $('.net_amount_dis').each(function() {
+
+    //         amount += +$(this).val();
+
+    //     });
+    //     $('#net').val(amount);
+
+    //     var sales_tax = parseFloat($('#sales_amount_td').val());
+    //     var net = (amount + sales_tax).toFixed(2);
+
+    //     $('#net_after_tax').val(net);
+    //     console.log(net);
+
+
+    // }
+
 
     function total_amount() {
-        var amount = 0;
+    var amount = 0;
+    $('.net_amount_dis').each(function() {
+        amount += +$(this).val();
+    });
+    
+    $('#net').val(amount.toFixed(2));
+    
+    var sales_tax = parseFloat($('#sales_amount_td').val()) || 0;
+    var net_after_tax = (amount - sales_tax).toFixed(2);
+    
+    $('#net_after_tax').val(net_after_tax);
+    $('#d_t_amount_1').val(net_after_tax);
+    
+    // Also update words if needed
+    toWords(1);
+}
 
-        $('.net_amount_dis').each(function() {
-
-            amount += +$(this).val();
-
-        });
-        $('#net').val(amount);
-
-        var sales_tax = parseFloat($('#sales_amount_td').val());
-        var net = (amount + sales_tax).toFixed(2);
-
-        $('#net_after_tax').val(net);
-        console.log(net);
-
-
-    }
 
 
     function get_address() {
@@ -1199,7 +1239,13 @@ $(document).ready(function(){
     function get_rate() {
         var currency_id = $('#curren').val();
         currency_id = currency_id.split(',');
-        $('#curren_rate').val(currency_id[1]);
+        $('#currency_rate').val(currency_id[1]);
+        
+        var count = 1;
+        $('.ActualQty').each(function() {
+            claculation(count);
+            count++;
+        });
     }
 </script>
 
@@ -1218,9 +1264,11 @@ $(document).ready(function(){
 
     function discount_percent(id) {
         var number = id.replace("discount_percent", "");
-        var amount = $('#amount' + number).val();
+        var amount = parseFloat($('#actual_amount' + number).val()) || 0;
+        var tax_amount = parseFloat($('#tax_amount' + number).val()) || 0;
+        var total_with_tax = amount + tax_amount;
 
-        var x = parseFloat($('#' + id).val());
+        var x = parseFloat($('#' + id).val()) || 0;
 
         if (x > 100) {
             alert('Percentage Cannot Exceed by 100');
@@ -1228,76 +1276,44 @@ $(document).ready(function(){
             x = 0;
         }
 
-        x = x * amount;
-        var discount_amount = parseFloat(x / 100).toFixed(2);
+        var discount_amount = parseFloat(total_with_tax * x / 100).toFixed(2);
         $('#discount_amount' + number).val(discount_amount);
-        var discount_amount = $('#discount_amount' + number).val();
 
-        if (isNaN(discount_amount)) {
+        var amount_after_discount = total_with_tax - discount_amount;
 
-            $('#discount_amount' + number).val(0);
-            discount_amount = 0;
-        }
-
-
-
-        var amount_after_discount = amount - discount_amount;
-
-        $('#after_dis_amount' + number).val(amount_after_discount);
-        var amount_after_discount = $('#after_dis_amount' + number).val();
-
-        if (amount_after_discount == 0) {
-            $('#after_dis_amount' + number).val(amount);
-            $('#net_amounttd_' + number).val(amount);
-            $('#net_amount' + number).val(amount_after_discount);
-        } else {
-
-            $('#net_amounttd_' + number).val(amount_after_discount);
-            $('#after_dis_amount' + number).val(amount_after_discount);
-        }
-
-        $('#cost_center_dept_amount' + number).text(amount_after_discount);
-        $('#cost_center_dept_hidden_amount' + number).val(amount_after_discount);
-
+        $('#after_dis_amount' + number).val(amount_after_discount.toFixed(2));
+        
+        var currency = $('#currency_rate').val() || 1;
+        $('#amount' + number).val((amount_after_discount * currency).toFixed(2));
 
         sales_tax('sales_taxx');
         net_amount();
-        //  toWords(1);
-
-
     }
 
     function discount_amount(id) {
         var number = id.replace("discount_amount", "");
-        var amount = parseFloat($('#amount' + number).val());
+        var amount = parseFloat($('#actual_amount' + number).val()) || 0;
+        var tax_amount = parseFloat($('#tax_amount' + number).val()) || 0;
+        var total_with_tax = amount + tax_amount;
 
-        var discount_amount = parseFloat($('#' + id).val());
+        var discount_amount = parseFloat($('#' + id).val()) || 0;
 
-        if (discount_amount > amount) {
-            alert('Amount Cannot Exceed by ' + amount);
+        if (discount_amount > total_with_tax) {
+            alert('Amount Cannot Exceed by ' + total_with_tax.toFixed(2));
             $('#discount_amount' + number).val(0);
             discount_amount = 0;
         }
 
-        if (isNaN(discount_amount)) {
-
-            $('#discount_amount' + number).val(0);
-            discount_amount = 0;
-        }
-
-        var percent = (discount_amount / amount * 100).toFixed(2);
+        var percent = (discount_amount / total_with_tax * 100).toFixed(2);
         $('#discount_percent' + number).val(percent);
-        var amount_after_discount = amount - discount_amount;
-        $('#after_dis_amount' + number).val(amount_after_discount);
+        var amount_after_discount = total_with_tax - discount_amount;
+        $('#after_dis_amount' + number).val(amount_after_discount.toFixed(2));
+        
+        var currency = $('#currency_rate').val() || 1;
+        $('#amount' + number).val((amount_after_discount * currency).toFixed(2));
 
-
-        $('#net_amounttd_' + number).val(amount_after_discount);
-        $('#net_amount_' + number).val(amount_after_discount);
         sales_tax('sales_taxx');
-        //   toWords(1);
         net_amount();
-
-
     }
 
     function get_detail(id, number) {
@@ -1429,11 +1445,11 @@ $(document).ready(function(){
 
         var productName = $('#' + id).val();
         var index_val = id.replace("productName", "");
-        $('#product_type' + index_val).html('');
-        $('#product_barcode' + index_val).html('');
-        $('#product_classification' + index_val).html('');
-        $('#product_trend' + index_val).html('');
-        $('#uom_id' + index_val).html('');
+        $('#product_type' + index_val).val('');
+        $('#product_barcode' + index_val).val('');
+        $('#product_classification' + index_val).val('');
+        $('#product_trend' + index_val).val('');
+        $('#uom_id' + index_val).val('');
 
         //  $('#productName').empty();
         var category = $('#CategoryId').val();
@@ -1441,7 +1457,7 @@ $(document).ready(function(){
         //  var item_master_id = $('#item_master').val();
         if (productName > 0) {
             $.ajax({
-                url: '/pdc/get_type_barcode_by_product',
+                url: '{{ url("/pdc/get_type_barcode_by_product") }}',
                 type: 'Get',
                 data: {
                     // category: category,
@@ -1473,6 +1489,7 @@ $(document).ready(function(){
             },
             success: function(data) {
                 $(element).closest('.main').find('.itemsclass').append(data);
+                $(element).closest('.main').find('.itemsclass').select2();
             }
         });
     }

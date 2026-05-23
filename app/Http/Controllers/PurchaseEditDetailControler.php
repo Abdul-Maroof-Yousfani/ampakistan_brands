@@ -56,6 +56,7 @@ class PurchaseEditDetailControler extends Controller
         $id = Input::get('supplier_id');
         $name = Input::get('name');
         $company_name = Input::get('company_name');
+         $with_holding_tax = Input::get('with_holding_tax');
         $country = Input::get('country');
         $state = Input::get('state');
         $city = Input::get('city');
@@ -72,8 +73,28 @@ class PurchaseEditDetailControler extends Controller
         $regd_in_pra=Input::get('regd_in_pra');
         $pra=Input::get('pra');
 
-        $company_status = (Input::get('company_status'))? Input::get('company_status') : [];  
-        $company_status = (count($company_status) > 0 ) ? implode(', ', $company_status) : '';
+        // $company_status = (Input::get('company_status'))? Input::get('company_status') : [];  
+        // $company_status = (count($company_status) > 0 ) ? implode(', ', $company_status) : '';
+
+$company_status = Input::get("company_status");
+
+
+
+    if(Input::get('regd_in_income_tax') != 1){
+
+           
+             $company_status = '';
+            $cnic = '';
+
+        }
+        else{
+             $company_status = Input::get('company_status');
+              $cnic=Input::get('cnic');
+        }
+      
+
+        // $company_status = (Input::get('company_status'))? Input::get('company_status') : [];  
+        // $company_status = (count($company_status) > 0 ) ? implode(', ', $company_status) : '';
 
         $print_check_as=Input::get('print_check_as');
         $vendor_type=Input::get('vendor_type');
@@ -106,6 +127,7 @@ class PurchaseEditDetailControler extends Controller
         $data2['pra']     	        = strip_tags($pra);
         $data2['name']     		    = strip_tags($name);
         $data2['company_name']     	= strip_tags($company_name);
+         $data2['with_holding_tax'] = strip_tags($with_holding_tax);
         $data2['country']     		= strip_tags($country);
         $data2['province']     	    = strip_tags($state);
         $data2['city']     	        = strip_tags($city);
@@ -202,6 +224,11 @@ class PurchaseEditDetailControler extends Controller
         $UpdateData['item_code'] = $request->item_code;
         $UpdateData['sku_code'] = $request->sku;
         $UpdateData['sub_category_id'] = $request->SubCategoryId;
+        $UpdateData['is_tax_apply'] = $request->tax_applied;
+        $UpdateData['tax_type_id'] = $request->tax_type_id;
+        $UpdateData['tax_applied_on'] = $request->tax_applied_on;
+        $UpdateData['tax'] = $request->tax;
+        $UpdateData['tax_policy'] = $request->tax_policy;
         //    $UpdateData['maintain_inventory'] = $maintain_inventory;
         $UpdateData['stockType'] = $itemType;
         DB::Connection('mysql2')->table('subitem')->where('id',$EditId)->update($UpdateData);
@@ -654,7 +681,7 @@ class PurchaseEditDetailControler extends Controller
             $purchase_orde->supplier_id=$supplier[0];
             $purchase_orde->term_of_del=$request->term_of_del;
             $purchase_orde->terms_of_paym=$request->model_terms_of_payment;
-            $purchase_orde->destination=$request->destination;
+
             $purchase_orde->currency_id=$currency[0];
             $purchase_orde->currency_rate=$currency[1];
             $purchase_orde->sales_tax=$request->sales_taxx;

@@ -2422,6 +2422,8 @@ class FinanceAddDetailControler extends Controller
 			$data1['date'] 			= date('Y-m-d');
 			$data1['status'] 		= 1;
 			$data1['sales']			= Input::get('sales');
+			$data1['brand_id'] = is_array(Input::get('brand_id')) ? implode(',', Input::get('brand_id')) : Input::get('brand_id');
+			$data1['principal_group_id'] = is_array(Input::get('principal_group_id')) ? implode(',', Input::get('principal_group_id')) : Input::get('principal_group_id');
 			//$data1['currency_id']=		Input::get('curren');
 			//$data1['exchange_rate']=		Input::get('exchange_rate');
 			//$data1['foreign_currency']=		CommonHelper::check_str_replace(Input::get('exchange_amunt'));
@@ -2767,16 +2769,19 @@ class FinanceAddDetailControler extends Controller
 			$rv_type=0;
 			$bank=0;
 			$pay_mode = 1;
+			$bank_detail_customer = null;
 			if ($request->pay_mode=='1,1'):
 				$rv_no = CommonHelper::uniqe_no_for_rvs(date('y'),date('m'),1);
 				$rv_type=2;
 				$pay_mode=1;
 				$rv_type=1;
 				$bank=$request->bank;
+				$bank_detail_customer=$request->bank_detail_customer;
 				elseif ($request->pay_mode=='2,2'):
 					$rv_no = CommonHelper::uniqe_no_for_rvs(date('y'),date('m'),2);
 					$pay_mode=2;
 					$rv_type=2;
+					$bank=$request->bank;
 					elseif ($request->pay_mode=='3,1'):
 						$rv_no = CommonHelper::uniqe_no_for_rvs(date('y'),date('m'),1);
 						$rv_type=1;
@@ -2785,8 +2790,8 @@ class FinanceAddDetailControler extends Controller
 				endif;
 
 			$territory_id = $request->territory_id;
-			$brand_id = $request->brand_id;
-			$principal_group_id = $request->principal_group_id;
+			$brand_id = is_array($request->brand_id) ? implode(',', $request->brand_id) : $request->brand_id;
+			$principal_group_id = is_array($request->principal_group_id) ? implode(',', $request->principal_group_id) : $request->principal_group_id;
 			$data=array
 			(
 				'rv_no'=>$rv_no,
@@ -2806,7 +2811,9 @@ class FinanceAddDetailControler extends Controller
 				'pay_mode'=>$pay_mode,
 				'territory_id' => $territory_id,
 				'brand_id' => $brand_id,
-				'principal_group_id' => $principal_group_id
+				'bank_customer_id' => $bank_detail_customer,
+				'principal_group_id' => $principal_group_id,
+				'acc_id' => $request->acc_id
 			);
 
 			// dd($data);
@@ -2828,21 +2835,20 @@ class FinanceAddDetailControler extends Controller
 					'rv_id'=>$master_id,
 					'rv_no'=>$rv_no,
 					'received_amount'=>CommonHelper::check_str_replace($request->input('receive_amount')[$key]),
-					'tax_percent'=>$request->input('percent')[$key],
-					'tax_amount'=>$request->input('tax_amount')[$key],
-					'discount_amount'=>$request->input('discount')[$key],
-					'net_amount'=>CommonHelper::check_str_replace($request->input('net_amount')[$key]),
+					'tax_percent'     => ($request->input('percent') ?? [])[$key] ?? 0,
+					'tax_amount'      => ($request->input('tax_amount') ?? [])[$key] ?? 0,
+					'discount_amount' => ($request->input('discount') ?? [])[$key] ?? 0,
+					'net_amount'      => CommonHelper::check_str_replace(($request->input('net_amount') ?? [])[$key] ?? 0),
 				);
-				if ($request->input('percent')[$key]!=0):
-				$tax_acc_id=	CommonHelper::generic('invoice_tax',array('name'=>$request->input('percent')[$key]),'acc_id')->first()->acc_id;
+				if (($request->input('percent') ?? [])[$key] ?? 0 != 0):
+				$tax_acc_id=	CommonHelper::generic('invoice_tax',array('name'=>($request->input('percent') ?? [])[$key] ?? 0),'acc_id')->first()->acc_id;
 
 					endif;
 
 				$net_amount+=CommonHelper::check_str_replace($request->input('receive_amount')[$key]);
-				$discount_amount+=$request->input('discount')[$key];
-
-				if ($request->input('percent')[$key]!=0):
-				$tax_amount+=$request->input('tax_amount')[$key];
+				$discount_amount += ($request->input('discount') ?? [])[$key] ?? 0;
+				if (($request->input('percent') ?? [])[$key] ?? 0 != 0):
+				$tax_amount += ($request->input('tax_amount') ?? [])[$key] ?? 0;
 					else:
 						$tax_amount+=0;
 					endif;
@@ -3101,124 +3107,58 @@ class FinanceAddDetailControler extends Controller
             //     // DB::connection('mysql2')->table('transactions')->insert($data14);
 
             // }
+			// --- ADVANCE USAGE LOGIC (Single Row Management) ---
 			if ($request->use_advance) {
+				$advance_old = AdvancePayment::find($request->use_advance);
+				if ($advance_old && $advance_old->remaining_amount > 0) {
+					// Use only required amount, capped by available balance
+					$use_amount = min($net_amount, $advance_old->remaining_amount);
 
+					// Deduct from existing record (No new row created)
+					$new_balance = $advance_old->remaining_amount - $use_amount;
+					$advance_old->remaining_amount = $new_balance;
+					
+					// Status: 1 = Completed (0 balance), 0 = Partial (remaining balance)
+					if ($new_balance <= 0) {
+						$advance_old->amount_issued_status = 1;
+						$advance_old->amount_issued_no = $rv_no;
+					} else {
+						$advance_old->amount_issued_status = 0;
+					}
+					$advance_old->save();
 
+					// Track usage against this transaction
+					DB::connection('mysql2')->table('new_rvs')->where('id', $master_id)
+						->update([
+							'is_advnace_used' => 1,
+							'advance_amount_id' => -1 * $use_amount,
+						]);
+				}
+			}
 
-                $advance_old = AdvancePayment::find($request->use_advance);
-                $cal_credit_debit_amount = AdvancePayment::where(function ($q) use ($advance_old) {
-                    $q->where('id', $advance_old->id)
-                        ->orWhere('parent_id', $advance_old->id);
-                })->sum('amount');
+			// --- NEW ADVANCE CREATION LOGIC (Excess New Payment Only) ---
+			// Important: If we are using an existing advance, the rollover is handled by 'remaining_amount'
+			// so we ONLY create a new record if it's a FRESH payment (not using an old advance).
+			if ($request->advance_amount > 0 && !$request->use_advance) {
+				$last = AdvancePayment::orderBy('id', 'desc')->first();
+				$nextId = $last ? $last->id + 1 : 1;
+				$paymentNo = 'ADV' . str_pad($nextId, 3, '0', STR_PAD_LEFT);
 
+				$advance_new = new AdvancePayment();
+				$advance_new->payment_no = $paymentNo;
+				$advance_new->customer_id = $request->buyers_id;
+				$advance_new->supplier_id = $request->supplier_id;
+				$advance_new->bank_id = $request->bank_id; 
+				$advance_new->account_recieve_id = $request->ref_bill_no;
+				$advance_new->adv_date = date('Y-m-d');
+				$advance_new->amount = CommonHelper::check_str_replace($request->advance_amount);
+				$advance_new->remaining_amount = CommonHelper::check_str_replace($request->advance_amount); // Set initial balance
+				$advance_new->amount_recieved_no = $rv_no;
+				$advance_new->description = "Advance amount received from Receipt: $rv_no";
+				$advance_new->user_name = Auth::user()->name;
+				$advance_new->save();
+			}
 
-                if ($advance_old->amount_issued_status != 1) {
-
-                    $advance = new AdvancePayment();
-                    $advance->parent_id = $advance_old->id;
-                    $advance->payment_no = $advance_old->payment_no;
-                    $advance->supplier_id = $advance_old->supplier_id;
-                    $advance->account_recieve_id = $advance_old->account_recieve_id;
-                    $advance->amount = -1 * min($net_amount, $cal_credit_debit_amount);
-
-                    $advance->amount_recieved_no = $advance_old->amount_recieved_no;
-                    $advance->amount_issued_no = $rv_no;
-                    $advance->description = $advance_old->description;
-                    $advance->user_name = $advance_old->user_name;
-                    $advance->save();
-
-
-                }
-
-                db::connection('mysql2')->table('new_rvs')->where('id', $master_id)
-                    ->update([
-                        'is_advnace_used' => 1,
-                        'advance_amount_id' => -1 * min($net_amount, $cal_credit_debit_amount),
-                    ]);
-
-                $parentAmount = $advance_old->amount;
-                $childrenSum = AdvancePayment::where('parent_id', $advance_old->id)->sum('amount'); // -2000
-
-                $cal_credit_debit = ($parentAmount + $childrenSum) == 0;
-
-                if ($cal_credit_debit) {
-                    $advance_old = AdvancePayment::find($request->use_advance);
-                    $advance_old->amount_issued_status = 1;
-                    $advance_old->amount_issued_no = $rv_no;
-                    $advance_old->save();
-                }
-
-
-
-                if ($request->advance_amount > 0 && $cal_credit_debit) {
-
-                    $last = AdvancePayment::orderBy('id', 'desc')->first();
-                    $nextId = $last ? $last->id + 1 : 1;
-                    $paymentNo = 'ADV' . str_pad($nextId, 3, '0', STR_PAD_LEFT);
-
-                    $advance = new AdvancePayment();
-                    $advance->payment_no = $paymentNo;
-                    $advance->supplier_id = $request->supplier;
-                    $advance->account_recieve_id = $request->ref_bill_no;
-                    $advance->amount = $request->advance_amount;
-                    $advance->amount_recieved_no = $rv_no;
-                    $advance->description = "advance amount recieved from again this voucher no {$rv_no}";
-                    $advance->user_name = Auth::user()->name;
-                    $advance->save();
-
-                    // $data14 = array
-                    // (
-                    //     'voucher_no' => $paymentNo,
-                    //     'voucher_type' => 33,
-                    //     'date' => date('Y-m-d'),
-                    //     'v_date' => date('Y-m-d'),
-                    //     'time' => date("H:i:s"),
-                    //     'master_id' => $advance->id,
-                    //     'username' => Auth::user()->name,
-                    //     'acc_id' => $customer_acc_id,
-                    //     'amount' => $request->advance_amount,
-                    //     'debit_credit' => 1,
-                    //     'status' => 1
-                    // );
-
-                    // DB::connection('mysql2')->table('transactions')->insert($data14);
-
-                }
-            }
-
-            if (!isset($request->use_advance) && ($request->advance_amount > 0)) {
-                $last = AdvancePayment::orderBy('id', 'desc')->first();
-                $nextId = $last ? $last->id + 1 : 1;
-                $paymentNo = 'ADV' . str_pad($nextId, 3, '0', STR_PAD_LEFT);
-
-                $advance = new AdvancePayment();
-                $advance->payment_no = $paymentNo;
-                $advance->supplier_id = $request->supplier;
-                $advance->account_recieve_id = $request->ref_bill_no;
-                $advance->amount = $request->advance_amount;
-                $advance->amount_recieved_no = $rv_no;
-                $advance->description = "advance amount recieved from again this voucher no {$rv_no}";
-                $advance->user_name = Auth::user()->name;
-                $advance->save();
-
-                // $data14 = array
-                // (
-                //     'voucher_no' => $paymentNo,
-                //     'voucher_type' => 33,
-                //     'date' => date('Y-m-d'),
-                //     'v_date' => date('Y-m-d'),
-                //     'time' => date("H:i:s"),
-                //     'master_id' => $advance->id,
-                //     'username' => Auth::user()->name,
-                //     'acc_id' => $customer_acc_id,
-                //     'amount' => $request->advance_amount,
-                //     'debit_credit' => 1,
-                //     'status' => 1
-                // );
-
-                // DB::connection('mysql2')->table('transactions')->insert($data14);
-
-            }
 
 			SalesHelper::sales_activity($rv_no,$request->v_date,$total_amount,5,'Insert');
 
@@ -3261,6 +3201,7 @@ try {
     elseif ($request->pay_mode == '2,2'):
         $pay_mode = 2;
         $rv_type = 2;
+        $bank = $request->bank;
     elseif ($request->pay_mode == '3,1'):
         $rv_type = 1;
         $pay_mode = 3;
@@ -3283,7 +3224,8 @@ try {
         'bank'          => $bank,
         'pay_mode'      => $pay_mode,
 		'territory_id' => $request->territory_id,
-		'brand_id' => $request->brand_id
+		'brand_id'     => is_array($request->brand_id) ? implode(',', $request->brand_id) : $request->brand_id,
+		'principal_group_id' => is_array($request->principal_group_id) ? implode(',', $request->principal_group_id) : $request->principal_group_id
     ];
 
     DB::connection('mysql2')
@@ -3314,19 +3256,19 @@ try {
             'rv_id'           => $id,
             'rv_no'           => $rv_no,
             'received_amount' => CommonHelper::check_str_replace($request->input('receive_amount')[$key]),
-            'tax_percent'     => $request->input('percent')[$key],
-            'tax_amount'      => $request->input('tax_amount')[$key],
-            'discount_amount' => $request->input('discount')[$key],
-            'net_amount'      => CommonHelper::check_str_replace($request->input('net_amount')[$key]),
+            'tax_percent'     => ($request->input('percent') ?? [])[$key] ?? 0,
+            'tax_amount'      => ($request->input('tax_amount') ?? [])[$key] ?? 0,
+            'discount_amount' => ($request->input('discount') ?? [])[$key] ?? 0,
+            'net_amount'      => CommonHelper::check_str_replace(($request->input('net_amount') ?? [])[$key] ?? 0),
         ];
 
-        if ($request->input('percent')[$key] != 0):
-            $tax_acc_id = CommonHelper::generic('invoice_tax', ['name' => $request->input('percent')[$key]], 'acc_id')->first()->acc_id;
+        if (($request->input('percent') ?? [])[$key] ?? 0 != 0):
+            $tax_acc_id = CommonHelper::generic('invoice_tax', ['name' => ($request->input('percent') ?? [])[$key] ?? 0], 'acc_id')->first()->acc_id;
         endif;
 
         $net_amount += CommonHelper::check_str_replace($request->input('receive_amount')[$key]);
-        $discount_amount += $request->input('discount')[$key];
-        $tax_amount += ($request->input('percent')[$key] != 0) ? $request->input('tax_amount')[$key] : 0;
+        $discount_amount += ($request->input('discount') ?? [])[$key] ?? 0;
+        $tax_amount += (($request->input('percent') ?? [])[$key] ?? 0 != 0) ? (($request->input('tax_amount') ?? [])[$key] ?? 0) : 0;
         $total_amount += CommonHelper::check_str_replace($request->input('net_amount')[$key]);
 
         DB::connection('mysql2')->table('brige_table_sales_receipt')->insert($data1);

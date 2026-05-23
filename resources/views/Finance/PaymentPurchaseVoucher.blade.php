@@ -59,12 +59,22 @@ $UserId = Auth::user()->id;
 
 
 
-                                                      $return_amount=  DB::Connection('mysql2')->table('purchase_return as a')
-                                                            ->join('purchase_return_data as b','a.id','b.master_id')
-                                                            ->where('a.status',1)
-                                                            ->where('a.type',2)
-                                                            ->where('grn_no',$purchase_voucher->grn_no)
-                                                            ->sum('b.net_amount');
+                                                    
+
+
+
+                                                            
+ $return = DB::connection('mysql2')->table('purchase_return as a')
+    ->join('purchase_return_data as b', 'a.id', 'b.master_id')
+    ->where('a.status', 1)
+    ->where('a.type', 2)
+    ->where('a.grn_no', $purchase_voucher->grn_no)
+    ->select('a.summary_withholding_tax', DB::raw('SUM(b.net_amount) as total_net_amount'))
+    ->groupBy('a.id', 'a.summary_withholding_tax')
+    ->first();
+
+$return_amount = $return ? ($return->total_net_amount + $return->summary_withholding_tax) : 0;
+
 
                                                         $purchase_voucher_data = DB::connection('mysql2')->table('new_purchase_voucher_data')->where('master_id', $row)
                                                                 ->where('staus',1)
@@ -72,7 +82,7 @@ $UserId = Auth::user()->id;
                                                                 ->groupBy('master_id')
                                                                 ->first();
                                                         $PurchaseAmount = CommonHelper::PurchaseAmountCheck($row);
-                                                        $PurchaseAmount = $PurchaseAmount + $purchase_voucher->sales_tax_amount;
+                                                        $PurchaseAmount = $PurchaseAmount;
                                                         $purchase_voucher_payment_data = DB::connection('mysql2')->table('new_purchase_voucher_payment')->where('new_purchase_voucher_id', $row)
                                                                 ->where('status',1)
                                                                 ->select(DB::raw('sum(amount) as totalamount'))
@@ -91,35 +101,50 @@ $UserId = Auth::user()->id;
 
                                                                 <div class="row">
                                                                     <input type="hidden" name="id[]" value="{{$purchase_voucher->id}}" />
-                                                                    <div class="col-lg-2 col-md-2 col-sm-2 col-xs-2">
+                                                                    <div class="col-lg-1 col-md-1 col-sm-1 col-xs-1">
                                                                         <label class="sf-label">Purchase No. <span class="rflabelsteric"><strong>*</strong></span></label>
                                                                         <input readonly type="text" class="form-control requiredField" name="pv_no{{$purchase_voucher->id}}" id="pv_no" value="{{$purchase_voucher->pv_no}}" />
                                                                     </div>
 
-                                                                    <div class="col-lg-2 col-md-2 col-sm-2 col-xs-2">
-                                                                        <label class="sf-label">Purchase Date.</label>
+                                                                    <div class="col-lg-1 col-md-1 col-sm-1 col-xs-1">
+                                                                        <label class="sf-label">P. Date.</label>
                                                                         <span class="rflabelsteric"><strong>*</strong></span>
-                                                                        <input readonly type="date" class="form-control requiredField" name="purchase_date{{$purchase_voucher->id}}" id="demand_date_1" value="{{$purchase_voucher->pv_date}}" />
+                                                                        <input readonly type="date" class="form-control requiredField" name="purchase_date{{$purchase_voucher->id}}" id="demand_date_{{$purchase_voucher->id}}" value="{{$purchase_voucher->pv_date}}" title="{{$purchase_voucher->pv_date}}" />
                                                                     </div>
 
                                                                     <div class="col-lg-2 col-md-2 col-sm-2 col-xs-2">
                                                                         <label class="sf-label">Supplier Name<span class="rflabelsteric"><strong>*</strong></span></label>
-                                                                        <input readonly type="text" class="form-control requiredField" name="supplier{{$purchase_voucher->id}}" id="" value="{{$supplier_name}}" />
+                                                                        <input readonly title="{{$supplier_name}}" type="text" class="form-control requiredField" name="supplier{{$purchase_voucher->id}}" id="" value="{{$supplier_name}}" />
                                                                     </div>
 
-                                                                    <div class="col-lg-2 col-md-2 col-sm-2 col-xs-2">
+                                                                    <div class="col-lg-1 col-md-1 col-sm-1 col-xs-1">
                                                                         <label class="sf-label">Ref / Bill No. <span class="rflabelsteric"><strong>*</strong></span></label>
-                                                                        <input readonly type="text" class="form-control" name="slip_no{{$purchase_voucher->id}}" id="slip_no_1" value="{{$purchase_voucher->slip_no}}" />
+                                                                        <input readonly type="text" class="form-control" name="slip_no{{$purchase_voucher->id}}" id="slip_no_{{$purchase_voucher->id}}" value="{{$purchase_voucher->slip_no}}" />
                                                                     </div>
 
-                                                                    <div class="col-lg-2 col-md-2 col-sm-2 col-xs-2">
+                                                                    <div class="col-lg-1 col-md-1 col-sm-1 col-xs-1">
                                                                         <label class="sf-label">Bill Date.</label>
                                                                         <span class="rflabelsteric"><strong>*</strong></span>
-                                                                        <input readonly type="date" class="form-control requiredField"  name="bill_date{{$purchase_voucher->id}}" id="bill_date" value="{{$purchase_voucher->bill_date}}" />
+                                                                        <input readonly type="date" class="form-control requiredField"  name="bill_date{{$purchase_voucher->id}}" id="bill_date_{{$purchase_voucher->id}}" value="{{$purchase_voucher->bill_date}}" title="{{$purchase_voucher->bill_date}}" />
+                                                                    </div>
+
+                                                                    <div class="col-lg-1 col-md-1 col-sm-1 col-xs-1">
+                                                                        <label class="sf-label" title="Purchased Amount">Purchased Invoice</label>
+                                                                        <input readonly type="text" class="form-control" value="{{number_format($PurchaseAmount, 2)}}" />
+                                                                    </div>
+
+                                                                    <div class="col-lg-1 col-md-1 col-sm-1 col-xs-1">
+                                                                        <label class="sf-label" title="Return Amount">Return Invoice</label>
+                                                                        <input readonly type="text" class="form-control" value="{{number_format($return_amount, 2)}}" />
+                                                                    </div>
+
+                                                                    <div class="col-lg-1 col-md-1 col-sm-1 col-xs-1">
+                                                                        <label class="sf-label" title="Paid Amount">Paid Amount</label>
+                                                                        <input readonly type="text" class="form-control" value="{{number_format($paid_amt, 2)}}" />
                                                                     </div>
 
                                                                     <div class="col-lg-2 col-md-2 col-sm-2 col-xs-2">
-                                                                        <label class="sf-label">Amount<span class="rflabelsteric"><strong>*</strong></span></label>
+                                                                        <label class="sf-label">Remaining Amount<span class="rflabelsteric"><strong>*</strong></span></label>
                                                                         <input type="text" class="form-control requiredField amount" onkeyup="sumed();CheckAmount('<?= $purchase_voucher->id; ?>');sum(1)" name="amount{{$purchase_voucher->id}}" id="amount{{$purchase_voucher->id}}" value="{{$remainamount}}" />
                                                                         <input type="hidden" id="existAmount{{$purchase_voucher->id}}" value="{{$remainamount}}" />
                                                                     </div>
@@ -174,7 +199,7 @@ $UserId = Auth::user()->id;
                                                                     </th>
                                                                     <th class="text-center" style="width:150px;">Debit <span class="rflabelsteric"><strong>*</strong></span></th>
                                                                     <th class="text-center" style="width:150px;">Credit <span class="rflabelsteric"><strong>*</strong></span></th>
-                                                                    <th class="text-center" style="width:150px;">Action</th>
+                                                                    <!-- <th class="text-center" style="width:150px;">Action</th> -->
                                                                 </tr>
                                                                 </thead>
                                                                 <tbody class="addMorePvsDetailRows_1" id="addMorePvsDetailRows_1">
@@ -196,18 +221,26 @@ $UserId = Auth::user()->id;
                                                                     <td>
                                                                         <input readonly placeholder="Credit" class="form-control c_amount_1 number_format " type="text" name="c_amount[]" id="c_amount_1_1" value="" onkeyup="sum('1')" />
                                                                     </td>
-                                                                    <td class="text-center">---</td>
+                                                                    <!-- <td class="text-center">---</td> -->
                                                                 </tr>
 
                                                                 <tr>
                                                                     <td>
                                                                         <select style="width: 100%" class="form-control requiredField select2" name="account_id[]" id="account_id_1_2">
                                                                             <option value="">Select Account</option>
-                                                                            @foreach(CommonHelper::get_all_account_operat_with_unique_code('1-2-8') as $key => $y)
+                                                                            <!-- @foreach(CommonHelper::get_all_account_operat_with_unique_code('1-2-8') as $key => $y)
                                                                                 <option data-url="{{ $y->balance ?? 0 }}" value="{{ $y->id}}" @if($y->id == 87) selected @endif >
                                                                                     {{ $y->code .' ---- '. $y->name.' Balance ('.number_format($y->balance,2).')'}}
                                                                                 </option>
-                                                                            @endforeach
+                                                                            @endforeach -->
+                                                                             @foreach(CommonHelper::get_all_account() as $y)
+                                                                    <option 
+                                                                        data-url="{{ $y->balance ?? 0 }}" 
+                                                                        value="{{ $y->id }}" 
+                                                                        {{ $y->id == 87 ? 'selected' : '' }}>
+                                                                        {{ "{$y->code} ---- {$y->name} Balance (" . number_format($y->balance ?? 0, 2) . ")" }}
+                                                                    </option>
+                                                                @endforeach
                                                                         </select>
                                                                     </td>
                                                                     <td>
@@ -216,18 +249,22 @@ $UserId = Auth::user()->id;
                                                                     <td>
                                                                         <input placeholder="Credit" class="form-control c_amount_1 number_format" type="text" name="c_amount[]" id="c_amount_1_2" value="" onkeyup="sum('1')" readonly />
                                                                     </td>
-                                                                    <td class="text-center">---</td>
+                                                                    <!-- <td class="text-center">---</td> -->
                                                                 </tr>
 
-                                                                <tr>
+                                                                <!-- <tr>
                                                                     <td>
                                                                         <select style="width: 100%" class="form-control select2" name="account_id[]" id="account_id_1_3">
                                                                             <option value="">Select Account</option>
-                                                                            @foreach(CommonHelper::get_gst_account() as $key => $y)
-                                                                                <option value="{{ $y->id}}" data-value="{{$y->rate}}" >
-                                                                                    {{$y->name}}
-                                                                                </option>
-                                                                            @endforeach
+                                                                           
+                                                                             @foreach(CommonHelper::get_all_account() as $y)
+                                                                    <option 
+                                                                        data-url="{{ $y->balance ?? 0 }}" 
+                                                                        value="{{ $y->id }}" 
+                                                                        {{ $y->id == 87 ? 'selected' : '' }}>
+                                                                        {{ "{$y->code} ---- {$y->name} Balance (" . number_format($y->balance ?? 0, 2) . ")" }}
+                                                                    </option>
+                                                                @endforeach
                                                                         </select>
                                                                     </td>
                                                                     <td>
@@ -236,8 +273,8 @@ $UserId = Auth::user()->id;
                                                                     <td>
                                                                         <input placeholder="Credit" class="form-control c_amount_1 number_format" type="text" name="c_amount[]" id="c_amount_1_3" value="" onkeyup="with_hold();sum('1')"/>
                                                                     </td>
-                                                                    <td class="text-center">---</td>
-                                                                </tr>
+                                                                    
+                                                                </tr> -->
 
                                                                                     {{--For Tax Amir--}}
 
@@ -271,9 +308,9 @@ $UserId = Auth::user()->id;
                                                                                 class="form-control requiredField text-right number_format"
                                                                                 value=""/>
                                                                     </td>
-                                                                    <td class="diff" style="width:150px;font-size: 20px;">
+                                                                    <!-- <td class="diff" style="width:150px;font-size: 20px;">
                                                                         <input readonly style="color: blue;font-weight: 600" class="form-control" type="text" id="diff" value=""/>
-                                                                    </td>
+                                                                    </td> -->
                                                                 </tr>
                                                                 </tbody>
                                                             </table>

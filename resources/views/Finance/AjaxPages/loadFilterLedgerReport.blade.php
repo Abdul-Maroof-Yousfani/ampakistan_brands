@@ -21,30 +21,44 @@ $m = Input::get('m');
 ?>
 <style>
     .hov:hover {
-        background-color: yellow;
+        background-color: #f8f9fa;
+    }
+    @media print {
+        .no-print {
+            display: none !important;
+        }
+    }
+    .ledger-header-title {
+        text-align: center;
+        border-bottom: 2px solid #eee;
+        padding-bottom: 10px;
+        margin-bottom: 20px;
+        color: #333;
     }
 </style>
 
 
 
 <div id="">
-    <div class="row">
-        <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
-            <label style="border-bottom:2px solid #000 !important;">Printed On Date&nbsp;:&nbsp;</label><label
-                style="border-bottom:2px solid #000 !important;"><?php echo CommonHelper::changeDateFormat(date('Y-m-d'));
-                $x = date('Y-m-d');
-                echo ' ' . '(' . date('D', strtotime($x)) . ')'; ?></label>
+    <div class="row no-print">
+        <div class="col-lg-12 text-right">
+            <button type="button" class="btn btn-sm btn-success" onclick="ExportToExcel('xlsx')">Export to Excel</button>
+            <button type="button" class="btn btn-sm btn-primary" onclick="window.print()">Print PDF</button>
         </div>
     </div>
+    
     <div class="row">
-        <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
-            <?php echo CommonHelper::get_company_logo(Session::get('run_company')); ?>
+        <div class="col-lg-12 text-right">
+            <span class="text-muted" style="font-size: 11px;">Report Generated On: {{ date('d-M-Y H:i:s') }}</span>
         </div>
+    </div>
 
-    </div>
     <div class="row">
         <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
-            <h3 style="text-align: center;">Ledger Report</h3>
+            <div class="ledger-header-title">
+                <h3 style="margin-bottom: 5px;">Ledger Report</h3>
+                <p class="text-muted" style="font-size: 14px;">{{ FinanceHelper::getCompanyName(Session::get('run_company')) }}</p>
+            </div>
         </div>
     </div>
     <div style="line-height:5px;">&nbsp;</div>
@@ -111,6 +125,11 @@ $m = Input::get('m');
             $total_credit = 0;
             $balance = 0;
             
+            if ($amount >= 0):
+                $total_debit = $amount;
+            else:
+                $total_credit = $amount * -1;
+            endif;
             ?>
             <tr>
                 <td></td>
@@ -333,8 +352,14 @@ $m = Input::get('m');
                 <td class="text-center" colspan="5"><b style="font-size: large;">TOTAL</b></td>
                 <td class="text-right" colspan="1"><b style="font-size: large;"><?php echo number_format($total_debit, 2); ?></b></td>
                 <td class="text-right" colspan="1"><b style="font-size: large;"><?php echo number_format($total_credit, 2); ?></b></td>
-                <td class="text-center" colspan="1"><b
-                        style="font-size: large;"></b></td>
+                <td class="text-right" colspan="1"><b
+                        style="font-size: large;"><?php 
+                        if ($balance >= 0):
+                            echo number_format($balance, 2);
+                        else:
+                            echo '(' . number_format($balance * -1, 2) . ')';
+                        endif; 
+                        ?></b></td>
 
             </tr>
 

@@ -13,6 +13,9 @@ use Illuminate\Http\Request;
 |
 */
 Route::post('/login','MobileApplicationController@login');
+Route::post('/loginById','MobileApplicationController@loginById');
+Route::post('/hr/update-status', 'BAFormationController@hrUpdateStatus');
+Route::get('/test-api', 'BAFormationController@testApi');
 
 // Route::middleware('auth:api')->get('/user', function (Request $request) {
 //     return $request->user();
@@ -65,6 +68,14 @@ Route::middleware(['custom-middleware'])->group(function () {
     Route::post('/createSurvey','MobileApplicationController@createSurvey');
     Route::get('/surveyList','MobileApplicationController@surveyList');
     Route::get('/surveyData','MobileApplicationController@surveyData');
+    Route::get('/get-target-report', 'MobileApplicationController@targetReportApi');
+    Route::get('/get-ba-target-progress', 'MobileApplicationController@getBaTargetProgressApi');
+    Route::get('/get-user-stock-report', 'MobileApplicationController@getUserStockReportApi');
+    Route::post('/CreateBAStockAdjustment','MobileApplicationController@CreateBAStockAdjustment');
+    Route::get('/BAStockAdjustmentList','MobileApplicationController@BAStockAdjustmentList');
+    Route::get('/BAStockAdjustmentData','MobileApplicationController@BAStockAdjustmentData');
+    Route::get('/getAllUserProducts','MobileApplicationController@getAllUserProducts');
+    Route::get('/getBASaleSummary','MobileApplicationController@getBASaleSummary');
 
     // Route::controller('SalesController')->prefix("survey")->group(function(){
     //     Route::post('createSurvey', "createSurvey");

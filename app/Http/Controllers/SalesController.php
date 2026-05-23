@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests;
 use App\Models\Quotation_Data;
-use App\Models\Regions;
 use Illuminate\Http\Request;
 use Auth;
 use DB;
@@ -476,11 +475,8 @@ public function exportCustomers(Request $request)
     // }
 
 
-    
     public function uploadCreditCustomer(Request $request)
 {
-
-   
     $file = $request->file('import_file');
     $data = array_map('str_getcsv', file($file->getRealPath()));
 
@@ -496,16 +492,6 @@ public function exportCustomers(Request $request)
         $cityid = $cityData->id ?? 0;
         $stateid = $cityData->state_id ?? 0;
         $countryid = CommonHelper::get_country_id_by_state_id($stateid);
-
-        if(empty($row[45])) {
-            return redirect()->back()->with("error", "Region is required");
-        }
-
-        $region = Region::where('region_name', $row[45])->value('id');
-        if(!$region) {
-            return redirect()->back()->with("error", "Invalid Region");
-        }
-
 
         $customerCode = !empty($row[1]) ? $row[1] : "";
         $customerData = [
@@ -547,9 +533,9 @@ public function exportCustomers(Request $request)
             'display_pending_payment_invoice' => $row[32] ?? "",
             'CustomerType' => CommonHelper::get_id_from_db_by_name($row[37], 'customer_types') ?? 0,
             'employee_id' => $row[39] ?? null,
-            'region_id' => Region::where('region_name', $row[45])->value('id'),
             'special_price_mapped' => $row[40] ?? "",
             'warehouse_from' => CommonHelper::get_warehouse_id_by_name($row[41]) ?? null,
+            'region_id' => Region::where('region_name', $row[45])->value('id'),
             'warehouse_to' => $row[42] ?? null,
             'username' => Auth::user()->name,
             'customer_group_id' => CommonHelper::get_id_from_db_by_name($row[31], 'customer_group') ?? NULL,
@@ -973,15 +959,228 @@ ini_set('memory_limit', '512M');
 //     }
 // }
 
+// public function uploadProduct(Request $request)
+// {
+//     ini_set('max_execution_time', 300);
+//     ini_set('memory_limit', '512M');
+//     DB::connection('mysql2')->beginTransaction();
+
+//         $request->validate([
+//         'import_file' => 'required|file|mimetypes:text/plain,text/csv|max:2048',
+//     ]);
+
+//     try {
+//         $file = $request->file('import_file');
+//         if (!$file || !$file->isValid()) {
+//             throw new \Exception('Invalid file uploaded');
+//         }
+
+//         $filePath = $file->getRealPath();
+//         if (!$filePath || !is_readable($filePath)) {
+//             throw new \Exception('Could not read the uploaded file');
+//         }
+
+//         // Use fgetcsv to safely parse CSV data
+//         $csv = fopen($filePath, 'r');
+//         $data = [];
+//         while (($row = fgetcsv($csv)) !== false) {
+//             $data[] = $row;
+//         }
+//         fclose($csv);
+
+//         $insertData = [];
+//         $updatedCount = 0;
+//         $insertedCount = 0;
+
+//         foreach ($data as $key => $row) {
+//             if ($key == 0) continue; // skip header
+
+//             $row = array_pad($row, 33, null);
+//             $product_name = trim($row[3]);
+//             $brand_name = trim($row[8]);
+
+//             // Get brand_id from brands table
+//             $brand_id = 0;
+//             if (!empty($brand_name)) {
+//                 $brand = DB::connection('mysql2')->table('brands')
+//                     ->whereRaw("CONVERT(`name` USING utf8mb4) COLLATE utf8mb4_unicode_ci = ?", [$brand_name])
+//                     ->first();
+//                 $brand_id = $brand ? $brand->id : 0;
+//             }
+//           $sku_code = !empty($row[2]) ? trim($row[2]) : null;
+
+//             if(empty($row[2])) {
+//                 continue;
+//             }
+//             if(!$product_name) {
+//                 continue;
+//             }
+//             if(empty($row[4])) {
+//                 continue;
+//             }
+//             if(empty($row[5])) {
+//                 continue;   
+//             }
+//             if(empty($row[7]))  {
+//                 continue;
+//             }
+//             if(!$brand_id) {
+//                 continue;
+//             }
+//             if(empty($row[9])) {
+//                 continue;
+//             }
+
+//             if(empty($row[10])) {
+//                 continue;
+//             }
+
+//             if(empty($row[11])) {
+//                 continue;
+//             }
+
+//             if(empty($row[12])) {
+//                 continue;
+//             }
+
+//             if(empty($row[13])) {
+//                 continue;
+//             }
+
+//             if(empty($row[14])) {
+//                 continue;
+//             }
+
+//             if(empty($row[15])) {
+//                 continue;
+//             }
+
+//             if(empty($row[16])) {
+//                 continue;
+//             }
+
+//             if(empty($row[17])) {
+//                 continue;
+//             }
+
+//             if(empty($row[18])) {
+//                 continue;
+//             }
+
+//             if(empty($row[20])) {
+//                 continue;
+//             }
+//             if(empty($row[22])) {
+//                 continue;
+//             }
+
+//             if(empty($row[31])) {
+//                 continue;
+//             }
+
+//             $productData = [
+//                 'sku_code' => !empty($row[2]) ? trim($row[2]) : null,
+//                 'product_name' => $product_name,
+//                 'product_description' => !empty($row[4]) ? trim($row[4]) : null,
+//                 'uom' => !empty($row[5]) ? CommonHelper::get_id_from_db_by_name_for_product(trim($row[5]), 'uom') : 0,
+//                 'packing' => !empty($row[6]) ? trim($row[6]) : null,
+//                 'product_barcode' => !empty($row[7]) ? trim($row[7]) : null,
+//                 'brand_id' => $brand_id,
+//                 'group_id' => !empty($row[9]) ? CommonHelper::get_id_from_db_by_name_for_product(trim($row[9]), 'company_groups') : 0,
+//                 'main_ic_id' => !empty($row[10]) ? CommonHelper::get_id_from_db_by_name_for_product(trim($row[10]), 'category') : 0,
+//                 'sub_category_id' => !empty($row[11]) ? CommonHelper::get_id_from_db_by_name_for_product(trim($row[11]), 'sub_category') : 0,
+//                 'product_classification_id' => !empty($row[12]) ? CommonHelper::get_id_from_db_by_name_for_product(trim($row[12]), 'product_classifications') : 0,
+//                 'product_type_id' => !empty($row[13]) ? CommonHelper::get_id_from_db_by_name_for_product(trim($row[13]), 'product_type') : 0,
+//                 'product_trend_id' => !empty($row[14]) ? CommonHelper::get_id_from_db_by_name_for_product(trim($row[14]), 'product_trends') : 0,
+//                 'purchase_price' => !empty($row[15]) ? (float) str_replace(',', '', trim($row[15])) : 0,
+//                 'sale_price' => !empty($row[16]) ? (float) str_replace(',', '', trim($row[16])) : 0,
+//                 'mrp_price' => !empty($row[17]) ? (float) str_replace(',', '', trim($row[17])) : 0,
+//                 'is_tax_apply' => !empty($row[18]) && strtolower(trim($row[18])) === 'yes' ? 1 : 0,
+//                     'tax_type_id' => !empty($row[19]) 
+//                         ? (strtolower(trim($row[19])) === 'include in' 
+//                             ? 1 
+//                             : (strtolower(trim($row[19])) === 'tax on' 
+//                                 ? 2 
+//                                 : 0)
+//                         ) 
+//                         : 0,
+
+//                 // 'tax_type_id' => !empty($row[19]) ? CommonHelper::get_id_from_db_by_name_for_product(trim($row[19]), 'tax_types') : 0,
+//                 'tax_applied_on' => !empty($row[20]) ? trim($row[20]) : null,
+//                 'tax_policy' => !empty($row[21]) ? trim($row[21]) : null,
+//                 'tax' => !empty($row[22]) ? (float) str_replace(',', '', trim($row[22])) : null,
+//                 'flat_discount' => !empty($row[23]) ? (float) str_replace(',', '', trim($row[23])) : 0,
+//                 'min_qty' => !empty($row[24]) ? (int) trim($row[24]) : 0,
+//                 'max_qty' => !empty($row[25]) ? (int) trim($row[25]) : 0,
+//                   'hs_code' => !empty($row[27]) ? trim($row[27]): 0,
+//                 // 'hs_code' => !empty($row[27]) ? CommonHelper::get_id_from_db_by_name_for_product(trim($row[27]), 'hs_codes') : 0,
+//                 'locality' => !empty($row[28]) ? trim($row[28]) : null,
+//                 'origin' => !empty($row[29]) ? trim($row[29]) : null,
+//                 'color' => !empty($row[30]) ? trim($row[30]) : null,
+//                 'product_status' => !empty($row[31]) ? trim($row[31]) : null,
+//                 'is_barcode_scanning' => !empty($row[32]) ? (strtolower(trim($row[32])) == 'yes' ? 1 : 0) : null,
+//                 'principal_group_id' => !empty($row[33]) ? CommonHelper::get_id_from_db_by_name_for_product(trim($row[33]), 'products_principal_group') : 0,
+//                 'username' => Auth::user()->name,
+//                 'date' => date('Y-m-d'),
+//             ];
+
+//             // Collation-safe check for existing product
+//             // $existingProduct = DB::connection('mysql2')->table('subitem')
+//             //     ->whereRaw("CONVERT(`product_name` USING utf8mb4) COLLATE utf8mb4_unicode_ci = ?", [$product_name])
+//             //     ->where('brand_id', $brand_id)
+//             //     ->first();
+
+
+//                 $existingProduct = DB::connection('mysql2')->table('subitem')
+//                 ->where('sku_code', $sku_code)
+//                 // ->where('brand_id', $brand_id)
+//                 ->first();
+
+
+//             if ($existingProduct) {
+//                 DB::connection('mysql2')->table('subitem')
+//                     ->where('id', $existingProduct->id)
+//                     ->update($productData);
+//                 $updatedCount++;
+//             } else {
+//                 $productData['sys_no'] = CommonHelper::generateUniqueNumber('ITEM-', 'subitem', 'sys_no');
+//                 $insertData[] = $productData;
+//                 $insertedCount++;
+//             }
+
+//             if (count($insertData) >= 500) {
+//                 DB::connection('mysql2')->table('subitem')->insert($insertData);
+//                 $insertData = [];
+//             }
+//         }
+
+//         if (!empty($insertData)) {
+//             DB::connection('mysql2')->table('subitem')->insert($insertData);
+//         }
+
+//         DB::connection('mysql2')->commit();
+
+//         return redirect()->back()->with([
+//             'success' => 'Products uploaded successfully',
+//             'stats' => "Inserted: {$insertedCount}, Updated: {$updatedCount}"
+//         ]);
+//     } catch (\Exception $e) {
+//         DB::connection('mysql2')->rollBack();
+//         return redirect()->back()->with('error', 'Error: ' . $e->getMessage());
+//     }
+// }
+
+
 public function uploadProduct(Request $request)
 {
     ini_set('max_execution_time', 300);
     ini_set('memory_limit', '512M');
-    DB::connection('mysql2')->beginTransaction();
-
+    
     $request->validate([
-    'import_file' => 'required|file|mimetypes:text/plain,text/csv|max:2048',
-]);
+        'import_file' => 'required|file|mimetypes:text/plain,text/csv|max:2048',
+    ]);
+
+    DB::connection('mysql2')->beginTransaction();
 
     try {
         $file = $request->file('import_file');
@@ -994,7 +1193,7 @@ public function uploadProduct(Request $request)
             throw new \Exception('Could not read the uploaded file');
         }
 
-        // Use fgetcsv to safely parse CSV data
+        // Parse CSV
         $csv = fopen($filePath, 'r');
         $data = [];
         while (($row = fgetcsv($csv)) !== false) {
@@ -1002,96 +1201,65 @@ public function uploadProduct(Request $request)
         }
         fclose($csv);
 
+        if (count($data) <= 1) {
+            throw new \Exception('The CSV file is empty or contains only headers');
+        }
+
         $insertData = [];
         $updatedCount = 0;
         $insertedCount = 0;
+        $skippedRows = 0;
+        $errors = [];
 
         foreach ($data as $key => $row) {
-            if ($key == 0) continue; // skip header
+            if ($key == 0) continue;
 
             $row = array_pad($row, 33, null);
             $product_name = trim($row[3]);
             $brand_name = trim($row[8]);
+            $sku_code = !empty($row[2]) ? trim($row[2]) : null;
 
-            // Get brand_id from brands table
+            // ✅ SIRF YEH FIELDS TRULY REQUIRED HAIN
+            $required_fields = [
+                'sku_code' => $row[2] ?? null,
+                'product_name' => $product_name,
+                'brand_name' => $brand_name,
+                'uom' => $row[5] ?? null,
+                'product_barcode' => $row[7] ?? null,
+                'product_status' => $row[31] ?? null,
+            ];
+
+            $missing_fields = [];
+            foreach ($required_fields as $field_name => $field_value) {
+                if (empty($field_value)) {
+                    $missing_fields[] = $field_name;
+                }
+            }
+
+            if (!empty($missing_fields)) {
+                $skippedRows++;
+                $errors[] = "Row " . ($key + 1) . ": Missing required fields - " . implode(", ", $missing_fields);
+                continue;
+            }
+
+            // Get brand_id (required)
             $brand_id = 0;
             if (!empty($brand_name)) {
                 $brand = DB::connection('mysql2')->table('brands')
                     ->whereRaw("CONVERT(`name` USING utf8mb4) COLLATE utf8mb4_unicode_ci = ?", [$brand_name])
                     ->first();
                 $brand_id = $brand ? $brand->id : 0;
-            }
-          $sku_code = !empty($row[2]) ? trim($row[2]) : null;
-             if(empty($row[2])) {
-                return redirect()->back()->with("error", "SKU code is required");
-            }
-            if(!$product_name) {
-                return redirect()->back()->with("error", "Product Name is required");
-            }
-            if(empty($row[4])) {
-                return redirect()->back()->with("error", "Product Description is required");
-            }
-            if(empty($row[5])) {
-                return redirect()->back()->with("error", "UOM is required");
-            }
-            if(empty($row[7]))  {
-                return redirect()->back()->with("error", "Product Barcode is required");
-            }
-            if(empty($row[9])) {
-                 return redirect()->back()->with("error", "Group ID is required");
+                
+                if ($brand_id == 0) {
+                    $skippedRows++;
+                    $errors[] = "Row " . ($key + 1) . ": Brand '{$brand_name}' not found in database";
+                    continue;
+                }
             }
 
-            if(empty($row[10])) {
-                 return redirect()->back()->with("error", "Category is required");
-            }
-
-            if(empty($row[11])) {
-                return redirect()->back()->with("error", "Sub-Category is required");
-            } 
-
-            if(empty($row[12])) {
-                return redirect()->back()->with("error", "Product Classification is required");
-            }
-
-            if(empty($row[13])) {
-                return redirect()->back()->with("error", "Product Type is required");
-            }
-
-            if(empty($row[14])) {
-                return redirect()->back()->with("error", "Product Trend is required");
-            }
-
-            if(empty($row[15])) {
-                return redirect()->back()->with("error", "Purchase Price is required");
-            }
-
-            if(empty($row[16])) {
-                return redirect()->back()->with("error", "Sale Price is required");
-            }
-
-            if(empty($row[17])) {
-                return redirect()->back()->with("error", "MRP Price is required");
-            }
-
-            if(empty($row[18])) {
-                return redirect()->back()->with("error", "Tax Apply is required");
-            }
-
-            if(empty($row[20])) {
-                return redirect()->back()->with("error", "Tax Applied on is required");
-            }
-            if(empty($row[22])) {
-                return redirect()->back()->with("error", "Tax is required");
-            }
-
-            if(empty($row[31])) {
-                return redirect()->back()->with("error", "Product Status is required");
-            
-            }
-            
-
+            // ✅ BAQI SARI FIELDS OPTIONAL HAIN - Inki validation nahi karni
             $productData = [
-                'sku_code' => !empty($row[2]) ? trim($row[2]) : null,
+                'sku_code' => $sku_code,
                 'product_name' => $product_name,
                 'product_description' => !empty($row[4]) ? trim($row[4]) : null,
                 'uom' => !empty($row[5]) ? CommonHelper::get_id_from_db_by_name_for_product(trim($row[5]), 'uom') : 0,
@@ -1108,24 +1276,16 @@ public function uploadProduct(Request $request)
                 'sale_price' => !empty($row[16]) ? (float) str_replace(',', '', trim($row[16])) : 0,
                 'mrp_price' => !empty($row[17]) ? (float) str_replace(',', '', trim($row[17])) : 0,
                 'is_tax_apply' => !empty($row[18]) && strtolower(trim($row[18])) === 'yes' ? 1 : 0,
-                    'tax_type_id' => !empty($row[19]) 
-                        ? (strtolower(trim($row[19])) === 'include in' 
-                            ? 1 
-                            : (strtolower(trim($row[19])) === 'tax on' 
-                                ? 2 
-                                : 0)
-                        ) 
-                        : 0,
-
-                // 'tax_type_id' => !empty($row[19]) ? CommonHelper::get_id_from_db_by_name_for_product(trim($row[19]), 'tax_types') : 0,
+                'tax_type_id' => !empty($row[19]) 
+                    ? (strtolower(trim($row[19])) === 'include in' ? 1 : (strtolower(trim($row[19])) === 'tax on' ? 2 : 0)) 
+                    : 0,
                 'tax_applied_on' => !empty($row[20]) ? trim($row[20]) : null,
                 'tax_policy' => !empty($row[21]) ? trim($row[21]) : null,
                 'tax' => !empty($row[22]) ? (float) str_replace(',', '', trim($row[22])) : null,
                 'flat_discount' => !empty($row[23]) ? (float) str_replace(',', '', trim($row[23])) : 0,
                 'min_qty' => !empty($row[24]) ? (int) trim($row[24]) : 0,
                 'max_qty' => !empty($row[25]) ? (int) trim($row[25]) : 0,
-                  'hs_code' => !empty($row[27]) ? trim($row[27]): 0,
-                // 'hs_code' => !empty($row[27]) ? CommonHelper::get_id_from_db_by_name_for_product(trim($row[27]), 'hs_codes') : 0,
+                'hs_code' => !empty($row[27]) ? trim($row[27]): 0,
                 'locality' => !empty($row[28]) ? trim($row[28]) : null,
                 'origin' => !empty($row[29]) ? trim($row[29]) : null,
                 'color' => !empty($row[30]) ? trim($row[30]) : null,
@@ -1136,25 +1296,19 @@ public function uploadProduct(Request $request)
                 'date' => date('Y-m-d'),
             ];
 
-            // Collation-safe check for existing product
-            // $existingProduct = DB::connection('mysql2')->table('subitem')
-            //     ->whereRaw("CONVERT(`product_name` USING utf8mb4) COLLATE utf8mb4_unicode_ci = ?", [$product_name])
-            //     ->where('brand_id', $brand_id)
-            //     ->first();
-
-
-                $existingProduct = DB::connection('mysql2')->table('subitem')
+            // Check for existing product by SKU
+            $existingProduct = DB::connection('mysql2')->table('subitem')
                 ->where('sku_code', $sku_code)
-                //->where('brand_id', $brand_id)
                 ->first();
 
-
             if ($existingProduct) {
+                // Update existing product
                 DB::connection('mysql2')->table('subitem')
                     ->where('id', $existingProduct->id)
                     ->update($productData);
                 $updatedCount++;
             } else {
+                // Insert new product
                 $productData['sys_no'] = CommonHelper::generateUniqueNumber('ITEM-', 'subitem', 'sys_no');
                 $insertData[] = $productData;
                 $insertedCount++;
@@ -1166,21 +1320,45 @@ public function uploadProduct(Request $request)
             }
         }
 
+        // Insert remaining records
         if (!empty($insertData)) {
             DB::connection('mysql2')->table('subitem')->insert($insertData);
         }
 
+        $totalProcessed = $insertedCount + $updatedCount;
+        
+        if ($totalProcessed === 0) {
+            DB::connection('mysql2')->rollBack();
+            
+            $errorMessage = "No products were uploaded. ";
+            if ($skippedRows > 0) {
+                $errorMessage .= "{$skippedRows} rows were skipped due to missing required fields.";
+                if (!empty($errors)) {
+                    $errorMessage .= " Errors: " . implode("; ", array_slice($errors, 0, 5));
+                }
+            }
+            
+            return redirect()->back()->with('error', $errorMessage);
+        }
+
         DB::connection('mysql2')->commit();
 
+        $message = "Products uploaded successfully: {$insertedCount} inserted, {$updatedCount} updated";
+        if ($skippedRows > 0) {
+            $message .= ", {$skippedRows} rows skipped (missing required fields)";
+        }
+
         return redirect()->back()->with([
-            'success' => 'Products uploaded successfully',
-            'stats' => "Inserted: {$insertedCount}, Updated: {$updatedCount}"
+            'success' => $message,
+            'stats' => "Inserted: {$insertedCount}, Updated: {$updatedCount}, Skipped: {$skippedRows}"
         ]);
+
     } catch (\Exception $e) {
         DB::connection('mysql2')->rollBack();
         return redirect()->back()->with('error', 'Error: ' . $e->getMessage());
     }
 }
+
 
 
 
@@ -1466,8 +1644,9 @@ public function uploadProduct(Request $request)
 
        
         CommonHelper::reconnectMasterDatabase();
-        $SubDepartments = SubDepartment::where('status','=', 1)->orderBy('id')->get();
-        $customerGroups = \App\Models\CustomerGroup::where('status', 1)->get();
+
+         $SubDepartments = SubDepartment::where('status','=', 1)->orderBy('id')->get();
+         $customerGroups = \App\Models\CustomerGroup::where('status', 1)->get();
         return view('Sales.createCreditCustomerForm', compact('regions', 'accounts', 'countries', 'StoresCategory', 'Territory', 'CustomerType','SubDepartments', 'customerGroups'));
     }
 
@@ -1488,24 +1667,22 @@ public function uploadProduct(Request $request)
         $StoresCategory = StoresCategory::where('status', '=', 1)->get();
         $Territory = Territory::where('status', '=', 1)->get();
         $CustomerType = CustomerType::where('status', '=', 1)->get();
+        $regions = Region::where("status", 1)->get();
         CommonHelper::reconnectMasterDatabase();
-        CommonHelper::companyDatabaseConnection(1);
-        $regions = new Region;
-        $regions = $regions::get();
-        CommonHelper::reconnectMasterDatabase();
-        
-         $salesPersons = SubDepartment::where('status','=', 1)->orderBy('id')->get();
-    $customerGroups = \App\Models\CustomerGroup::where('status', 1)->get();
+
+        $salesPersons = SubDepartment::where('status','=', 1)->orderBy('id')->get();
+        $customerGroups = \App\Models\CustomerGroup::where('status', 1)->get();
 
         return view('Sales.editCustomerForm', compact('regions', 'accounts', 'countries', 'id', 'StoresCategory', 'Territory', 'CustomerType','salesPersons', 'customerGroups'));
-        }
+    }
     public function approveCustomer(Request $request)
     {
         $customerApprove = Customer::find($request->id);
         $customerApprove->status = 1;
         $customerApprove->save();
         $territories = Territory::all();
-        return view('Sales.viewCreditCustomerList', compact('territories'));
+        $branches = \App\Models\Branch::where('status', 1)->get();
+        return view('Sales.viewCreditCustomerList', compact('territories', 'branches'));
     }
 
 
@@ -1513,7 +1690,8 @@ public function uploadProduct(Request $request)
     public function viewCreditCustomerList()
     {
         $territories = Territory::all();
-        return view('Sales.viewCreditCustomerList', compact('territories'));
+        $branches = \App\Models\Branch::where('status', 1)->get();
+        return view('Sales.viewCreditCustomerList', compact('territories', 'branches'));
     }
     public function add_agent_list()
     {
@@ -1709,8 +1887,6 @@ public function uploadProduct(Request $request)
         $sale_order = $sale_order->where('status', 0)->where('delivery_note_status', 0)
             ->whereIn('so_status', [1, 2, 3, 4])
             ->whereBetween('so_date', [$currentMonthStartDate, $currentMonthEndDate])->get();
-
-         
         $Customer = DB::Connection('mysql2')->table('customers')->where('status', 1)->get();
         return view('Sales.CreateDeliveryNoteList', compact('sale_order', 'Customer'));
     }
@@ -1891,7 +2067,9 @@ public function uploadProduct(Request $request)
     {
         $delivery_note = new DeliveryNote();
         $delivery_note = $delivery_note->SetConnection('mysql2');
+        
         $type = request()->type;
+
         // where('status',1)->
         $territory_ids = json_decode(auth()->user()->territory_id); 
         $delivery_note = $delivery_note
@@ -2405,7 +2583,6 @@ public function getDeliveryNoteDefaultData(Request $request)
         $user = auth()->user();
         $territory_ids = json_decode($user->territory_id);   
         $type = request()->type;                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    
        
         $sales_tax_invoice = $sales_tax_invoice
             ->join('customers', 'customers.id', '=', 'sales_tax_invoice.buyers_id')
@@ -2733,17 +2910,16 @@ if (in_array($user->acc_type, ['user'])) {
         $currentMonthEndDate   = date('Y-m-t');
         $type = request()->type;
 
-
         $credit_note = new CreditNote();
         $credit_note = $credit_note->SetConnection('mysql2');
-          $credit_note = $credit_note
+        $credit_note = $credit_note
                             ->where('status', 1)
                             ->when($type == 'pending', function($query) {
                                 $query->where("status", 0);
                             })
                             ->whereBetween('cr_date', [$currentMonthStartDate, $currentMonthEndDate])
                             ->orderBy('id', 'DESC')->get();
-      return view('Sales.viewCustomerCreditNoteList', compact('credit_note'));
+        return view('Sales.viewCustomerCreditNoteList', compact('credit_note'));
     }
     public function viewCustomer(Request $request)
     {
@@ -3163,6 +3339,20 @@ if (in_array($user->acc_type, ['user'])) {
     }
 
 
+    private static function getAccountIds()
+    {
+        // You can store these in .env file or database settings
+        return [
+            'advance_tax_receivable' => '1777',
+            'advance_tax_receivable_code' => '1-57-2',
+            'sales_revenue' => '1045',
+            'sales_revenue_code' => '5-2',
+            'sales_tax_payable' => '1778',
+            'sales_tax_payable_code' => '2-371',
+        ];
+    }
+
+
     public static function si_approve(Request $request)
     {
         DB::Connection('mysql2')->beginTransaction();
@@ -3251,11 +3441,6 @@ if (in_array($user->acc_type, ['user'])) {
                 $subject = 'Sales Tax Invoice Approved For ' . $so_no;
                 NotificationHelper::send_email('Sales tax Invoice', $behavior, $dept_id, $voucher_no, $subject, $p_type);
             endif;
-            $type = "Sales Tax Invoice";
-            \App\Helpers\CommonHelper::createNotification(
-                $type . " with " . $gi_no . " is approved by " . auth()->user()->name, 
-                $type . ""
-            );
             DB::Connection('mysql2')->commit();
         } catch (Exception $ex) {
 
@@ -3314,6 +3499,14 @@ if (in_array($user->acc_type, ['user'])) {
         $StoresCategory = $StoresCategory->SetConnection('mysql2');
         $StoresCategory = $StoresCategory->where('status', 1)->get();
         return view('Sales.StoresCategory.List', compact('StoresCategory'));
+    }
+
+    public function storesCategoryListReadOnly()
+    {
+        $StoresCategory = new  StoresCategory();
+        $StoresCategory = $StoresCategory->SetConnection('mysql2');
+        $StoresCategory = $StoresCategory->where('status', 1)->get();
+        return view('Sales.StoresCategory.ListReadOnly', compact('StoresCategory'));
     }
     function editStoresCategoryForm(Request $request)
     {

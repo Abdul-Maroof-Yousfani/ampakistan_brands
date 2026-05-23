@@ -45,12 +45,19 @@ $UserId = Auth::user()->id;
                                                     $purchase_voucher = DB::connection('mysql2')->table('new_purchase_voucher')->where('id', $row)->first();
                                                     $grn = DB::connection('mysql2')->table('new_purchase_voucher')->whereIn('id', $id)->get()->pluck('grn_no');
                                                     $sales_tax_amount = DB::connection('mysql2')->table('new_purchase_voucher')->whereIn('id', $id)->sum('sales_tax_amount');
-                                                    $return_amount=  DB::Connection('mysql2')->table('purchase_return as a')
-                                                        ->join('purchase_return_data as b','a.id','b.master_id')
-                                                        ->where('a.status',1)
-                                                        ->where('a.type',2)
-                                                        ->whereIn('grn_no',$grn)
-                                                        ->sum('b.net_amount');
+                                                  
+
+
+ $return = DB::connection('mysql2')->table('purchase_return as a')
+    ->join('purchase_return_data as b', 'a.id', 'b.master_id')
+    ->where('a.status', 1)
+    ->where('a.type', 2)
+    ->where('a.grn_no', $grn)
+    ->select('a.summary_withholding_tax', DB::raw('SUM(b.net_amount) as total_net_amount'))
+    ->groupBy('a.id', 'a.summary_withholding_tax')
+    ->first();
+
+$return_amount = $return ? ($return->total_net_amount + $return->summary_withholding_tax) : 0;
 
                                                     $purchase_voucher_data = DB::connection('mysql2')->table('new_purchase_voucher_data')->where('master_id', $row)
                                                         ->where('staus',1)
@@ -58,7 +65,9 @@ $UserId = Auth::user()->id;
                                                         ->groupBy('master_id')
                                                         ->first();
                                                     $PurchaseAmount = CommonHelper::PurchaseAmountCheck($id);
-                                                    $PurchaseAmount = $PurchaseAmount + $sales_tax_amount;
+                                                    $PurchaseAmount = $PurchaseAmount;
+
+                                                    
                                                     $purchase_voucher_payment_data = DB::connection('mysql2')->table('new_purchase_voucher_payment')->whereIn('new_purchase_voucher_id', $id)
                                                         ->where('status',1)
                                                         ->where('purchase_voucher_type',1)
@@ -66,7 +75,11 @@ $UserId = Auth::user()->id;
                                                         ->first();
 
                                                     $paid_amt = isset($purchase_voucher_payment_data->totalamount)?$purchase_voucher_payment_data->totalamount:0;
-                                                    $remainamount = $PurchaseAmount-$paid_amt-$return_amount;
+                                                  
+                                                   $remainamount = $PurchaseAmount - $paid_amt - $return_amount;
+
+
+                                                    $remainamount = number_format($remainamount, 1, '.', '');
                                                     ?>
 
 
@@ -133,11 +146,19 @@ $UserId = Auth::user()->id;
                                                             <td>
                                                                 <select style="width: 100%" class="form-control requiredField select2" name="account_id[]" id="account_id_1_2">
                                                                     <option value="">Select Account</option>
-                                                                    @foreach(CommonHelper::get_all_account_operat_with_unique_code('1-2-8') as $key => $y)
+                                                                 @foreach(CommonHelper::get_all_account() as $y)
+                                                                    <option 
+                                                                        data-url="{{ $y->balance ?? 0 }}" 
+                                                                        value="{{ $y->id }}" 
+                                                                        {{ $y->id == 87 ? 'selected' : '' }}>
+                                                                        {{ "{$y->code} ---- {$y->name} Balance (" . number_format($y->balance ?? 0, 2) . ")" }}
+                                                                    </option>
+                                                                @endforeach
+                                                                    <!-- @foreach(CommonHelper::get_all_account_operat_with_unique_code('1-2-8') as $key => $y)
                                                                         <option data-url="{{ $y->balance ?? 0 }}" value="{{ $y->id}}" @if($y->id == 87) selected @endif >
                                                                             {{ $y->code .' ---- '. $y->name.' Balance ('.number_format($y->balance,2).')'}}
                                                                         </option>
-                                                                    @endforeach
+                                                                    @endforeach -->
                                                                 </select>
                                                             </td>
                                                             <td>
@@ -154,11 +175,19 @@ $UserId = Auth::user()->id;
                                                             <td>
                                                                 <select style="width: 100%" class="form-control select2" name="account_id[]" id="account_id_1_3">
                                                                     <option value="">Select Account</option>
-                                                                    @foreach(CommonHelper::get_gst_account() as $key => $y)
+                                                                       @foreach(CommonHelper::get_all_account() as $y)
+                                                                    <option 
+                                                                        data-url="{{ $y->balance ?? 0 }}" 
+                                                                        value="{{ $y->id }}" 
+                                                                        {{ $y->id == 87 ? 'selected' : '' }}>
+                                                                        {{ "{$y->code} ---- {$y->name} Balance (" . number_format($y->balance ?? 0, 2) . ")" }}
+                                                                    </option>
+                                                                @endforeach
+                                                                    <!-- @foreach(CommonHelper::get_gst_account() as $key => $y)
                                                                         <option value="{{ $y->id}}" data-value="{{$y->rate}}" >
                                                                             {{$y->name}}
                                                                         </option>
-                                                                    @endforeach
+                                                                    @endforeach -->
                                                                 </select>
                                                             </td>
                                                             <td>
@@ -719,6 +748,7 @@ $UserId = Auth::user()->id;
 
 
                 total = $('#totalamount').val();
+                
                 //alert(total);
                 $('#d_amount_1_1').val(total);
                 $('#d_t_amount_1').val(total);

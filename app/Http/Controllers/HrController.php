@@ -82,7 +82,6 @@ use App\Models\Buildings;
 use App\Models\AllowanceType;
 use App\Models\Territory;
 
-
 use Input;
 use Auth;
 use DB;
@@ -165,14 +164,20 @@ class HrController extends Controller
         $territories = Territory::where('status','=', 1)->get();
 
         return view('Hr.viewSubDepartmentList', compact('SubDepartments', 'territories'));
-   }
+    }
 
     public function editSubDepartmentForm()
     {
         $departments = Department::where([['company_id','=',Input::get('m')],['status','=', 1]])->orderBy('id')->get();
         $territories = Territory::where('status','=', 1)->get();
         return view('Hr.editSubDepartmentForm',compact('departments', 'territories'));
-   }
+    }
+
+    public function editUOM(int $id)
+    {
+        $uom = UOM::find($id);
+        return view('Hr.editUOM',compact('uom'));
+    }
 
     public function createDesignationForm()
     {
@@ -190,12 +195,6 @@ class HrController extends Controller
     {
         $departments = Department::where([['company_id', '=', Input::get('m')], ['status', '=', '1']])->orderBy('id')->get();
         return view('Hr.editDesignationForm',compact('departments'));
-    }
-
-    public function editUOM(int $id)
-    {
-        $uom = UOM::find($id);
-        return view('Hr.editUOM',compact('uom'));
     }
 
     public function createEmployeeForm(){
@@ -223,52 +222,9 @@ class HrController extends Controller
     {
         $login_credentials ='';
 
-        $leaves_policy = LeavesPolicy::where([['status','=','1']])->get();
-        $jobtype = JobType::where([['company_id', '=', Input::get('m')], ['status', '=', '1']])->orderBy('id')->get();
-        $departments = Department::where([['company_id', '=', Input::get('m')], ['status', '=', '1']])->orderBy('id')->get();
-        $marital_status = MaritalStatus::where([['company_id', '=', Input::get('m')], ['status', '=', '1']])->orderBy('id')->get();
-        $designation = Designation::where([['company_id', '=', Input::get('m')], ['status', '=', '1']])->orderBy('id')->get();
-        $qualification = Qualification::where([['company_id', '=', Input::get('m')], ['status', '=', '1']])->orderBy('id')->get();
-        $eobi = Eobi::where([['company_id', '=', Input::get('m')], ['status', '=', '1']])->orderBy('id')->get();
-        $tax= Tax::select('id','tax_name')->where([['company_id', '=', Input::get('m')], ['status', '=', '1']])->orderBy('id')->get();
-        $DegreeType = DegreeType::where([['company_id', '=', Input::get('m')], ['status', '=', '1']])->orderBy('id')->get();
-        $employee_category = EmployeeCategory::where([['company_id', '=', Input::get('m')], ['status', '=', '1']])->orderBy('id')->get();
-        $employee_projects = EmployeeProjects::where([['company_id', '=', Input::get('m')], ['status', '=', '1']])->orderBy('id')->get();
-        $employee_regions = Regions::where([['company_id', '=', Input::get('m')], ['status', '=', '1']])->orderBy('id')->get();
-        // $employee_grades = Grades::where([['company_id', '=', Input::get('m')], ['status', '=', '1']])->orderBy('id')->get();
-        $employee_locations = Locations::where([['company_id', '=', Input::get('m')], ['status', '=', '1']])->orderBy('id')->get();
-        CommonHelper::companyDatabaseConnection($CompanyId);
-        $employee_detail = Employee::where([['id','=',$id]])->first();
-        $emp_code = $employee_detail->emp_code;
-        $employee_family_detail = EmployeeFamilyData::where([['emp_code','=',$emp_code]]);
-        $employee_bank_detail = EmployeeBankData::where([['emp_code','=',$emp_code]]);
-        $employee_educational_detail = EmployeeEducationalData::where([['emp_code','=',$emp_code]]);
-        $employee_language_proficiency = EmployeeLanguageProficiency::where([['emp_code','=',$emp_code]]);
-        $employee_health_data = EmployeeHealthData::where([['emp_code','=',$emp_code]]);
-        $employee_activity_data = EmployeeActivityData::where([['emp_code','=',$emp_code]]);
-        $employee_work_experience = EmployeeWorkExperience::where([['emp_code','=',$emp_code]]);
-        $employee_reference_data = EmployeeReferenceData::where([['emp_code','=',$emp_code]]);
-        $employee_kins_data = EmployeeKinsData::where([['emp_code','=',$emp_code]]);
-        $employee_relatives_data = EmployeeRelativesData::where([['emp_code','=',$emp_code]]);
-        $employee_other_details = EmployeeOtherDetails::where([['emp_code','=',$emp_code]]);
-        $employee_documents = EmployeeDocuments::where([['emp_code', '=', $emp_code], ['status','=', 1]]);
-        $employee_gssp_documents = EmployeeGsspDocuments::where([['emp_code', '=', $emp_code], ['status','=', 1]]);
-        $employee_cnic_copy = Employee::where([['emp_code','=',$emp_code],['status','=',1],['cnic_path', '!=', null]]);
-        $employee_eobi_copy = Employee::where([['emp_code','=',$emp_code],['status','=',1],['eobi_path', '!=', null]]);
-        $employee_insurance_copy = Employee::where([['emp_code','=',$emp_code],['status','=',1],['insurance_path', '!=', null]]);
-        $employee_work_experience_doc = EmployeeWorkExperience::where([['emp_code','=',$emp_code],['status','=',1],['work_exp_path', '!=', null]]);
-
-        CommonHelper::reconnectMasterDatabase();
-        if($employee_detail->can_login == 'yes'):
-
-            $login_credentials = DB::Table('users')->select('acc_type')->where([['company_id', '=', Input::get('m')],['emp_code', '=', $employee_detail->emp_code]])->first();
-        endif;
-
+        $employee = Employee::find($id);
         return view('Hr.editEmployeeDetailForm'
-            ,compact('login_credentials','employee_other_details', 'employee_eobi_copy', 'employee_insurance_copy','employee_relatives_data','employee_kins_data','employee_reference_data','employee_work_experience','employee_activity_data','employee_health_data','employee_language_proficiency','employee_educational_detail','employee_bank_detail','employee_family_detail','leaves_policy','employee_detail','DegreeType','tax','eobi','designation','qualification','
-            leaves_policy','departments','jobtype','marital_status',
-                'employee_regions', 'employee_grades', 'employee_locations','buildings'
-                , 'employee_documents', 'employee_gssp_documents', 'employee_cnic_copy', 'employee_work_experience_doc'));
+            ,compact('employee'));
 
     }
 

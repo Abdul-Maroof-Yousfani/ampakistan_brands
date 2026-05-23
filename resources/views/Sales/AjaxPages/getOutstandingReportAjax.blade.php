@@ -62,27 +62,15 @@ if((!empty($Invoice))):
 ?>
 <table class="table table-bordered sf-table-list AutoCounter table{{$main_count}}" id="export_table_to_excel_<?php echo $main_count?>">
     <thead>
-        <th colspan="13" class="text-center"><h3 style="text-align: center;"><?php echo CommonHelper::get_company_name(Session::get('run_company'));?></h3></th>
-    </thead>
-    <thead>
-        <th colspan="13" class="text-center">Debtor Outstanding Report</th>
-    </thead>
-    <thead>
-        <th colspan="13" class="text-right"><p style="float: right;">Printed On: <?php echo date_format(date_create(date('Y-m-d')),'F d, Y')?></p></th>
-    </thead>
-    <thead>
-        <th colspan="12" class="text-center"><strong style="font-size: 22px"><?php echo CommonHelper::byers_name($CustFil->id)->name?></strong></th>
+        <th colspan="10" class="text-center"><strong style="font-size: 22px"><?php echo CommonHelper::byers_name($CustFil->id)->name?></strong></th>
     </thead>
     <thead>
     <th class="text-center col-sm-1">S.No</th>
     <th class="text-center col-sm-1">SI No</th>
-    <th class="text-center col-sm-1">ST No</th>
     <th class="text-center col-sm-1">SI Date</th>
-    <th class="text-center col-sm-1">SO No.</th>
-    <th class="text-center">Buyer's Order No</th>
-    <th class="text-center">Buyer's Unit</th>
+    <th class="text-center">QTY</th>
     <th class="text-center">Due Date</th>
-    <th class="text-center">Invoice Amount</th>
+    <th class="text-center">Net invoice Total</th>
     <th class="text-center">Return Amount</th>
     <th class="text-center">Received Amount</th>
     <th class="text-center">Remaining Amount</th>
@@ -101,24 +89,25 @@ if((!empty($Invoice))):
         <?php
 
         CommonHelper::companyDatabaseConnection($_GET['m']);
-        $data=SalesHelper::getTotalAmountSalesTaxInvoice($row->id);
+        $data=SalesHelper::getTotalAmountSalesTaxInvoiceNew($row->id);
         $get_freight=SalesHelper::get_freight($row->id);
         $customer=CommonHelper::byers_name($row->buyers_id);
         $return_amount=SalesHelper::get_sales_return_from_sales_tax_invoice_by_date($row->id,$FromDate,$ToDate);
 
 
-        //$rece=SalesHelper::get_received_payment($row->id);
         $rece = CommonHelper::bearkup_receievd($row->id,$FromDate,$ToDate);
         CommonHelper::reconnectMasterDatabase();
         $BuyersUnit = '';
         $BuyerOrderNo = '';
+        $sale_taxes_amount_rate = 0;
         if($row->so_id != 0 ):
-            $SoData = DB::Connection('mysql2')->table('sales_order')->where('id',$row->so_id)->select('so_no','buyers_unit')->first();
-            $BuyersUnit = $SoData->buyers_unit;
-            $BuyerOrderNo = $SoData->so_no;
+            $SoData = DB::Connection('mysql2')->table('sales_order')->where('id',$row->so_id)->select('so_no','buyers_unit', 'sale_taxes_amount_rate')->first();
+            $BuyersUnit = $SoData->buyers_unit ?? '';
+            $BuyerOrderNo = $SoData->so_no ?? '';
+            $sale_taxes_amount_rate = $SoData->sale_taxes_amount_rate ?? 0;
         endif;
 
-        $rema=$data->total+$get_freight-$return_amount-$rece;
+        $rema=$data->total+$get_freight+$sale_taxes_amount_rate-$return_amount-$rece;
 
                 if($rema > 0.5):
         ?>
@@ -129,21 +118,18 @@ if((!empty($Invoice))):
             </td>
 
             <td class="text-center">{{strtoupper($row->gi_no)}}</td>
-            <td class="text-center">{{strtoupper($row->sc_no)}}</td>
             <td class="text-center"> <?php echo '`'.CommonHelper::changeDateFormat($row->gi_date); ?></td>
-            <td title="{{$row->id}}" class="text-center">{{strtoupper($row->so_no)}}</td>
-            <td class="text-center"><?php echo '`'.$BuyerOrderNo?></td>
-            <td class="text-center"><?php echo $BuyersUnit?></td>
+            <td class="text-center"><?php echo $data->qty?></td>
             <td title="{{$row->id}}" class="text-center">{{'`'.CommonHelper::changeDateFormat($row->due_date)}}</td>
 
             <?php
 
-            $inv=$data->total+$get_freight; ?>
+            $inv=$data->total; ?>
 
             <td class="text-right">{{number_format($inv,2)}}</td>
             <td class="text-right">{{number_format($return_amount,2)}} <?php $total_return+=$return_amount; ?></td>
             <?php
-            $rema=$data->total+$get_freight-$return_amount-$rece;?>
+            $rema=$data->total-$return_amount-$rece;?>
             <td class="text-right">{{number_format($rece,2)}}</td>
             <td class="text-right">{{number_format($rema,2)}}</td>
 
@@ -170,9 +156,9 @@ if((!empty($Invoice))):
 
 
     <tr>
-        <td class="text-center" colspan="8" style="font-size: 20px;">Total</td>
-        <td class="text-right" colspan="1" style="font-size: 20px;color: white">{{number_format($total,2)}}<?php $totalEnd+=$total;?></td>
-        <td class="text-right" colspan="1" style="font-size: 20px;color: white">{{number_format($total_return,2)}}<?php $total_return_end+=$total_return;?></td>
+        <td class="text-center" colspan="5" style="font-size: 20px;">Totalities</td>
+        <td class="text-right" colspan="1" style="font-size: 20px;">{{number_format($total,2)}}<?php $totalEnd+=$total;?></td>
+        <td class="text-right" colspan="1" style="font-size: 20px;">{{number_format($total_return,2)}}<?php $total_return_end+=$total_return;?></td>
         <td class="text-right" colspan="1" style="font-size: 20px;">{{number_format($received,2)}}<?php $receivedEnd+=$received;?></td>
         <td class="text-right <?php if ($remaining==0): ?>  hidee{{$main_count}}<?php endif ?>" colspan="2" style="font-size: 20px;">{{number_format($remaining,2)}}<?php $remainingEnd+=$remaining;?></td>
 
@@ -192,7 +178,7 @@ endforeach;?>
 <table class="table table-bordered sf-table-list GrandTotal" id="export_table_to_excel_<?php echo $main_count?>">
     <thead>
     <tr>
-        <th class="text-center" colspan="7">Grand Total</th>
+        <th class="text-center" colspan="5">Grand Total</th>
         <th class="text-center">Total Invoice Amount</th>
         <th class="text-center">Total Return Amount</th>
         <th class="text-center">Total Paid Amount</th>
@@ -201,8 +187,8 @@ endforeach;?>
     </thead>
     <tbody>
         <tr>
-            <td class="text-center" colspan="7" style="font-size: 20px;">Total</td>
-            <td class="text-right" colspan="1" style="font-size: 20px;color: white">{{number_format($totalEnd,2)}}</td>
+            <td class="text-center" colspan="5" style="font-size: 20px;">Totalities</td>
+            <td class="text-right" colspan="1" style="font-size: 20px;">{{number_format($totalEnd,2)}}</td>
             <td class="text-right" colspan="1" style="font-size: 20px;">{{number_format($total_return_end,2)}}</td>
             <td class="text-right" colspan="1" style="font-size: 20px;">{{number_format($receivedEnd,2)}}</td>
             <td class="text-right" colspan="2" style="font-size: 20px;">{{number_format($remainingEnd,2)}}</td>

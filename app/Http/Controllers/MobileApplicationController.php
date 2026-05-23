@@ -20,6 +20,9 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use GuzzleHttp\Client;
 use Illuminate\Support\Facades\Validator;
+use App\TargetItems;
+use App\Models\Customer;
+use App\Models\Subitem;
 
 class MobileApplicationController extends Controller
 {
@@ -41,7 +44,7 @@ class MobileApplicationController extends Controller
     //         ], 422); // 422 Unprocessable Entity
     //     }
 
-        
+
     //     // Find the user by email
     //     $user = User::where('email', $request->email)->first();
 
@@ -62,47 +65,155 @@ class MobileApplicationController extends Controller
     //         'token' => $token,
     //     ]);
     // }
-public function login(Request $request)
-{
-    // ✅ Validation rules
-    $validator = Validator::make($request->all(), [
-        'name' => ['required', 'string'],
-        'password' => 'required|string',
-    ]);
 
-    if ($validator->fails()) {
+    public function login(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'name' => ['required', 'string'],
+            'password' => 'required|string',
+            'imei' => 'nullable|string',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'errors' => $validator->errors(),
+            ], 422);
+        }
+
+        // ✅ Find user
+        $user = User::where('username', $request->name)->first();
+
+        if (!$user) {
+            return response()->json(['message' => 'Invalid username or password'], 401);
+        }
+
+        // ✅ IMEI check ONLY if user has IMEI stored
+        if (!empty($user->imei)) {
+
+            // request me IMEI nahi aya
+            if (empty($request->imei)) {
+                return response()->json(['message' => 'IMEI required for this user'], 401);
+            }
+
+            // IMEI mismatch
+            if ($user->imei !== $request->imei) {
+                return response()->json(['message' => 'Invalid IMEI'], 401);
+            }
+        }
+
+        // ✅ Password check
+        if (!Hash::check($request->password, $user->password)) {
+            return response()->json(['message' => 'Invalid username or password'], 401);
+        }
+
+        // ✅ Account type check
+        if ($user->acc_type !== 'ba') {
+            return response()->json(['message' => 'Unauthorized account type'], 403);
+        }
+
+        // ✅ Status check (1 = Active, 0 = Inactive)
+        if ($user->status == '0') {
+            return response()->json(['message' => 'Account is inactive. Please contact administrator.'], 401);
+        }
+
+        // ✅ Generate token
+        $token = $user->generateApiToken();
+
         return response()->json([
-            'success' => false,
-            'errors' => $validator->errors(),
-        ], 422);
+            'message' => 'Login successful',
+            'user' => $user,
+            'token' => $token,
+        ], 200);
     }
 
-    // ✅ Check user by username
-    $user = User::where('name', $request->name)->first();
+    public function loginById(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'user_id' => 'required|numeric'
+        ]);
 
-    if (!$user) {
-        return response()->json(['message' => 'Invalid username or password'], 401);
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'errors' => $validator->errors(),
+            ], 422);
+        }
+
+        // ✅ Find user
+        $user = User::find($request->user_id);
+
+        if (!$user) {
+            return response()->json(['message' => 'Invalid user id'], 401);
+        }
+
+
+        // ✅ Account type check
+        if ($user->acc_type !== 'ba') {
+            return response()->json(['message' => 'Unauthorized account type'], 403);
+        }
+
+        // ✅ Status check (1 = Active, 0 = Inactive)
+        if ($user->status == '0') {
+            return response()->json(['message' => 'Account is inactive. Please contact administrator.'], 401);
+        }
+
+        // ✅ Generate token
+        $token = $user->generateApiToken();
+
+        return response()->json([
+            'message' => 'Login successful',
+            'user' => $user,
+            'token' => $token,
+        ], 200);
     }
 
-    // ✅ Verify password
-    if (!Hash::check($request->password, $user->password)) {
-        return response()->json(['message' => 'Invalid username or password'], 401);
-    }
+    // public function login(Request $request)
+// {
+//     // ✅ Validation rules
+//     $validator = Validator::make($request->all(), [
+//         'name' => ['required', 'string'],
+//         'password' => 'required|string',
+//         'imei' => 'required'
+//     ]);
 
-    // ✅ Check account type
-    if ($user->acc_type !== 'ba') {
-        return response()->json(['message' => 'Unauthorized account type'], 403);
-    }
+    //     if ($validator->fails()) {
+//         return response()->json([
+//             'success' => false,
+//             'errors' => $validator->errors(),
+//         ], 422);
+//     }
 
-    // ✅ Generate token (ensure generateApiToken() exists)
-    $token = $user->generateApiToken();
+    //     // ✅ Check user by username
+//     $user = User::where('username', $request->name)->first();
 
-    return response()->json([
-        'message' => 'Login successful',
-        'user' => $user,
-        'token' => $token,
-    ], 200);
-}
+    //     if($user->imei != $request->imei) {
+//         return response()->json(["message" => "invalid IMEI"], 401);
+//     }
+
+    //     if (!$user) {
+//         return response()->json(['message' => 'Invalid username or password'], 401);
+//     }
+
+    //     // ✅ Verify password
+//     if (!Hash::check($request->password, $user->password)) {
+//         return response()->json(['message' => 'Invalid username or password'], 401);
+//     }
+
+    //     // ✅ Check account type
+//     if ($user->acc_type !== 'ba') {
+//         return response()->json(['message' => 'Unauthorized account type1'], 403);
+//     }
+
+    //     // ✅ Generate token (ensure generateApiToken() exists)
+//     $token = $user->generateApiToken();
+
+    //     return response()->json([
+//         'message' => 'Login successful',
+//         'user' => $user,
+//         'token' => $token,
+//     ], 200);
+// }
 
 
     public function logout(Request $request)
@@ -212,7 +323,10 @@ public function login(Request $request)
         }
 
         $brand = Brand::find($request->brand_id);
-        $subitems = $brand->subitems()->selected()->get();
+        $subitems = $brand->subitems()->selected()->get()->map(function ($item) {
+            $item->product_name = $item->sku_code . ' ' . $item->product_name . ' ' . $item->product_barcode;
+            return $item;
+        });
 
         return response()->json([
             'message' => 'all products',
@@ -272,7 +386,51 @@ public function login(Request $request)
     // }
 
 
-      public function get_stock(Request $request)
+    //   public function get_stock(Request $request)
+    // {
+    //     $user = $this->getAuthenticatedUser();
+    //     if ($user instanceof \Illuminate\Http\JsonResponse) {
+    //         return $user;
+    //     }
+
+    //     $rules = [
+    //         'product_id' => 'required|integer',
+    //         'distributor_id' => 'required|integer',
+    //     ];
+
+    //     $validator = Validator::make($request->all(), $rules);
+
+    //     if ($validator->fails()) {
+    //         return response()->json([
+    //             'success' => false,
+    //             'errors' => $validator->errors()
+    //         ], 422);
+    //     }
+
+    //     $total_stock = Stock::where('sub_item_id', $request->product_id)
+    //         ->where('customer_id', $request->distributor_id)
+    //         ->where('voucher_type', 1)
+    //         ->sum('qty');
+
+    //     $total_sale = Stock::where('sub_item_id', $request->product_id)
+    //         ->where('customer_id', $request->distributor_id)
+    //         ->where('voucher_type', 50)
+    //         ->sum('qty');
+
+    //     $total_return = Stock::where('sub_item_id', $request->product_id)
+    //         ->where('customer_id', $request->distributor_id)
+    //         ->where('voucher_type', 51)
+    //         ->sum('qty');
+
+    //     $available_qty = max(0, $total_stock + $total_return - $total_sale);
+
+    //     return response()->json([
+    //         'message' => 'Total stock for product',
+    //         'available_qty' => $available_qty,
+    //     ], 200);
+    // }
+
+    public function get_stock(Request $request)
     {
         $user = $this->getAuthenticatedUser();
         if ($user instanceof \Illuminate\Http\JsonResponse) {
@@ -293,32 +451,165 @@ public function login(Request $request)
             ], 422);
         }
 
-        $total_stock = Stock::where('sub_item_id', $request->product_id)
+        $total_in = DB::Connection('mysql2')->table('ba_stock')
+            ->where('sub_item_id', $request->product_id)
             ->where('customer_id', $request->distributor_id)
-            ->where('voucher_type', 1)
+            ->where('status', 1)
+            ->whereIn("voucher_type", [51, 1, 4, 6, 10, 11])
+            ->where('transfer_status', '!=', 1)
             ->sum('qty');
 
-        $total_sale = Stock::where('sub_item_id', $request->product_id)
+        $total_out = DB::Connection('mysql2')->table('ba_stock')
+            ->where('sub_item_id', $request->product_id)
             ->where('customer_id', $request->distributor_id)
-            ->where('voucher_type', 50)
+            ->where('status', 1)
+            ->whereIn("voucher_type", [50, 2, 5, 3, 9])
             ->sum('qty');
 
-        $total_return = Stock::where('sub_item_id', $request->product_id)
-            ->where('customer_id', $request->distributor_id)
-            ->where('voucher_type', 51)
-            ->sum('qty');
-
-        $available_qty = max(0, $total_stock + $total_return - $total_sale);
+        $available_qty = abs($total_in - $total_out);
 
         return response()->json([
             'message' => 'Total stock for product',
             'available_qty' => $available_qty,
         ], 200);
     }
- 
 
+    public function getUserStockReportApi(Request $request)
+    {
+        // Get user from filter or auth
+        if ($request->user_id) {
+            $user = User::find($request->user_id);
+        } else {
+            $user = $this->getAuthenticatedUser();
+            if ($user instanceof \Illuminate\Http\JsonResponse) {
+                return $user;
+            }
+        }
 
-// public function getSaleAmount(Request $request)
+        if (!$user) {
+            return response()->json(['success' => false, 'message' => 'User not found'], 404);
+        }
+
+        // Get all formations for this user to identify allowed brands and customers
+        $formations = \App\BAFormation::where('employee_id', $user->emp_code)->where('status', 1)->get();
+
+        $allBrandIds = [];
+        $customerIds = [];
+        foreach ($formations as $f) {
+            $ids = json_decode($f->brands_ids, true);
+            if (is_array($ids)) {
+                $allBrandIds = array_merge($allBrandIds, $ids);
+            }
+            $customerIds[] = $f->customer_id;
+        }
+        $allBrandIds = array_unique(array_filter($allBrandIds));
+        $customerIds = array_unique(array_filter($customerIds));
+
+        if (empty($allBrandIds) || empty($customerIds)) {
+            return response()->json([
+                'success' => true,
+                'message' => 'No brands or customers assigned to this user',
+                'data' => []
+            ], 200);
+        }
+
+        // Handle optional filters
+        $requestedBrandId = $request->brand_id;
+        $requestedProductId = $request->product_id;
+
+        // Get products that are actually in the user's stock for their assigned customers
+        $stockProductIds = DB::connection('mysql2')->table('ba_stock')
+            ->whereIn('customer_id', $customerIds)
+            ->where('status', 1)
+            ->distinct()
+            ->pluck('sub_item_id');
+
+        // Get all products belonging to the allowed brands OR products that are in their stock
+        $productsQuery = DB::connection('mysql2')->table('subitem as si')
+            ->leftJoin('product_type as pt', 'si.product_type_id', '=', 'pt.product_type_id')
+            ->where(function ($q) use ($allBrandIds, $stockProductIds) {
+                $q->whereIn('si.brand_id', $allBrandIds)
+                    ->orWhereIn('si.id', $stockProductIds);
+            })
+            ->where('si.status', 1);
+
+        if ($requestedBrandId) {
+            $productsQuery->where('si.brand_id', $requestedBrandId);
+        }
+
+        if ($requestedProductId) {
+            $productsQuery->where('si.id', $requestedProductId);
+        }
+
+        $products = $productsQuery->get(['si.id', 'si.sku_code', 'si.product_name', 'si.product_barcode', 'si.brand_id', 'pt.type as item_type']);
+
+        if ($products->isEmpty()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'No products found for assigned brands',
+                'data' => []
+            ], 200);
+        }
+
+        // Aggregate stock across all assigned customers for these products
+        $stockData = DB::connection('mysql2')->table('ba_stock')
+            ->whereIn('customer_id', $customerIds)
+            ->whereIn('sub_item_id', $products->pluck('id'))
+            ->where('status', 1)
+            ->select(
+                'sub_item_id',
+                DB::raw('SUM(CASE WHEN voucher_type IN (51,1,4,6,10,11) AND transfer_status != 1 THEN qty ELSE 0 END) AS total_in'),
+                DB::raw('SUM(CASE WHEN voucher_type IN (50,2,5,3,9) THEN qty ELSE 0 END) AS total_out')
+            )
+            ->groupBy('sub_item_id')
+            ->get()
+            ->keyBy('sub_item_id');
+
+        // Fetch brand names
+        $brandNames = Brand::whereIn('id', $allBrandIds)->pluck('name', 'id');
+
+        $result = $products->map(function ($p) use ($stockData) {
+            $stock = $stockData->get($p->id);
+            $available = 0;
+            if ($stock) {
+                $available = abs($stock->total_in - $stock->total_out);
+            }
+            return [
+                'product_id' => $p->id,
+                'sku_code' => $p->sku_code,
+                'product_name' => ($p->sku_code ?? '') . ' ' . ($p->product_name ?? '') . ' ' . ($p->product_barcode ?? ''),
+                'barcode' => $p->product_barcode,
+                'available_qty' => (float) $available,
+                'brand_id' => $p->brand_id,
+                'item_type' => $p->item_type
+            ];
+        });
+
+        $result = $result->filter(function ($p) use ($requestedProductId) {
+            // Only show items with stock > 0, unless a specific product was requested
+            if ($requestedProductId) {
+                return true;
+            }
+            return $p['available_qty'] > 0;
+        });
+
+        // Group by Brand
+        $grouped = $result->groupBy('brand_id')->map(function ($items, $brandId) use ($brandNames) {
+            return [
+                'brand_id' => $brandId,
+                'brand_name' => $brandNames[$brandId] ?? 'N/A',
+                'products' => $items->values()
+            ];
+        })->values();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Products stock report grouped by brand',
+            'data' => $grouped
+        ], 200);
+    }
+
+    // public function getSaleAmount(Request $request)
 // {
 //     // Validate inputs
 //     $validator = Validator::make($request->all(), [
@@ -327,47 +618,47 @@ public function login(Request $request)
 //         'month' => 'nullable|integer|min:1|max:12',
 //     ]);
 
-//     if ($validator->fails()) {
+    //     if ($validator->fails()) {
 //         return response()->json([
 //             'success' => false,
 //             'errors' => $validator->errors()
 //         ], 422);
 //     }
 
-//     try {
+    //     try {
 //         // Get user from main DB
 //         $user = DB::connection('mysql')
 //             ->table('users')
 //             ->where('emp_code', $request->emp_code)
 //             ->first();
 
-//         if (!$user) {
+    //         if (!$user) {
 //             return response()->json([
 //                 'success' => false,
 //                 'message' => 'Employee not found.'
 //             ], 404);
 //         }
 
-//         // Build query in mysql2
+    //         // Build query in mysql2
 //         $query = DB::connection('mysql2')
 //             ->table('retail_sale_orders as so')
 //             ->join('retail_sale_order_details as sod', 'so.id', '=', 'sod.retail_sale_order_id')
 //             ->join('subitem as si', 'sod.product_id', '=', 'si.id') // join for rate
 //             ->where('so.user_id', $user->id);
 
-//         // Optional filters
+    //         // Optional filters
 //         if ($request->year) {
 //             $query->whereYear('so.sale_order_date', $request->year);
 //         }
 
-//         if ($request->month) {
+    //         if ($request->month) {
 //             $query->whereMonth('so.sale_order_date', $request->month);
 //         }
 
-//         // Calculate total sale amount (qty * rate)
+    //         // Calculate total sale amount (qty * rate)
 //         $totalAmount = $query->sum(DB::raw('sod.qty * si.rate'));
 
-//         return response()->json([
+    //         return response()->json([
 //             'success' => true,
 //             'emp_code' => $request->emp_code,
 //             'year' => $request->year,
@@ -375,7 +666,7 @@ public function login(Request $request)
 //             'total_sale_amount' => $totalAmount ?? 0,
 //         ], 200);
 
-//     } catch (\Exception $e) {
+    //     } catch (\Exception $e) {
 //         return response()->json([
 //             'success' => false,
 //             'message' => 'Failed to fetch sale amount.',
@@ -385,32 +676,32 @@ public function login(Request $request)
 // }
 
 
-  public function getSaleAmount(Request $request)
+    public function getSaleAmount(Request $request)
     {
         $validator = Validator::make($request->all(), [
             'emp_code' => 'required|integer|exists:mysql.users,emp_code',
             'year' => 'nullable|integer|min:2000|max:' . date('Y'),
             'month' => 'nullable|integer|min:1|max:12',
         ]);
- 
+
         if ($validator->fails()) {
             return response()->json([
                 'success' => false,
                 'errors' => $validator->errors()
             ], 422);
         }
- 
+
         try {
             // Fetch employee (main DB)
             $employee = DB::connection('mysql')
                 ->table('users')
                 ->where('emp_code', $request->emp_code)
                 ->first();
- 
+
             if (!$employee) {
                 return response()->json(['success' => false, 'message' => 'Employee not found'], 404);
             }
- 
+
             /*
             |--------------------------------------------------------------------------
             | 1. GET ALL CUSTOMERS ASSIGNED TO EMPLOYEE (BA FORMATION)
@@ -420,7 +711,7 @@ public function login(Request $request)
                 ->table('b_a_formations')
                 ->where('employee_id', $employee->emp_id)
                 ->pluck('customer_id');
- 
+
             /*
             |--------------------------------------------------------------------------
             | 2. SECONDARY SALE (SALE ORDER TABLE)
@@ -429,17 +720,17 @@ public function login(Request $request)
             $secondaryQuery = DB::connection('mysql2')
                 ->table('sales_order')
                 ->whereIn('buyers_id', $customers);
- 
+
             if ($request->year) {
                 $secondaryQuery->whereYear('so_date', $request->year);
             }
             if ($request->month) {
                 $secondaryQuery->whereMonth('so_date', $request->month);
             }
- 
+
             $secondaryAmount = $secondaryQuery->sum('total_amount');
             $secondaryQty = $secondaryQuery->sum('total_qty');
- 
+
             /*
             |--------------------------------------------------------------------------
             | 3. TERTIARY SALE (RETAIL SALE ORDERS)
@@ -450,17 +741,17 @@ public function login(Request $request)
                 ->join('retail_sale_order_details as sod', 'so.id', '=', 'sod.retail_sale_order_id')
                 ->join('subitem as si', 'sod.product_id', '=', 'si.id')
                 ->where('so.user_id', $employee->id);
- 
+
             if ($request->year) {
                 $tertiaryQuery->whereYear('so.sale_order_date', $request->year);
             }
             if ($request->month) {
                 $tertiaryQuery->whereMonth('so.sale_order_date', $request->month);
             }
- 
+
             $tertiaryAmount = $tertiaryQuery->sum(DB::raw('sod.qty * si.sale_price'));
             $tertiaryQty = $tertiaryQuery->sum('sod.qty');
- 
+
             /*
             |--------------------------------------------------------------------------
             | 4. FINAL RESPONSE
@@ -471,21 +762,21 @@ public function login(Request $request)
                 'emp_code' => $request->emp_code,
                 'year' => $request->year,
                 'month' => $request->month,
- 
+
                 // Secondary sale (customer-wise)
                 'secondary_sale_amount' => $secondaryAmount ?? 0,
-                'secondary_sale_qty'    => $secondaryQty ?? 0,
- 
+                'secondary_sale_qty' => $secondaryQty ?? 0,
+
                 // Tertiary sale (employee-created)
                 'tertiary_sale_amount' => $tertiaryAmount ?? 0,
-                'tertiary_sale_qty'    => $tertiaryQty ?? 0,
+                'tertiary_sale_qty' => $tertiaryQty ?? 0,
                 // 'distributor_id'    => $tertiaryQuery->first()->distributor_id ?? null,
                 // 'data'    => $secondaryQuery->get(),
                 // 'customers'    => $customers,
                 // 'employee'    => $employee,
- 
+
             ], 200);
- 
+
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
@@ -500,6 +791,8 @@ public function login(Request $request)
 
         $user = $this->getAuthenticatedUser();
 
+
+
         if ($user instanceof \Illuminate\Http\JsonResponse) {
             return $user; // Return the error response if no authenticated user
         }
@@ -513,6 +806,8 @@ public function login(Request $request)
             'details.*.product_id' => 'required|integer',
             'details.*.qty' => 'required|integer|min:1',
         ];
+
+
 
         // Create the validator instance
         $validator = Validator::make($request->all(), $rules);
@@ -541,6 +836,7 @@ public function login(Request $request)
             ]);
 
             $distributor = $user->customers()->where('customers.id', $request->distributor_id)->first();
+
 
             if (!$distributor) {
                 return response()->json([
@@ -589,7 +885,7 @@ public function login(Request $request)
                     'opening' => 0,
                     'so_data_id' => 0   //DNA
                 );
-                DB::Connection('mysql2')->table('stock')->insert($stock);
+                DB::Connection('mysql2')->table('ba_stock')->insert($stock);
             }
 
             return response()->json([
@@ -604,6 +900,21 @@ public function login(Request $request)
         }
     }
 
+
+    public function getBranchName(Request $request)
+    {
+        $branch = DB::connection('mysql2')
+            ->table('branch')  // table name check kar lena
+            ->where('id', $request->id)
+            ->first();
+
+
+
+        return response()->json([
+            'name' => $branch ? $branch->branch_name : '-',
+            'code' => $branch ? $branch->id : '-'
+        ]);
+    }
     // public function SaleOrderList(Request $request)
     // {
     //     $user = $this->getAuthenticatedUser();
@@ -636,53 +947,53 @@ public function login(Request $request)
     // }
 
 
-//   
+    //   
 
 
- public function SaleOrderList(Request $request)
-{
-    $user = $this->getAuthenticatedUser();
- 
-    if ($user instanceof \Illuminate\Http\JsonResponse) {
-        return $user;
-    }
- 
-    // Start query
-    $query = RetailSaleOrder::with([
-        'details' => function ($query) {
-            $query->with(['brand:id,name', 'product:id,product_name,product_barcode,sku_code']);
-        },
-        'distributor:id,name'
-    ])->where('user_id', $user->id);
- 
-    // Apply date filter
-    if ($request->filled('start_date') && $request->filled('end_date')) {
- 
-        $startDate = Carbon::parse($request->start_date)->startOfDay();
-        $endDate   = Carbon::parse($request->end_date)->endOfDay();
- 
-        $query->whereBetween('created_at', [$startDate, $endDate]);
-    }
- 
-    $saleOrder = $query->get();
- 
-    // Calculate total count
-    $totalCount = $saleOrder->count();
- 
-    if ($saleOrder->isEmpty()) {
+    public function SaleOrderList(Request $request)
+    {
+        $user = $this->getAuthenticatedUser();
+
+        if ($user instanceof \Illuminate\Http\JsonResponse) {
+            return $user;
+        }
+
+        // Start query
+        $query = RetailSaleOrder::with([
+            'details' => function ($query) {
+                $query->with(['brand:id,name', 'product:id,product_name,product_barcode,sku_code']);
+            },
+            'distributor:id,name'
+        ])->where('user_id', $user->id);
+
+        // Apply date filter
+        if ($request->filled('start_date') && $request->filled('end_date')) {
+
+            $startDate = Carbon::parse($request->start_date)->startOfDay();
+            $endDate = Carbon::parse($request->end_date)->endOfDay();
+
+            $query->whereBetween('created_at', [$startDate, $endDate]);
+        }
+
+        $saleOrder = $query->get();
+
+        // Calculate total count
+        $totalCount = $saleOrder->count();
+
+        if ($saleOrder->isEmpty()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No sale orders found for the given date range.',
+                'total' => $totalCount
+            ], 404);
+        }
+
         return response()->json([
-            'success' => false,
-            'message' => 'No sale orders found for the given date range.',
+            'success' => true,
+            'data' => $saleOrder,
             'total' => $totalCount
-        ], 404);
+        ]);
     }
- 
-    return response()->json([
-        'success' => true,
-        'data' => $saleOrder,
-        'total' => $totalCount
-    ]);
-}
 
     public function getSaleOrder(Request $request)
     {
@@ -841,8 +1152,8 @@ public function login(Request $request)
             'details.*.qty' => 'required|integer|min:1',
             'details.*.barcode' => 'nullable|string',
             'details.*.reason' => 'nullable|string',
-     'details.*.damage_photo' => 'nullable|file|image|mimes:jpg,jpeg,png|max:2048',
-        'details.*.expiry_date' => 'nullable|date',
+            'details.*.damage_photo' => 'nullable|file|image|mimes:jpg,jpeg,png|max:2048',
+            'details.*.expiry_date' => 'nullable|date',
 
         ];
 
@@ -859,7 +1170,7 @@ public function login(Request $request)
 
 
         try {
-          
+
             $order = RetailSaleOrderReturn::create([
                 'user_id' => Auth::user()->id,
                 'user_name' => Auth::user()->name,
@@ -874,25 +1185,25 @@ public function login(Request $request)
             $order->return_no = 'SR-' . str_pad($order->id, 4, '0', STR_PAD_LEFT);
             $order->save();
 
-           foreach ($request->details as $index => $detail) {
+            foreach ($request->details as $index => $detail) {
 
-                    $damagePhotoPath = null;
+                $damagePhotoPath = null;
 
-                    // Check if file exists in this detail item
-                    if ($request->hasFile("details.$index.damage_photo")) {
-                        $photoFile = $request->file("details.$index.damage_photo");
-                        $damagePhotoPath = $photoFile->store('damage_photos', 'public');
-                    }
+                // Check if file exists in this detail item
+                if ($request->hasFile("details.$index.damage_photo")) {
+                    $photoFile = $request->file("details.$index.damage_photo");
+                    $damagePhotoPath = $photoFile->store('damage_photos', 'public');
+                }
 
-                    $order->returnDetails()->create([
-                        'brand_id' => $detail['brand_id'],
-                        'product_id' => $detail['product_id'],
-                        'quantity' => $detail['qty'],
-                        'barcode' => $detail['barcode'],
-                        'reason' => $detail['reason'] ?? null,
-                        'damage_photo' => $damagePhotoPath,
-                        'expiry_date' => $detail['expiry_date'] ?? null,
-                    ]);
+                $order->returnDetails()->create([
+                    'brand_id' => $detail['brand_id'],
+                    'product_id' => $detail['product_id'],
+                    'quantity' => $detail['qty'],
+                    'barcode' => $detail['barcode'],
+                    'reason' => $detail['reason'] ?? null,
+                    'damage_photo' => $damagePhotoPath,
+                    'expiry_date' => $detail['expiry_date'] ?? null,
+                ]);
 
                 $stock = array(
                     'main_id' => 0,   //  delivery note id
@@ -915,7 +1226,7 @@ public function login(Request $request)
                     'opening' => 0,
                     'so_data_id' => 0   //DNA
                 );
-                DB::Connection('mysql2')->table('stock')->insert($stock);
+                DB::Connection('mysql2')->table('ba_stock')->insert($stock);
             }
 
             return response()->json([
@@ -930,6 +1241,341 @@ public function login(Request $request)
         }
     }
 
+    public function CreateBAStockAdjustment(Request $request)
+    {
+        $user = $this->getAuthenticatedUser();
+        if ($user instanceof \Illuminate\Http\JsonResponse) {
+            return $user;
+        }
+
+        $rules = [
+            'distributor_id' => 'required|integer',
+            'remarks' => 'nullable|string',
+            'details' => 'required|array',
+            'details.*.product_id' => 'required|integer',
+            'details.*.available_qty' => 'required|numeric',
+            'details.*.actual_qty' => 'required|numeric',
+            'details.*.diff_qty' => 'required|numeric',
+        ];
+
+        $validator = Validator::make($request->all(), $rules);
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        try {
+            $distributor = $user->customers()->where('customers.id', $request->distributor_id)->first();
+            if (!$distributor) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Distributor not found.',
+                ], 404);
+            }
+
+            if (!$distributor->warehouse_to) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Virtual Warehouse is not assigned to this distributor.',
+                ], 400);
+            }
+
+            $adj_no = 'BA-ADJ-' . time();
+            $date = date('Y-m-d');
+
+            foreach ($request->details as $detail) {
+                $diff = (float) $detail['diff_qty'];
+                if ($diff == 0)
+                    continue;
+
+                $stock = [
+                    'main_id' => 0,
+                    'master_id' => 0,
+                    'voucher_no' => $adj_no,
+                    'voucher_date' => $date,
+                    'supplier_id' => 0,
+                    'customer_id' => $request->distributor_id,
+                    'voucher_type' => ($diff > 0) ? 1 : 2, // 1: Adj In, 2: Adj Out
+                    'rate' => 0,
+                    'sub_item_id' => $detail['product_id'],
+                    'batch_code' => 0,
+                    'qty' => abs($diff),
+                    'discount_amount' => 0,
+                    'amount' => 0,
+                    'status' => 1,
+                    'warehouse_id' => $distributor->warehouse_to,
+                    'username' => Auth::user()->username,
+                    'created_date' => $date,
+                    'opening' => 0,
+                    'so_data_id' => 0,
+                    'description' => "BA-ADJ | Avail: {$detail['available_qty']} | Actual: {$detail['actual_qty']} | Diff: {$diff} | Remarks: " . ($request->remarks ?? '')
+                ];
+                DB::Connection('mysql2')->table('ba_stock')->insert($stock);
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'BA Stock Adjustment saved successfully!',
+                'adj_no' => $adj_no
+            ], 200);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to create adjustment.',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    public function BAStockAdjustmentList(Request $request)
+    {
+        $user = $this->getAuthenticatedUser();
+        if ($user instanceof \Illuminate\Http\JsonResponse) {
+            return $user;
+        }
+
+        try {
+            $adjustments = DB::Connection('mysql2')->table('ba_stock as bs')
+                ->join('customers as c', 'bs.customer_id', '=', 'c.id')
+                ->where('bs.voucher_no', 'like', 'BA-ADJ-%')
+                ->where('bs.username', $user->username)
+                ->select(
+                    'bs.voucher_no',
+                    'bs.voucher_date',
+                    'c.name as distributor_name',
+                    'bs.customer_id',
+                    DB::raw('COUNT(*) as total_items'),
+                    DB::raw('MAX(bs.description) as remarks')
+                )
+                ->groupBy('bs.voucher_no', 'bs.voucher_date', 'c.name', 'bs.customer_id')
+                ->orderBy('bs.voucher_date', 'DESC')
+                ->get();
+
+            return response()->json([
+                'success' => true,
+                'data' => $adjustments
+            ], 200);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to fetch adjustments list.',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    public function getAllUserProducts(Request $request)
+    {
+        $rules = [
+            'user_id' => 'required|integer',
+        ];
+
+        $validator = Validator::make($request->all(), $rules);
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        $user = User::find($request->user_id);
+        if (!$user) {
+            return response()->json(['success' => false, 'message' => 'User not found'], 404);
+        }
+
+        // Get assigned brands from BAFormation
+        $formations = \App\BAFormation::where('employee_id', $user->emp_code)->where('status', 1)->get();
+
+        $allBrandIds = [];
+        foreach ($formations as $f) {
+            $ids = json_decode($f->brands_ids, true);
+            if (is_array($ids)) {
+                $allBrandIds = array_merge($allBrandIds, $ids);
+            }
+        }
+        $allBrandIds = array_unique(array_filter($allBrandIds));
+
+        if (empty($allBrandIds)) {
+            return response()->json([
+                'success' => true,
+                'message' => 'No brands assigned to this user',
+                'data' => []
+            ], 200);
+        }
+
+        // Get all products belonging to the allowed brands
+        $products = DB::connection('mysql2')->table('subitem')
+            ->whereIn('brand_id', $allBrandIds)
+            ->where('status', 1)
+            ->get(['id', 'sku_code', 'product_name', 'product_barcode', 'brand_id', 'sale_price', 'rate']);
+
+        // Format names like in other APIs
+        $formattedProducts = $products->map(function ($p) {
+            $p->full_product_name = ($p->sku_code ?? '') . ' ' . ($p->product_name ?? '') . ' ' . ($p->product_barcode ?? '');
+            return $p;
+        });
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Assigned brands products',
+            'data' => $formattedProducts
+        ], 200);
+    }
+
+    public function getBASaleSummary(Request $request)
+    {
+        $rules = [
+            'user_id' => 'required|integer',
+            'date' => 'nullable|date',
+            'month' => 'nullable|integer|min:1|max:12',
+            'year' => 'nullable|integer|min:2000',
+        ];
+
+        $validator = Validator::make($request->all(), $rules);
+        if ($validator->fails()) {
+            return response()->json(['success' => false, 'errors' => $validator->errors()], 422);
+        }
+
+        $query = RetailSaleOrder::where('user_id', $request->user_id);
+
+        if ($request->date) {
+            $query->whereDate('sale_order_date', $request->date);
+        } elseif ($request->month && $request->year) {
+            $query->whereMonth('sale_order_date', $request->month)
+                ->whereYear('sale_order_date', $request->year);
+        }
+
+        $orders = $query->with(['distributor:id,name', 'details.brand:id,name', 'details.product:id,product_name,sku_code'])->get();
+
+        $summary = [];
+
+        foreach ($orders as $order) {
+            $storeName = $order->distributor->name ?? 'Unknown Store';
+            $storeId = $order->distributor_id;
+
+            if (!isset($summary[$storeId])) {
+                $summary[$storeId] = [
+                    'store_id' => $storeId,
+                    'store_name' => $storeName,
+                    'brands' => []
+                ];
+            }
+
+            foreach ($order->details as $detail) {
+                $brandName = $detail->brand->name ?? 'Unknown Brand';
+                $brandId = $detail->brand_id;
+
+                if (!isset($summary[$storeId]['brands'][$brandId])) {
+                    $summary[$storeId]['brands'][$brandId] = [
+                        'brand_id' => $brandId,
+                        'brand_name' => $brandName,
+                        'total_quantity' => 0,
+                        'products' => []
+                    ];
+                }
+
+                $summary[$storeId]['brands'][$brandId]['total_quantity'] += (float) $detail->qty;
+
+                $productId = $detail->product_id;
+                if (!isset($summary[$storeId]['brands'][$brandId]['products'][$productId])) {
+                    $summary[$storeId]['brands'][$brandId]['products'][$productId] = [
+                        'product_id' => $productId,
+                        'product_name' => $detail->product->product_name ?? 'Unknown Product',
+                        'sku_code' => $detail->product->sku_code ?? '',
+                        'quantity' => 0
+                    ];
+                }
+                $summary[$storeId]['brands'][$brandId]['products'][$productId]['quantity'] += (float) $detail->qty;
+            }
+        }
+
+        // Convert associative arrays to indexed arrays for JSON response
+        $finalData = array_values(array_map(function ($store) {
+            $store['brands'] = array_values(array_map(function ($brand) {
+                $brand['products'] = array_values($brand['products']);
+                return $brand;
+            }, $store['brands']));
+            return $store;
+        }, $summary));
+
+        return response()->json([
+            'success' => true,
+            'data' => $finalData
+        ], 200);
+    }
+
+    public function BAStockAdjustmentData(Request $request)
+    {
+        $user = $this->getAuthenticatedUser();
+        if ($user instanceof \Illuminate\Http\JsonResponse) {
+            return $user;
+        }
+
+        $rules = [
+            'voucher_no' => 'required|string',
+        ];
+
+        $validator = Validator::make($request->all(), $rules);
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        try {
+            $details = DB::Connection('mysql2')->table('ba_stock as bs')
+                ->join('subitem as si', 'bs.sub_item_id', '=', 'si.id')
+                ->leftJoin('brands as b', 'si.brand_id', '=', 'b.id')
+                ->leftJoin('customers as c', 'bs.customer_id', '=', 'c.id')
+                ->where('bs.voucher_no', $request->voucher_no)
+                ->where('bs.username', $user->username)
+                ->select(
+                    'bs.*',
+                    'si.product_name',
+                    'si.sku_code',
+                    'b.name as brand_name',
+                    'c.name as customer_name'
+                )
+                ->get()
+                ->map(function ($item) {
+                    $item->voucher_type_name = ($item->voucher_type == 1) ? 'Adjustment In' : 'Adjustment Out';
+
+                    // Parse quantities from description if they exist (for new records)
+                    $item->available_qty = 0;
+                    $item->actual_qty = 0;
+                    $item->diff_qty = (float) $item->qty * ($item->voucher_type == 2 ? -1 : 1);
+
+                    if (strpos($item->description, 'BA-ADJ |') !== false) {
+                        preg_match('/Avail: ([\d.-]+) \| Actual: ([\d.-]+) \| Diff: ([\d.-]+)/', $item->description, $matches);
+                        if (count($matches) >= 4) {
+                            $item->available_qty = (float) $matches[1];
+                            $item->actual_qty = (float) $matches[2];
+                            $item->diff_qty = (float) $matches[3];
+                        }
+                    }
+
+                    return $item;
+                });
+
+            return response()->json([
+                'success' => true,
+                'data' => $details
+            ], 200);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to fetch adjustment data.',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
     public function ReturnSaleOrderList(Request $request)
     {
         $user = $this->getAuthenticatedUser();
@@ -938,27 +1584,78 @@ public function login(Request $request)
             return $user; // Return the error response if no authenticated user
         }
 
-
-        // Find the sale order by its ID
-        $saleReturn = RetailSaleOrderReturn::with([
+        // Find the sale return by its ID
+        $query = RetailSaleOrderReturn::with([
             'returnDetails' => function ($query) {
-                $query->with(['brand:id,name', 'product:id,product_name']); // Ensure 'id' and 'name' are actual columns
+                $query->with(['brand:id,name', 'product:id,product_name,sku_code,product_barcode,image']);
             },
             'distributor:id,name' // Fetch distributor with selected fields
         ])
-            ->where('user_id', Auth::user()->id) // Filter by user_id
-            ->get();
+            ->where('user_id', $user->id); // Filter by user_id
 
-        if (!$saleReturn) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Sale return not found',
-            ], 404); // 404 Not Found
+        // Apply date filter if provided (consistency with SaleOrderList)
+        if ($request->filled('start_date') && $request->filled('end_date')) {
+            $startDate = Carbon::parse($request->start_date)->startOfDay();
+            $endDate = Carbon::parse($request->end_date)->endOfDay();
+            $query->whereBetween('created_at', [$startDate, $endDate]);
+        }
+
+        $saleReturns = $query->orderBy('id', 'desc')->get();
+
+        $flattenedItems = [];
+
+        foreach ($saleReturns as $returnOrder) {
+            foreach ($returnOrder->returnDetails as $detail) {
+                // Image handling logic
+                $image = null;
+                if ($detail->product && $detail->product->image) {
+                    if (!str_starts_with($detail->product->image, 'http')) {
+                        if (str_starts_with($detail->product->image, 'uploads/')) {
+                            $image = asset($detail->product->image);
+                        } else {
+                            $image = asset('uploads/products/' . $detail->product->image);
+                        }
+                    } else {
+                        $image = $detail->product->image;
+                    }
+                }
+
+                $damagePhoto = null;
+                if ($detail->damage_photo) {
+                    if (!str_starts_with($detail->damage_photo, 'http')) {
+                        $damagePhoto = asset('storage/' . $detail->damage_photo);
+                    } else {
+                        $damagePhoto = $detail->damage_photo;
+                    }
+                }
+
+                $flattenedItems[] = [
+                    'return_id' => $returnOrder->id,
+                    'return_no' => $returnOrder->return_no,
+                    'return_date' => $returnOrder->return_date,
+                    'return_reason' => $returnOrder->return_reason,
+                    'distributor_id' => $returnOrder->distributor_id,
+                    'distributor_name' => $returnOrder->distributor->name ?? 'N/A',
+
+                    'detail_id' => $detail->id,
+                    'brand_id' => $detail->brand_id,
+                    'brand_name' => $detail->brand->name ?? 'N/A',
+                    'product_id' => $detail->product_id,
+                    'product_name' => $detail->product->product_name ?? 'N/A',
+                    'sku_code' => $detail->product->sku_code ?? '',
+                    'barcode' => $detail->barcode ?? ($detail->product->product_barcode ?? ''),
+                    'qty' => $detail->quantity,
+                    'reason' => $detail->reason,
+                    'damage_photo' => $damagePhoto,
+                    'expiry_date' => $detail->expiry_date,
+                    'image' => $image,
+                ];
+            }
         }
 
         return response()->json([
             'success' => true,
-            'data' => $saleReturn,
+            'data' => $flattenedItems,
         ]);
     }
 
@@ -989,7 +1686,7 @@ public function login(Request $request)
         // Find the sale order by its ID
         $saleReturn = RetailSaleOrderReturn::with([
             'returnDetails' => function ($query) {
-                $query->with(['brand:id,name', 'product:id,product_name']); // Ensure 'id' and 'name' are actual columns
+                $query->with(['brand:id,name', 'product:id,product_name,image']); // Ensure 'id' and 'name' are actual columns
             },
             'distributor:id,name' // Fetch distributor with selected fields
         ])->find($request->return_id);
@@ -999,6 +1696,24 @@ public function login(Request $request)
                 'success' => false,
                 'message' => 'Sale return not found',
             ], 404); // 404 Not Found
+        }
+
+        foreach ($saleReturn->returnDetails as $detail) {
+            if ($detail->product && $detail->product->image) {
+                if (!str_starts_with($detail->product->image, 'http')) {
+                    if (str_starts_with($detail->product->image, 'uploads/')) {
+                        $detail->product->image = asset($detail->product->image);
+                    } else {
+                        $detail->product->image = asset('uploads/products/' . $detail->product->image);
+                    }
+                }
+            }
+
+            if ($detail->damage_photo) {
+                if (!str_starts_with($detail->damage_photo, 'http')) {
+                    $detail->damage_photo = asset('storage/' . $detail->damage_photo);
+                }
+            }
         }
 
         return response()->json([
@@ -1184,6 +1899,12 @@ public function login(Request $request)
             ->where('user_id', Auth::user()->id) // Filter by user_id
             ->get();
 
+        $merchandise = $merchandise->map(function ($item) {
+            $item->before_rack = $item->before_rack ? url('storage/' . $item->before_rack) : null;
+            $item->after_rack = $item->after_rack ? url('storage/' . $item->after_rack) : null;
+            return $item;
+        });
+
 
         return response()->json([
             'success' => true,
@@ -1286,9 +2007,9 @@ public function login(Request $request)
                 'contact' => $item->contact ?? 'N/A',
                 'alternate_contact' => $item->alternate_contact ?? 'N/A',
                 'area_address' => $item->area_address ?? 'N/A',
-                'currently_using_brand' => $item->currentlyUsingBrand->name ?? 'N/A',
+                'currently_using_brand' => $item->currently_using_brand_id ?? 'N/A',
                 'reason_of_usage_1' => $item->reason_of_usage_1 ?? '',
-                'currently_using_brand_2' => $item->currentlyUsingBrand2->name ?? 'N/A',
+                'currently_using_brand_2' => $item->currently_using_brand_2_id ?? 'N/A',
                 'reason_of_usage_2' => $item->reason_of_usage_2 ?? '',
                 'product_id' => $item->product_id ?? 'N/A', // Keep this to indicate the product ID
                 'product_name' => $item->product->product_name ?? 'N/A', // Correctly map the product name
@@ -1410,7 +2131,7 @@ public function login(Request $request)
             'longitude' => 'required',
             'check' => 'required',
             'username' => 'required',
-             'checkin_status' => 'nullable',
+            'checkin_status' => 'nullable',
         ];
 
         // Create the validator instance
@@ -1433,12 +2154,12 @@ public function login(Request $request)
         $longitude = $request->input('longitude');
         $check = $request->input('check');
         $username = $request->input('username');
-         $checkin_status = $request->input('checkin_status', null);
+        $checkin_status = $request->input('checkin_status', null);
 
 
 
- $user_id = Auth::user()->id;
-        $status = $this->findUsersNearby($request->latittude , $request->longitude , $user_id);
+        $user_id = Auth::user()->id;
+        $status = $this->findUsersNearby($request->latittude, $request->longitude, $user_id);
 
         if (!$status) {
             return response()->json([
@@ -1452,7 +2173,7 @@ public function login(Request $request)
         // Initialize Guzzle HTTP client
         $client = new Client();
 
-     
+
         // Make the POST request with the required data
         $response = $client->post('https://brands.smrsoftwares.com/api/addAttendance', [
             'form_params' => [
@@ -1461,7 +2182,7 @@ public function login(Request $request)
                 'longitude' => $longitude,
                 'check' => $check,
                 'username' => $username,
-                 'checkin_status' => $checkin_status,
+                'checkin_status' => $checkin_status,
             ]
         ]);
 
@@ -1474,62 +2195,62 @@ public function login(Request $request)
 
 
 
-    
+
     public function findUsersNearby($latitude, $longitude, $user_id)
-{
-    // dd($latitude, $longitude, $user_id);
-    $url = "https://nominatim.openstreetmap.org/reverse?format=json&lat={$latitude}&lon={$longitude}&accept-language=en";
-    $options = [
-        'http' => [
-            'header' => "User-Agent: popular-snd 1.0"
-        ]
-    ];
-    $context = stream_context_create($options);
-    $response = file_get_contents($url, false, $context);
-    $json = json_decode($response, true);
-    $address = $json['display_name'] ?? '';
+    {
+        // dd($latitude, $longitude, $user_id);
+        $url = "https://nominatim.openstreetmap.org/reverse?format=json&lat={$latitude}&lon={$longitude}&accept-language=en";
+        $options = [
+            'http' => [
+                'header' => "User-Agent: popular-snd 1.0"
+            ]
+        ];
+        $context = stream_context_create($options);
+        $response = file_get_contents($url, false, $context);
+        $json = json_decode($response, true);
+        $address = $json['display_name'] ?? '';
 
-    // 🔹 Get TSO with all saved locations
-    $user = User::with('locations')->find($user_id);
+        // 🔹 Get TSO with all saved locations
+        $user = User::with('locations')->find($user_id);
 
-    if (!$user) {
-        return false; // TSO not found
-    }
+        if (!$user) {
+            return false; // TSO not found
+        }
 
-    // Agar koi location hi nahi set hai → sab allowed
-    if ($user->locations->count() == 0) {
-        return true;
-    }
+        // Agar koi location hi nahi set hai → sab allowed
+        if ($user->locations->count() == 0) {
+            return true;
+        }
 
-    $earthRadius = 6371; // Earth's radius in kilometers
+        $earthRadius = 6371; // Earth's radius in kilometers
 
-    foreach ($user->locations as $location) {
-        if ($location->latitude && $location->longitude && $location->radius) {
-            $lat2 = $location->latitude;
-            $lon2 = $location->longitude;
-            $lat1 = $latitude;
-            $lon1 = $longitude;
+        foreach ($user->locations as $location) {
+            if ($location->latitude && $location->longitude && $location->radius) {
+                $lat2 = $location->latitude;
+                $lon2 = $location->longitude;
+                $lat1 = $latitude;
+                $lon1 = $longitude;
 
-            $dLat = deg2rad($lat2 - $lat1);
-            $dLon = deg2rad($lon2 - $lon1);
+                $dLat = deg2rad($lat2 - $lat1);
+                $dLon = deg2rad($lon2 - $lon1);
 
-            $a = sin($dLat / 2) * sin($dLat / 2) +
-                 cos(deg2rad($lat1)) * cos(deg2rad($lat2)) *
-                 sin($dLon / 2) * sin($dLon / 2);
+                $a = sin($dLat / 2) * sin($dLat / 2) +
+                    cos(deg2rad($lat1)) * cos(deg2rad($lat2)) *
+                    sin($dLon / 2) * sin($dLon / 2);
 
-            $c = 2 * atan2(sqrt($a), sqrt(1 - $a));
-            $distance = $earthRadius * $c;
+                $c = 2 * atan2(sqrt($a), sqrt(1 - $a));
+                $distance = $earthRadius * $c;
 
-            // ✅ Agar user is location ke radius ke andar hai → allow
-            if ($distance <= $location->radius) {
-                return true;
+                // ✅ Agar user is location ke radius ke andar hai → allow
+                if ($distance <= $location->radius) {
+                    return true;
+                }
             }
         }
-    }
 
-    // ✅ Agar koi bhi location match nahi hui
-    return false;
-}
+        // ✅ Agar koi bhi location match nahi hui
+        return false;
+    }
 
 
     // public function getSalesData()
@@ -1564,35 +2285,35 @@ public function login(Request $request)
 
 
     public function getSalesData()
-{
-    $user = $this->getAuthenticatedUser();
+    {
+        $user = $this->getAuthenticatedUser();
 
-    if ($user instanceof \Illuminate\Http\JsonResponse) {
-        return $user; // Return the error response if no authenticated user
+        if ($user instanceof \Illuminate\Http\JsonResponse) {
+            return $user; // Return the error response if no authenticated user
+        }
+
+        // Sum of qty for today's sale
+        $today_sale = RetailSaleOrder::where('user_id', $user->id)
+            ->whereDate('retail_sale_orders.created_at', Carbon::today())
+            ->join('retail_sale_order_details', 'retail_sale_orders.id', '=', 'retail_sale_order_details.retail_sale_order_id')
+            ->sum('retail_sale_order_details.qty');
+
+        // Sum of qty for current month's sale
+        $monthly_sale = RetailSaleOrder::where('user_id', $user->id)
+            ->whereYear('retail_sale_orders.created_at', Carbon::now()->year)
+            ->whereMonth('retail_sale_orders.created_at', Carbon::now()->month)
+            ->join('retail_sale_order_details', 'retail_sale_orders.id', '=', 'retail_sale_order_details.retail_sale_order_id')
+            ->sum('retail_sale_order_details.qty');
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Dashboard Data Fetched Successfully',
+            'data' => [
+                'today_sale' => (int) $today_sale,
+                'monthly_sale' => (int) $monthly_sale,
+            ],
+        ]);
     }
-
-    // Sum of qty for today's sale
-    $today_sale = RetailSaleOrder::where('user_id', $user->id)
-        ->whereDate('retail_sale_orders.created_at', Carbon::today())
-        ->join('retail_sale_order_details', 'retail_sale_orders.id', '=', 'retail_sale_order_details.retail_sale_order_id')
-        ->sum('retail_sale_order_details.qty');
-
-    // Sum of qty for current month's sale
-    $monthly_sale = RetailSaleOrder::where('user_id', $user->id)
-        ->whereYear('retail_sale_orders.created_at', Carbon::now()->year)
-        ->whereMonth('retail_sale_orders.created_at', Carbon::now()->month)
-        ->join('retail_sale_order_details', 'retail_sale_orders.id', '=', 'retail_sale_order_details.retail_sale_order_id')
-        ->sum('retail_sale_order_details.qty');
-
-   return response()->json([
-    'success' => true,
-    'message' => 'Dashboard Data Fetched Successfully',
-    'data' => [
-        'today_sale' => (int) $today_sale,
-        'monthly_sale' => (int) $monthly_sale,
-    ],
-]);
-}
 
     protected function getAuthenticatedUser()
     {
@@ -1603,5 +2324,296 @@ public function login(Request $request)
         }
 
         return $user;
+    }
+
+    public function targetReportApi(Request $request)
+    {
+        // ================= Filters =================
+        $date = $request->date ?? date('Y-m');
+        [$year, $month] = explode('-', $date);
+
+        $customerFilterId = $request->customer_id; // optional
+        $userId = $request->user_id;     // optional
+
+        // ================= Targets =================
+        $reports = TargetItems::where('year', $year)
+            ->where('month', (int) $month)
+            ->when($customerFilterId, function ($q) use ($customerFilterId) {
+                $q->where('customer_id', $customerFilterId);
+            })
+            ->get();
+
+        if ($reports->isEmpty()) {
+            return response()->json([
+                'status' => true,
+                'data' => []
+            ]);
+        }
+
+        $customerIds = $reports->pluck('customer_id')->unique();
+        $brandIds = $reports->pluck('brand_id')->unique();
+
+        // ================= Brands =================
+        $brands = Brand::whereIn('id', $brandIds)
+            ->pluck('name', 'id');
+
+        // ================= SALES =================
+        $sales = DB::connection('mysql2')
+            ->table('retail_sale_orders as so')
+            ->join('retail_sale_order_details as sod', 'so.id', '=', 'sod.retail_sale_order_id')
+            ->whereIn('so.distributor_id', $customerIds)
+            ->whereYear('so.sale_order_date', $year)
+            ->whereMonth('so.sale_order_date', $month)
+            ->when($userId, function ($q) use ($userId) {
+                $q->where('so.user_id', $userId);
+            })
+            ->select(
+                'sod.brand_id',
+                DB::raw('SUM(sod.qty) as total_qty')
+            )
+            ->groupBy('sod.brand_id')
+            ->get();
+
+        $salesData = $sales->pluck('total_qty', 'brand_id')->toArray();
+
+        // ================= RETURNS =================
+        $returns = DB::connection('mysql2')
+            ->table('retail_sale_order_returns as rsor')
+            ->join('retail_sale_order_return_details as rsord', 'rsor.id', '=', 'rsord.retail_sale_order_return_id')
+            ->whereIn('rsor.distributor_id', $customerIds)
+            ->whereYear('rsor.created_at', $year)
+            ->whereMonth('rsor.created_at', $month)
+            ->when($userId, function ($q) use ($userId) {
+                $q->where('rsor.user_id', $userId);
+            })
+            ->select(
+                'rsord.brand_id',
+                DB::raw('SUM(rsord.quantity) as total_qty')
+            )
+            ->groupBy('rsord.brand_id')
+            ->get();
+
+        $returnsData = $returns->pluck('total_qty', 'brand_id')->toArray();
+
+        // ================= FINAL BRAND-WISE REPORT =================
+        $finalReport = [];
+
+        foreach ($reports as $report) {
+
+            $brandId = $report->brand_id;
+
+            if (!isset($finalReport[$brandId])) {
+                $finalReport[$brandId] = [
+                    'brand_id' => $brandId,
+                    'brand_name' => $brands[$brandId] ?? '',
+                    'target_qty' => 0,
+                    'achieved_qty' => 0,
+                    'return_qty' => 0,
+                    'net_achieved_qty' => 0,
+                    'achieved_percent' => 0
+                ];
+            }
+
+            // ✅ Correct target column
+            $finalReport[$brandId]['target_qty'] += $report->target ?? 0;
+        }
+
+        foreach ($finalReport as $brandId => &$row) {
+
+            $row['achieved_qty'] = $salesData[$brandId] ?? 0;
+            $row['return_qty'] = $returnsData[$brandId] ?? 0;
+
+            $row['net_achieved_qty'] = $row['achieved_qty'] - $row['return_qty'];
+
+            $row['achieved_percent'] = $row['target_qty'] > 0
+                ? round(($row['net_achieved_qty'] / $row['target_qty']) * 100, 2)
+                : 0;
+        }
+
+        return response()->json([
+            'status' => true,
+            'filters' => [
+                'year' => $year,
+                'month' => $month,
+                'customer_id' => $customerFilterId,
+                'user_id' => $userId
+            ],
+            'data' => array_values($finalReport)
+        ]);
+    }
+
+    public function getBaTargetProgressApi(Request $request)
+    {
+        $user = $this->getAuthenticatedUser();
+        if ($user instanceof \Illuminate\Http\JsonResponse) {
+            return $user;
+        }
+
+        $validator = Validator::make($request->all(), [
+            'date' => 'nullable|date_format:Y-m',
+            'year' => 'nullable|integer|min:2000',
+            'month' => 'nullable|integer|min:1|max:12',
+            'user_id' => 'nullable|integer|exists:mysql.users,id',
+            'customer_id' => 'nullable|integer',
+            'target_basis' => 'nullable|string|in:qty,amount'
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['success' => false, 'errors' => $validator->errors()], 422);
+        }
+
+        // If user_id is passed, use it, otherwise use authenticated user
+        if ($request->user_id) {
+            $targetUser = \App\User::find($request->user_id);
+        } else {
+            $targetUser = $user;
+        }
+
+        // Handle Date/Year/Month
+        if ($request->date) {
+            [$year, $month] = explode('-', $request->date);
+        } else {
+            $year = $request->year ?? date('Y');
+            $month = $request->month ?? date('n');
+        }
+
+        $target_basis = $request->target_basis; // qty or amount or null
+        $emp_id = $targetUser->emp_id;
+
+        try {
+            // 1. Get assigned formations (Stores & Brands)
+            $formationQuery = DB::connection('mysql2')
+                ->table('b_a_formations')
+                ->where('employee_id', $emp_id);
+
+            if ($request->customer_id) {
+                $formationQuery->where('customer_id', $request->customer_id);
+            }
+
+            $formations = $formationQuery->get();
+
+            $customerIds = $formations->pluck('customer_id')->unique();
+
+            // 2. Get Targets (Filtered by basis if provided)
+            $targetQuery = DB::connection('mysql2')
+                ->table('target_items')
+                ->where('employee_id', $emp_id)
+                ->where('year', $year)
+                ->where('month', $month);
+
+            if ($target_basis) {
+                $targetQuery->where('target_type', $target_basis);
+            }
+
+            $targets = $targetQuery->get();
+
+            // 3. Achievements (Secondary & Tertiary) - Brand Wise
+            $secondarySales = DB::connection('mysql2')
+                ->table('sales_order as so')
+                ->join('sales_order_data as sod', 'so.id', '=', 'sod.master_id')
+                ->join('subitem as si', 'si.id', '=', 'sod.item_id')
+                ->whereIn('so.buyers_id', $customerIds)
+                ->whereYear('so.so_date', $year)
+                ->whereMonth('so.so_date', $month)
+                ->selectRaw('so.buyers_id, si.brand_id, SUM(sod.amount) as total_amount, SUM(sod.qty) as total_qty')
+                ->groupBy('so.buyers_id', 'si.brand_id')
+                ->get();
+
+            $tertiarySales = DB::connection('mysql2')
+                ->table('retail_sale_orders as so')
+                ->join('retail_sale_order_details as sod', 'so.id', '=', 'sod.retail_sale_order_id')
+                ->where('so.user_id', $targetUser->id)
+                ->whereYear('so.sale_order_date', $year)
+                ->whereMonth('so.sale_order_date', $month)
+                ->selectRaw('so.distributor_id, sod.brand_id, SUM(sod.qty) as total_qty')
+                ->groupBy('so.distributor_id', 'sod.brand_id')
+                ->get();
+
+            // 4. Returns - Brand Wise (Tertiary)
+            $tertiaryReturns = DB::connection('mysql2')
+                ->table('retail_sale_order_returns as rsor')
+                ->join('retail_sale_order_return_details as rsord', 'rsor.id', '=', 'rsord.retail_sale_order_return_id')
+                ->where('rsor.user_id', $targetUser->id)
+                ->whereYear('rsor.created_at', $year)
+                ->whereMonth('rsor.created_at', $month)
+                ->selectRaw('rsor.distributor_id, rsord.brand_id, SUM(rsord.quantity) as total_qty')
+                ->groupBy('rsor.distributor_id', 'rsord.brand_id')
+                ->get();
+
+            // Eager load customer and brand names to avoid N+1 queries
+            $allBrandIds = [];
+            foreach ($formations as $f) {
+                $allBrandIds = array_merge($allBrandIds, json_decode($f->brands_ids, true) ?? []);
+            }
+            $allBrandIds = array_unique($allBrandIds);
+
+            $brandNames = DB::connection('mysql2')->table('brands')->whereIn('id', $allBrandIds)->pluck('name', 'id');
+            $customerNames = DB::connection('mysql2')->table('customers')->whereIn('id', $customerIds)->pluck('name', 'id');
+
+            // Format Data
+            $reportData = [];
+            foreach ($formations as $f) {
+                $storeTargets = $targets->where('customer_id', $f->customer_id);
+                $storeName = $customerNames[$f->customer_id] ?? 'Unknown Store';
+
+                $brandDetails = [];
+                $brandIds = json_decode($f->brands_ids, true) ?? [];
+
+                foreach ($brandIds as $bId) {
+                    $brandName = $brandNames[$bId] ?? 'Unknown Brand';
+
+                    $qtyTarget = (float) ($storeTargets->where('brand_id', $bId)->where('target_type', 'qty')->first()->target ?? 0);
+                    $amountTarget = (float) ($storeTargets->where('brand_id', $bId)->where('target_type', 'amount')->first()->target ?? 0);
+
+                    // Brand-wise Achievements
+                    $secAchieved = $secondarySales->where('buyers_id', $f->customer_id)->where('brand_id', $bId)->first();
+                    $terAchieved = $tertiarySales->where('distributor_id', $f->customer_id)->where('brand_id', $bId)->first();
+                    $terReturned = $tertiaryReturns->where('distributor_id', $f->customer_id)->where('brand_id', $bId)->first();
+
+                    $netAchievedQty = (float) ($terAchieved->total_qty ?? 0) - (float) ($terReturned->total_qty ?? 0);
+
+                    $item = [
+                        'brand_id' => $bId,
+                        'brand_name' => $brandName
+                    ];
+
+                    // Only include the requested basis, or both if null
+                    if (!$target_basis || $target_basis == 'qty') {
+                        $item['qty_target'] = $qtyTarget;
+                        $item['achieved_qty'] = $netAchievedQty;
+                        $item['secondary_qty'] = (float) ($secAchieved->total_qty ?? 0);
+                        $item['percentage'] = $qtyTarget > 0 ? round(($netAchievedQty / $qtyTarget) * 100, 2) : 0;
+                    }
+
+                    if (!$target_basis || $target_basis == 'amount') {
+                        $item['amount_target'] = $amountTarget;
+                        $item['achieved_amount'] = (float) ($secAchieved->total_amount ?? 0);
+                        if ($target_basis == 'amount') {
+                            $item['percentage'] = $amountTarget > 0 ? round(($item['achieved_amount'] / $amountTarget) * 100, 2) : 0;
+                        }
+                    }
+
+                    $brandDetails[] = $item;
+                }
+
+                $reportData[] = [
+                    'store_id' => $f->customer_id,
+                    'store_name' => $storeName,
+                    'brands' => $brandDetails
+                ];
+            }
+
+            return response()->json([
+                'success' => true,
+                'year' => $year,
+                'month' => $month,
+                'target_basis' => $target_basis ?? 'all',
+                'employee' => $targetUser->name,
+                'data' => $reportData
+            ], 200);
+
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+        }
     }
 }

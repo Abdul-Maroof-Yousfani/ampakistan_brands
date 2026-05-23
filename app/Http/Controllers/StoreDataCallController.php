@@ -88,9 +88,59 @@ class StoreDataCallController extends Controller
     public function viewStockTransferDetail(){
         return view('Store.AjaxPages.viewStockTransferDetail');
     }
+    public function viewStockOutDetail(){
+        return view('Store.AjaxPages.viewStockOutDetail');
+    }
+    public function viewStockInDetail(){
+        return view('Store.AjaxPages.viewStockInDetail');
+    }
     public function viewIssuanceDetail(){
         return view('Store.AjaxPages.viewIssuanceDetail');
     }
+
+    public function viewQtyAdjustmentDetail(Request $request){
+        $m = $request->m;
+        $id = $request->id;
+
+        CommonHelper::companyDatabaseConnection($m);
+
+        $master = DB::connection('mysql2')->table('qty_adjustment as qa')
+            ->leftJoin('warehouse as w', 'qa.warehouse_id', '=', 'w.id')
+            ->select('qa.*', 'w.name as warehouse_name')
+            ->where('qa.id', $id)
+            ->first();
+
+        $details = DB::connection('mysql2')->table('qty_adjustment_data as qad')
+            ->leftJoin('subitem as s', 'qad.item_id', '=', 's.id')
+            ->select('qad.*', 's.product_name', 's.sku_code')
+            ->where('qad.master_id', $id)
+            ->get();
+
+        CommonHelper::reconnectMasterDatabase();
+
+        return view('Store.AjaxPages.viewQtyAdjustmentDetail', compact('master', 'details', 'm'));
+    }
+
+    public function filterQtyAdjustmentList(Request $request) {
+        $fromDate = $request->fromDate;
+        $toDate = $request->toDate;
+        $m = $request->m;
+        
+        CommonHelper::companyDatabaseConnection($m);
+        
+        $query = DB::connection('mysql2')->table('qty_adjustment as qa')
+            ->leftJoin('warehouse as w', 'qa.warehouse_id', '=', 'w.id')
+            ->select('qa.*', 'w.warehouse_name')
+            ->whereBetween('qa.adj_date', [$fromDate, $toDate])
+            ->where('qa.status', 1);
+
+        $results = $query->orderBy('qa.adj_date', 'desc')->get();
+        
+        CommonHelper::reconnectMasterDatabase();
+        
+        return view('Store.AjaxPages.filterQtyAdjustmentList', compact('results', 'm'));
+    }
+
     public function get_work_order_data(){
         return view('Store.AjaxPages.get_work_order_data');
     }
@@ -211,14 +261,131 @@ class StoreDataCallController extends Controller
        return $discount;
     }
 
-    public function getCustomerById(Request $request){
-        $customer = DB::connection('mysql2')->table('customers')->where('id',$request->id)->where('status',1)->select('*')->first();
-        $debitSum = DB::connection('mysql2')->table('transactions')->where('acc_id',$customer->acc_id)->where('debit_credit',1)->sum('amount');
-        $creditSum = DB::connection('mysql2')->table('transactions')->where('acc_id',$customer->acc_id)->where('debit_credit',0)->sum('amount');
-        $balanceAmount = $debitSum - $creditSum;
-         $customer->balance_amount = $balanceAmount;
-        return response()->json($customer);
+    // public function getCustomerById(Request $request){
+    //     $customer = DB::connection('mysql2')->table('customers')->where('id',$request->id)->where('status',1)->select('*')->first();
+    //     $debitSum = DB::connection('mysql2')->table('transactions')->where('acc_id',$customer->acc_id)->where('debit_credit',1)->sum('amount');
+    //     $creditSum = DB::connection('mysql2')->table('transactions')->where('acc_id',$customer->acc_id)->where('debit_credit',0)->sum('amount');
+    //     $balanceAmount = $debitSum - $creditSum;
+    //      $customer->balance_amount = $balanceAmount;
+    //     return response()->json($customer);
+    // }
+
+
+public function getCustomerById(Request $request){
+    $customer = DB::connection('mysql2')
+        ->table('customers')
+        ->where('id', $request->id)
+        ->where('status', 1)
+        ->select('*')
+        ->first();
+    
+    if (!$customer) {
+        return response()->json(['error' => 'Customer not found'], 404);
     }
+
+    // Sales person name fetch karna
+    if ($customer->SaleRep) {
+        $salesPerson = DB::table('sub_department')
+            ->where('id', $customer->SaleRep)
+            ->first();
+        $customer->sales_person_name = $salesPerson ? $salesPerson->sub_department_name : '-';
+    } else {
+        $customer->sales_person_name = '-';
+    }
+
+    // Balance calculation
+    $debitSum = DB::connection('mysql2')
+        ->table('transactions')
+        ->where('acc_id', $customer->acc_id)
+        ->where('debit_credit', 1)
+        ->sum('amount');
+
+    $creditSum = DB::connection('mysql2')
+        ->table('transactions')
+        ->where('acc_id', $customer->acc_id)
+        ->where('debit_credit', 0)
+        ->sum('amount');
+
+    $balanceAmount = $debitSum - $creditSum;
+
+    // IMPORTANT: Use 'balance_amount' as the property name to match JavaScript
+    $customer->balance_amount = $balanceAmount;
+
+    // Branch name fetch karna
+    if ($customer->branch_id) {
+        $branch = DB::connection('mysql2')
+            ->table('branch')
+            ->where('id', $customer->branch_id)
+            ->first();
+        
+        $customer->branch_name = $branch ? $branch->branch_name : '-';
+        $customer->branch_code = $branch ? $branch->id : '-';
+    } else {
+        $customer->branch_name = '-';
+        $customer->branch_code = '-';
+    }
+    
+    return response()->json($customer);
+}
+//     public function getCustomerById(Request $request){
+//     $customer = DB::connection('mysql2')
+//         ->table('customers')
+//         ->where('id', $request->id)
+//         ->where('status', 1)
+//         ->select('*')
+//         ->first();
+    
+//     if (!$customer) {
+//         return response()->json(['error' => 'Customer not found'], 404);
+//     }
+
+//     // Sales person name fetch karna
+//     if ($customer->SaleRep) {
+//         $salesPerson = DB::table('sub_department')
+//             ->where('id', $customer->SaleRep)
+//             ->first();
+//         $customer->sales_person_name = $salesPerson ? $salesPerson->sub_department_name : '-';
+//     } else {
+//         $customer->sales_person_name = '-';
+//     }
+
+//     // Balance calculation
+//     $debitSum = DB::connection('mysql2')
+//         ->table('transactions')
+//         ->where('acc_id', $customer->acc_id)
+//         ->where('debit_credit', 1)
+//         ->sum('amount');
+
+       
+    
+//     $creditSum = DB::connection('mysql2')
+//         ->table('transactions')
+//         ->where('acc_id', $customer->acc_id)
+//         ->where('debit_credit', 0)
+//         ->sum('amount');
+
+    
+//     $balanceAmount = $debitSum - $creditSum;
+
+             
+//     $customer->balance_amount = $balanceAmount;
+
+//     // Branch name fetch karna
+//     if ($customer->branch_id) {
+//         $branch = DB::connection('mysql2')
+//             ->table('branch')  // assume table name 'branches' hai
+//             ->where('id', $customer->branch_id)
+//             ->first();
+        
+//         $customer->branch_name = $branch ? $branch->branch_name : '-';
+//         $customer->branch_code = $branch ? $branch->id : '-'; // agar code bhi chahiye to
+//     } else {
+//         $customer->branch_name = '-';
+//         $customer->branch_code = '-';
+//     }
+    
+//     return response()->json($customer);
+// }
     public function createPurchaseRequestSaleDetailForm(Request $request){
         $m = $_GET['m'];
         CommonHelper::companyDatabaseConnection($m);
@@ -606,8 +773,8 @@ public function approve_transfer(Request $request)
 
     try {
         $id = $request->id;
-  $stock_transfer = \Illuminate\Support\Facades\DB::connection("mysql2")->table("stock_transfer")->where("id", $id)->first();
-       
+
+        $stock_transfer = \Illuminate\Support\Facades\DB::connection("mysql2")->table("stock_transfer")->where("id", $id)->first();
         $data = DB::connection('mysql2')->table('stock_transfer_data as a')
             ->join('stock_transfer as b','a.master_id','=','b.id')
             ->select('a.*','b.tr_date','b.tr_no')
@@ -649,10 +816,9 @@ public function approve_transfer(Request $request)
             DB::connection('mysql2')->table('stock')->insert($stock1);
         }
 
-
         $type = "Stock Transfer";
         \App\Helpers\CommonHelper::createNotification($type . " with " . $stock_transfer->tr_no . " is approved by " . auth()->user()->name, $type . "");
-       
+        
         // Update transfer status
         DB::connection('mysql2')->table('stock_transfer')->where('id', $id)->update([
             'tr_status' => 2
@@ -674,6 +840,24 @@ public function approve_transfer(Request $request)
     }
 }
 
+    public function delete_stock_out(Request $request)
+    {
+        $id = $request->id;
+        $so_no = $request->voucher_no;
+
+        DB::connection('mysql2')->beginTransaction();
+        try {
+            DB::connection('mysql2')->table('stock_out')->where('id', $id)->update(['status' => 0]);
+            DB::connection('mysql2')->table('stock_out_data')->where('master_id', $id)->update(['status' => 0]);
+            DB::connection('mysql2')->table('stock')->where('voucher_no', $so_no)->update(['status' => 0]);
+            
+            DB::connection('mysql2')->commit();
+            echo $id;
+        } catch (\Exception $e) {
+            DB::connection('mysql2')->rollBack();
+            echo "ERROR";
+        }
+    }
 
     public function internal_cosum(Request $request)
     {
@@ -1178,8 +1362,8 @@ public function approve_transfer(Request $request)
     {
         $PoNo = $request->PoNo;
         $m = $request->m;
+        $type = $request->type;
         $purchaseRequestDetail = DB::Connection('mysql2')->table('purchase_request')->where('status',1)->where('purchase_request_no','like', '%' . $PoNo . '%')->get();
-        dd($purchaseRequestDetail);
         return view('Store.AjaxPages.getPoDataPoNoWise', compact('purchaseRequestDetail','m'));
     }
 

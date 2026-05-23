@@ -70,6 +70,7 @@ Route::group(['prefix' => 'saleQuotation'], function () {
 
     Route::get('editSaleOrder/{id}','SalesOrderController@edit')->name('editSaleOrder');
     Route::get('deleteSaleOrder/{id}','SalesOrderController@destroy')->name('deleteSaleOrder');
+    Route::get('closeSaleOrder/{id}','SalesOrderController@closeSaleOrder')->name('closeSaleOrder');
     Route::post('updateSaleOrder/{id}','SalesOrderController@update')->name('updateSaleOrder');
 
 // ---- --------------      ----- Sale Order   ----        --------------------//
@@ -237,7 +238,7 @@ Route::get('editProductsPrincipalGroup/{id}', 'ProductsPrincipalGroupController@
 Route::post('updateProductsPrincipalGroup/{id}', 'ProductsPrincipalGroupController@updateProductsPrincipalGroup')->name('updateProductsPrincipalGroup');
 Route::get('deleteProductsPrincipalGroup/{id}', 'ProductsPrincipalGroupController@deleteProductsPrincipalGroup')->name('deleteProductsPrincipalGroup');
 
-
+// ---- --------------      ----- Customer Group CRUD   ----        --------------------//
 Route::get('listCustomerGroup', 'CustomerGroupController@listCustomerGroup')->name('listCustomerGroup');
 Route::get('createCustomerGroup', 'CustomerGroupController@createCustomerGroup')->name('createCustomerGroup');
 Route::post('storeCustomerGroup', 'CustomerGroupController@storeCustomerGroup')->name('storeCustomerGroup');
@@ -248,5 +249,9 @@ Route::get('deleteCustomerGroup/{id}', 'CustomerGroupController@deleteCustomerGr
 Route::get('rmplaningReport','ReportsController@rmplaningReport')->name('rmplaningReport');
 });
 
+
+// BA Attendance & Target Report
+Route::get('/ba/reports/attendance', 'BaAttendanceReportController@index')->name('ba.reports.attendance');
+Route::post('/ba/reports/attendance/generate', 'BaAttendanceReportController@generateReport')->name('ba.reports.attendance.generate');
 
 //  End New Implement tation  

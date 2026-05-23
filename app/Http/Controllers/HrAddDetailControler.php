@@ -85,7 +85,7 @@ class HrAddDetailControler extends Controller
 
     public function addSubDepartmentDetail()
     {
-       $subDepartmentSection = Input::get('subDepartmentSection');
+        $subDepartmentSection = Input::get('subDepartmentSection');
         foreach ($subDepartmentSection as $row) {
             $department_id = Input::get('department_id_' . $row . '');
             $sub_department_name = Input::get('sub_department_name_' . $row . '');
@@ -105,7 +105,6 @@ class HrAddDetailControler extends Controller
         }
         Session::flash('dataInsert', 'successfully saved.');
         return Redirect::to('hr/viewSubDepartmentList?pageType=' . Input::get('pageType') . '&&parentCode=' . Input::get('parentCode') . '&&m=' . $_GET['m'] . '#mima');
-     
     }
 
     public function addDesignationDetail()

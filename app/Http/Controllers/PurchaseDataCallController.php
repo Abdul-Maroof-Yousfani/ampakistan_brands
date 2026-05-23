@@ -302,7 +302,7 @@ function delete_cate(id) {
         echo $id;
     }
 
-     public function viewRegionList()
+    public function viewRegionList()
     {
         $m = $_GET['m'];
         CommonHelper::companyDatabaseConnection($m);
@@ -331,7 +331,6 @@ function delete_cate(id) {
     }
     function editRegionDetail()
     {
-
         $EditId = $_GET['id'];
         $Region = new Region();
         $Region = $Region->SetConnection('mysql2');
@@ -587,6 +586,126 @@ function delete_cate(id) {
         }
 
     }
+
+
+// public function viewSubItemListAjax(Request $request)
+// {
+
+   
+//     $m = 1;
+//     $category = $request->category;
+//     $sub_category = $request->sub_category;
+//     $principle_group = $request->principle_group;
+//     $product_trend_id = $request->product_trend_id; // Assuming Product Trend IDs are passed in the request.
+//     $product_classification_id = $request->product_classification_id; // Assuming Product Classification IDs are passed in the request.
+//     $brand_ids = $request->brand_ids; // Assuming brand IDs are passed in the request.
+//     $creation_date = $request->creation_date; // Assuming brand IDs are passed in the request.
+//     $product_status = $request->product_status; // Assuming Product Status are passed in the request.
+//     $username = $request->username; // Assuming brand IDs are passed in the request.
+//     $search = $request->search;
+
+//     CommonHelper::companyDatabaseConnection($m);
+
+//     // $subitems = Subitem::where('subitem.status', '=', 1)
+//     //     ->leftJoin('brands', 'brands.id', 'subitem.brand_id')
+//     //     ->when($category, function ($query, $category) {
+//     //         $query->where('subitem.main_ic_id', '=', $category);
+//     //     })
+//     //     ->when($product_status !== null && $product_status !== '', function ($query) use ($product_status) {
+//     //         $query->where('subitem.product_status', '=', $product_status);
+//     //     })
+//     //     ->when($product_classification_id, function ($query, $product_classification_id) {
+//     //         $query->whereIn('subitem.product_classification_id', $product_classification_id);
+//     //     })
+//     //     ->when($product_trend_id, function ($query, $product_trend_id) {
+//     //         $query->whereIn('subitem.product_trend_id', $product_trend_id);
+//     //     })
+//     //     ->when($username, function ($query, $username) {
+//     //         $query->whereIn('subitem.username', $username);
+//     //     })
+//     //     ->when($creation_date, function ($query, $creation_date) {
+//     //         $query->whereDate('subitem.date', '=', $creation_date);
+//     //     })
+//     //     ->when($sub_category, function ($query, $sub_category) {
+//     //         $query->where('subitem.sub_category_id', '=', $sub_category);
+//     //     })
+//     //     ->when($brand_ids, function ($query, $brand_ids) {
+//     //         $query->whereIn('subitem.brand_id', $brand_ids);
+//     //     })
+//     //     ->when($search, function ($query, $search) {
+//     //         $query->whereRaw('LOWER(subitem.product_name) LIKE ?', ['%' . strtolower($search) . '%'])
+//     //             ->orWhereRaw('brands.name LIKE ?', ['%' . strtolower($search) . '%'])
+//     //             ->orWhereRaw('LOWER(subitem.sku_code) LIKE ?', ['%' . strtolower($search) . '%'])
+//     //             ->orWhereRaw('LOWER(subitem.product_barcode) LIKE ?', ['%' . strtolower($search) . '%'])
+//     //             ->orWhereRaw('LOWER(subitem.sys_no) LIKE ?', ['%' . strtolower($search) . '%']);
+//     //     })
+//     //     ->select('subitem.*', 'brands.name as brand_name')
+//     //     ->paginate(request('per_page'));
+
+
+// $subitems = Subitem::where('subitem.status', 1)
+//     ->leftJoin('brands', 'brands.id', 'subitem.brand_id')
+
+//     ->when($category, function ($query, $category) {
+//         $query->where('subitem.main_ic_id', $category);
+//     })
+
+//     ->when($product_status !== null && $product_status !== '', function ($query) use ($product_status) {
+//         $query->where('subitem.product_status', $product_status);
+//     })
+
+//     ->when($product_classification_id, function ($query, $product_classification_id) {
+//         $query->whereIn('subitem.product_classification_id', $product_classification_id);
+//     })
+//     ->when($principle_group, function($query, $principle_group) {
+//         $query->where("subitem.principal_group_id", $principle_group);
+//     })
+//     ->when($product_trend_id, function ($query, $product_trend_id) {
+//         $query->whereIn('subitem.product_trend_id', $product_trend_id);
+//     })
+
+//     ->when($username, function ($query, $username) {
+//         $query->whereIn('subitem.username', $username);
+//     })
+
+//     ->when($creation_date, function ($query, $creation_date) {
+//         $query->whereDate('subitem.date', $creation_date);
+//     })
+
+//     ->when($sub_category, function ($query, $sub_category) {
+//         $query->where('subitem.sub_category_id', $sub_category);
+//     })
+
+//     ->when($brand_ids, function ($query, $brand_ids) {
+//         $query->whereIn('subitem.brand_id', $brand_ids);
+//     })
+
+//     // ✅ FIXED SEARCH
+//     ->when($search, function ($query, $search) {
+//         $search = strtolower($search);
+//         $query->where(function ($q) use ($search) {
+//             $q->whereRaw('LOWER(subitem.product_name) LIKE ?', ["%{$search}%"])
+//               ->orWhereRaw('LOWER(brands.name) LIKE ?', ["%{$search}%"])
+//               ->orWhereRaw('LOWER(subitem.sku_code) LIKE ?', ["%{$search}%"])
+//               ->orWhereRaw('LOWER(subitem.product_barcode) LIKE ?', ["%{$search}%"])
+//               ->orWhereRaw('LOWER(subitem.sys_no) LIKE ?', ["%{$search}%"]);
+//         });
+//     })
+
+//     ->select('subitem.*', 'brands.name as brand_name')
+//      ->orderBy('subitem.id', 'desc')
+//     ->paginate(request('per_page'));
+
+
+
+//     CommonHelper::reconnectMasterDatabase();
+
+//     return view('Purchase.AjaxPages.getviewSubItemListAjax', compact('subitems'));
+// }
+
+
+
+
 public function viewSubItemListAjax(Request $request)
 {
 
@@ -706,6 +825,83 @@ $subitems = Subitem::where('subitem.status', 1)
     return view('Purchase.AjaxPages.getviewSubItemListAjax', compact('subitems'));
 }
 
+public function viewSubItemListAjaxWithoutEditing(Request $request)
+{
+    $m = 1;
+    $category = $request->category;
+    $sub_category = $request->sub_category;
+    $principle_group = $request->principle_group;
+    $group = $request->group;
+    $product_trend_id = $request->product_trend_id;
+    $product_classification_id = $request->product_classification_id;
+    $brand_ids = $request->brand_ids;
+    $creation_date = $request->creation_date;
+    $product_status = $request->product_status;
+    $username = $request->username;
+    $search = $request->search;
+
+    CommonHelper::companyDatabaseConnection($m);
+
+    $subitems = Subitem::where('subitem.status', 1)
+        ->leftJoin('brands', 'brands.id', 'subitem.brand_id')
+
+        ->when($category, function ($query, $category) {
+            $query->where('subitem.main_ic_id', $category);
+        })
+
+        ->when($product_status !== null && $product_status !== '', function ($query) use ($product_status) {
+            $query->where('subitem.product_status', $product_status);
+        })
+
+        ->when($product_classification_id, function ($query, $product_classification_id) {
+            $query->whereIn('subitem.product_classification_id', $product_classification_id);
+        })
+        ->when($principle_group, function($query, $principle_group) {
+            $query->where("subitem.principal_group_id", $principle_group);
+        })
+        ->when($group, function($query, $group) {
+            $query->where("subitem.group_id", $group);
+        })
+        ->when($product_trend_id, function ($query, $product_trend_id) {
+            $query->whereIn('subitem.product_trend_id', $product_trend_id);
+        })
+
+        ->when($username, function ($query, $username) {
+            $query->whereIn('subitem.username', $username);
+        })
+
+        ->when($creation_date, function ($query, $creation_date) {
+            $query->whereDate('subitem.date', $creation_date);
+        })
+
+        ->when($sub_category, function ($query, $sub_category) {
+            $query->where('subitem.sub_category_id', $sub_category);
+        })
+
+        ->when($brand_ids, function ($query, $brand_ids) {
+            $query->whereIn('subitem.brand_id', $brand_ids);
+        })
+
+        ->when($search, function ($query, $search) {
+            $search = strtolower($search);
+            $query->where(function ($q) use ($search) {
+                $q->whereRaw('LOWER(subitem.product_name) LIKE ?', ["%{$search}%"])
+                  ->orWhereRaw('LOWER(brands.name) LIKE ?', ["%{$search}%"])
+                  ->orWhereRaw('LOWER(subitem.sku_code) LIKE ?', ["%{$search}%"])
+                  ->orWhereRaw('LOWER(subitem.product_barcode) LIKE ?', ["%{$search}%"])
+                  ->orWhereRaw('LOWER(subitem.sys_no) LIKE ?', ["%{$search}%"]);
+            });
+        })
+
+        ->select('subitem.*', 'brands.name as brand_name')
+         ->orderBy('subitem.id', 'desc')
+        ->paginate(request('per_page'));
+
+    CommonHelper::reconnectMasterDatabase();
+
+    return view('Purchase.AjaxPages.getviewSubItemListAjaxWithoutEditing', compact('subitems'));
+}
+
     public function viewSubItemListAjaxbk()
     {
         $m = $_GET['m'];
@@ -795,7 +991,8 @@ $subitems = Subitem::where('subitem.status', 1)
     //     $toDate = $_GET['toDate'];
     //     $m = $_GET['m'];
     //     $type  = $request->type;
-     
+        
+        
     //     $selectVoucherStatus = $_GET['selectVoucherStatus'];
     //     $selectSubDepartment = $_GET['selectSubDepartment'];
     //     $selectSubDepartmentId = $_GET['selectSubDepartmentId'];
@@ -839,6 +1036,9 @@ $subitems = Subitem::where('subitem.status', 1)
     //     } else if ($selectVoucherStatus == '3' && empty($selectSubDepartmentId)) {
     //         $demandDetail = Demand::whereBetween('demand_date', [$fromDate, $toDate])->where('status', '=', '2')->get();
     //     }
+
+
+
     //     CommonHelper::reconnectMasterDatabase();
     //     return view('Purchase.AjaxPages.filterDemandVoucherList', compact('demandDetail'));
     // }
@@ -992,7 +1192,6 @@ $subitems = Subitem::where('subitem.status', 1)
         
         echo $DeleteId;
 
-
     }
 
     public function DeleteStockReturn(Request $request)
@@ -1008,7 +1207,7 @@ $subitems = Subitem::where('subitem.status', 1)
 
     public function DeleteGrn(Request $request)
     {
-           $DeleteId = $request->Id;
+        $DeleteId = $request->Id;
         $DeleteData['status'] = 2;
         $grn = DB::Connection('mysql2')->table('goods_receipt_note')->where('id', $DeleteId);
         $grn_no = $grn->grn_no;
@@ -1018,8 +1217,6 @@ $subitems = Subitem::where('subitem.status', 1)
      $type = "Goods Receipt Note";
             \App\Helpers\CommonHelper::createNotification($type . " with " . $grn_no . " is deleted by " . auth()->user()->name, $type . "");
      
-    
-
     }
 
     public function MasterDeleteGrn(Request $request)
@@ -1059,8 +1256,7 @@ $subitems = Subitem::where('subitem.status', 1)
 
 
         $grn_no = DB::Connection('mysql2')->selectOne('select grn_no,po_no from goods_receipt_note where id = '.$DeleteId.'');
-        
-           $type = "Goods Receipt Note";
+          $type = "Goods Receipt Note";
             \App\Helpers\CommonHelper::createNotification($type . " with " . $grn_no->grn_no . " is deleted by " . auth()->user()->name, $type . "");
    
         $DeleteData['status'] = 2;
@@ -1350,6 +1546,9 @@ $subitems = Subitem::where('subitem.status', 1)
             $goodsReceiptNoteDetail = GoodsReceiptNote::whereBetween('goods_receipt_note.grn_date', [$fromDate, $toDate])
                                       // ->leftJoin("grn_data", "grn_data.master_id", "goods_receipt_note.id")
                                       // ->leftJoin("subitem", "subitem.id", "grn_data.sub_item_id")
+                                      ->when($type == 'pending', function($query) {
+                                        $query->where("grn_status", 1);
+                                      })
                                       ->where('goods_receipt_note.status', '=', '1')->orderBy('goods_receipt_note.id', 'desc');
 
             if(!empty($search)){
@@ -2113,77 +2312,69 @@ $subitems = Subitem::where('subitem.status', 1)
     {
         $search = $request->search;
         $username = $request->username;
-        $fromDate = $_GET['from'];
-        $to = $_GET['to'];
-        $SupplierId = $_GET['SupplierId'];
-        $ref_no = isset($_GET['ref_no']) ?? null; 
-        // $pi_no = isset($_GET['pi_no']) ?? null;
+        $fromDate = $request->from;
+        $to = $request->to;
+        $SupplierId = $request->SupplierId;
         $pi_no = $request->pi_no;
         $po_no = $request->po_no;
         $grn_no = $request->grn_no;
-        $RadioVal = $_GET['RadioVal'] ?? 9;
+        $RadioVal = $request->RadioVal ?? 1;
+        $m = $request->m;
 
-        $m = $_GET['m'];
-        $purchase_voucher=new NewPurchaseVoucher();
-        $purchase_voucher=$purchase_voucher->SetConnection('mysql2');
-        if($SupplierId == 'all'):
-            if($RadioVal == 1):
-            $purchase_voucher=$purchase_voucher->where('status',1)
-                ->whereBetween('pv_date', [$fromDate, $to])
-                ->orderBy('pv_date','ASC')->orderBy('id', 'desc')->get();
-            else:
-                $purchase_voucher=$purchase_voucher->where('status',1)->where('work_order_id','!=','0')
-                    ->whereBetween('pv_date', [$fromDate, $to])
-                    ->orderBy('pv_date','ASC')->orderBy('id', 'desc')->get();
-            endif;
+        CommonHelper::companyDatabaseConnection($m);
 
-        else:
-            if($RadioVal == 1):
-            $purchase_voucher=$purchase_voucher->where('status',1)
-                ->whereBetween('pv_date', [$fromDate, $to])->where('supplier',$SupplierId)->where('grn_id','!=','0')
-                ->orderBy('pv_date','ASC')->orderBy('id', 'desc')->get();
-            else:
-                $purchase_voucher=$purchase_voucher->where('status',1)
-                    ->whereBetween('pv_date', [$fromDate, $to])->where('supplier',$SupplierId)->where('work_order_id','!=','0')
-                    ->orderBy('pv_date','ASC')->orderBy('id', 'desc')->get();
-            endif;
-        endif;
+        $query = NewPurchaseVoucher::where('new_purchase_voucher.status', 1);
 
-        $purchase_voucher=new NewPurchaseVoucher();
-        $purchase_voucher=$purchase_voucher->SetConnection('mysql2');
-        $purchase_voucher=$purchase_voucher
-        ->join('new_purchase_voucher_data', 'new_purchase_voucher_data.master_id', '=', 'new_purchase_voucher.id')
-        ->join('subitem', 'subitem.id', '=', 'new_purchase_voucher_data.sub_item')
-        ->join('goods_receipt_note', 'goods_receipt_note.id', '=',  'new_purchase_voucher.grn_id')
-        ->where('new_purchase_voucher.status',1)
-        ->whereBetween('pv_date', [$fromDate, $to])
-        ->when($SupplierId!='all',function ($query) use ($SupplierId){
-            $query->where('supplier',$SupplierId);
-        })
-        ->when($ref_no!='',function ($query) use ($ref_no){
-            $query->where('slip_no','Like',"%".$ref_no."%");
-        })
-        ->when($pi_no!='',function ($query) use ($pi_no){
-            $query->where('new_purchase_voucher.pv_no','Like',"%".strtolower($pi_no)."%");
-        })
-        ->when($grn_no!='',function ($query) use ($grn_no){
-            $query->where('grn_no','Like',"%".strtolower($grn_no)."%");
-        })
-        ->when($po_no!='',function ($query) use ($po_no){
-            $query->where('goods_receipt_note.po_no','Like',"%".strtolower($po_no)."%");
-        })
-        ->when($username!='',function ($query) use ($username){
-            $query->where('subitem.username','Like',"%".$username."%");
-        })
-        ->when($search, function($query, $search){
-            $query->whereRaw('LOWER(subitem.product_name) LIKE ?', ['%'. strtolower($search) .'%'])
-                  ->orWhereRaw('LOWER(subitem.sys_no) LIKE ?', ['%'. strtolower($search) .'%'])
-                  ->orWhereRaw('LOWER(subitem.product_barcode) LIKE ?', ['%'. strtolower($search) .'%'])
-                  ->orWhereRaw('LOWER(subitem.sku_code) LIKE ?', ['%'. strtolower($search) .'%']);
-        })
-        ->orderBy('pv_date','ASC')->orderBy('new_purchase_voucher.id', 'desc')->get();
-        return view('Purchase.AjaxPages.purchase_voucher_list_ajax', compact('purchase_voucher','m'));
+        if ($fromDate && $to) {
+            $query->whereBetween('pv_date', [$fromDate, $to]);
+        }
 
+        if ($SupplierId && $SupplierId != 'all') {
+            $query->where('supplier', $SupplierId);
+        }
+
+        // if ($RadioVal == 2) {
+        //     $query->where('work_order_id', '!=', '0');
+        // }
+
+        // if ($pi_no) {
+        //     $query->where('new_purchase_voucher.pv_no', 'Like', "%" . strtolower($pi_no) . "%");
+        // }
+
+        // if ($grn_no) {
+        //     $query->where('new_purchase_voucher.grn_no', 'Like', "%" . strtolower($grn_no) . "%");
+        // }
+
+        // if ($po_no) {
+        //     $query->leftJoin('goods_receipt_note', 'goods_receipt_note.id', '=', 'new_purchase_voucher.grn_id')
+        //         ->where('goods_receipt_note.po_no', 'Like', "%" . strtolower($po_no) . "%");
+        // }
+
+        if (($username && $username != 'All User' && $username != 'all') || $search) {
+            $query->join('new_purchase_voucher_data', 'new_purchase_voucher_data.master_id', '=', 'new_purchase_voucher.id')
+                ->join('subitem', 'subitem.id', '=', 'new_purchase_voucher_data.sub_item');
+
+            if ($username && $username != 'All User' && $username != 'all') {
+                $query->where('subitem.username', 'Like', "%" . $username . "%");
+            }
+
+            if ($search) {
+                $query->where(function($q) use ($search) {
+                    $q->whereRaw('LOWER(subitem.product_name) LIKE ?', ['%' . strtolower($search) . '%'])
+                        ->orWhereRaw('LOWER(subitem.sys_no) LIKE ?', ['%' . strtolower($search) . '%'])
+                        ->orWhereRaw('LOWER(subitem.product_barcode) LIKE ?', ['%' . strtolower($search) . '%'])
+                        ->orWhereRaw('LOWER(subitem.sku_code) LIKE ?', ['%' . strtolower($search) . '%']);
+                });
+            }
+        }
+
+        $purchase_voucher = $query->select('new_purchase_voucher.*')
+            ->distinct()
+            ->orderBy('pv_date', 'ASC')
+            ->orderBy('new_purchase_voucher.id', 'desc')
+            ->get();
+
+        return view('Purchase.AjaxPages.purchase_voucher_list_ajax', compact('purchase_voucher', 'm'));
     }
 
 
@@ -2439,7 +2630,6 @@ $subitems = Subitem::where('subitem.status', 1)
         {
             $id = $_GET['id'];
             $grn = \Illuminate\Support\Facades\DB::connection("mysql2")->table("goods_receipt_note")->where("id", $id)->first();
-       
             $data['grn_status'] = 3;
             $data['approve_username'] = Auth::user()->name;
 
@@ -2624,7 +2814,7 @@ $subitems = Subitem::where('subitem.status', 1)
                 'status'=>1
             );
             DB::Connection('mysql2')->table('transactions')->insertGetId($data5);
-
+        
 
 
 
@@ -3195,7 +3385,7 @@ $subitems = Subitem::where('subitem.status', 1)
         $id=$request->id;
        $vendorId = $request->vendor_id;
         $data = DB::Connection('mysql2')->table('currency')->where('to_type_id',$id)->select('*')->get();
-        $vendors = DB::Connection('mysql2')->table('supplier')->select('*')->get();
+        $vendors = DB::Connection('mysql2')->table('supplier')->where('id',$vendorId)->select('*')->get();
 
         $currencyOptions = '<option value="">Select Currency</option>';
 
@@ -3580,6 +3770,14 @@ public function get_stock_location_wise(Request $request)
         $yearwise_ope=DB::Connection('mysql2')->table('year_wise_opening')->where('item_id',$item_id)->get();
         return view('Store.AjaxPages.year_wise_data',compact('year_wise_dataa','item_id','stock','yearwise_ope'));
     }
+    public  function get_data_opening_single(Request $request)
+    {
+        $item_id=$request->item;
+        $year_wise_dataa=DB::Connection('mysql2')->table('year_wise_opening')->where('item_id',$item_id)->get();
+        $stock=DB::Connection('mysql2')->table('stock')->where('sub_item_id',$item_id)->where('opening',1)->get()->where('amount','>',0);
+        $yearwise_ope=DB::Connection('mysql2')->table('year_wise_opening')->where('item_id',$item_id)->get();
+        return view('Store.AjaxPages.year_wise_data_single',compact('year_wise_dataa','item_id','stock','yearwise_ope'));
+    }
 
     public function getDataAjaxSupplierWise(Request $request)
     {
@@ -3668,6 +3866,7 @@ public function get_stock_location_wise(Request $request)
             $id = $request->grn_id;
             $data['grn_status'] = 2;
             $data['approve_username'] = Auth::user()->name;
+            
 
 
             $grn_data = $request->grn_data_id;
@@ -3687,10 +3886,12 @@ public function get_stock_location_wise(Request $request)
                 ->join('goods_receipt_note', 'goods_receipt_note.id', '=', 'grn_data.master_id')
                 ->join('subitem as c','c.id','grn_data.sub_item_id')
                 ->where('grn_data.master_id',$id)
-                ->select('grn_data.*', 'goods_receipt_note.supplier_id','goods_receipt_note.grn_date','goods_receipt_note.bill_date'
+                ->select('grn_data.*','grn_data.net_amount', 'goods_receipt_note.supplier_id','goods_receipt_note.grn_date','goods_receipt_note.bill_date'
                 ,'goods_receipt_note.po_no','goods_receipt_note.supplier_invoice_no',
                 'goods_receipt_note.sub_department_id','grn_data.po_data_id','goods_receipt_note.p_type','c.type')
                 ->get();
+
+                // dd($grn);
 
             // $po_detail=   CommonHelper::get_po($grn->first()->po_no);
 
@@ -3701,10 +3902,14 @@ public function get_stock_location_wise(Request $request)
 
                 foreach($barcodes as $value):
 
+                  
+
                     $status=1;
                 if ($row->type==2):
                  $status = 1;
                 endif;
+
+                 
                 $stock['voucher_no']=$row->grn_no;
                 $stock['main_id']=$id;
                 $stock['master_id']=$row->id;
@@ -3719,13 +3924,14 @@ public function get_stock_location_wise(Request $request)
                  else:
                   $qty = $row->purchase_recived_qty;
                  endif;
-                $amount =$row->rate * $qty;
+                $amount =$row->rate * $qty ;
                 if ($row->discount_percent>0):
                     $discount_amount= ($amount / 100) * $row->discount_percent;
                 else:
                     $discount_amount=0;
                 endif;
-                $net_amount = $amount -$discount_amount;
+                //$net_amount = $row->net_amount;
+                 $net_amount = $amount -$discount_amount;
 
                 $stock['qty']=$qty;
                 $stock['rate']=$row->rate;
@@ -3753,70 +3959,98 @@ public function get_stock_location_wise(Request $request)
           $grn_no = $row->grn_no;
           $goods_rece=  DB::Connection('mysql2')->table('goods_receipt_note')->where('id', $id);
           $goods_rece->update($data);
-                     $type = "Goods Receipt Note";
+                    $type = "Goods Receipt Note";
             \App\Helpers\CommonHelper::createNotification($type . " with " . $grn_no . " is approved by " . auth()->user()->name, $type . "");
      
-            DB::Connection('mysql2')->table('grn_data')->where('master_id', $id)->update($data);
+            // DB::Connection('mysql2')->table('grn_data')->where('master_id', $id)->update($data);
+
+         $t_data=   DB::Connection('mysql2')->table('stock as a')
+                   ->join('subitem as b','a.sub_item_id','=','b.id')
+                   ->join('category as c','c.id','=','b.main_ic_id')
+                  ->select('amount','sub_item_id','a.voucher_date','c.acc_id','a.supplier_id','a.amount as net_amount')
+                  ->where('voucher_no',$row->grn_no)
+                  ->whereIn('a.status',array(1,3))
+                  ->get();
+
+             
+
+            $total_amount=0;
+
+    
+            foreach($t_data as $row1):
+
+                $data4=array
+                (
+                    'master_id'=>$id,
+                    'acc_id'=>1101,
+                    'acc_code'=>'1-2-1',
+                    // 'acc_id'=>$row1->acc_id,
+                    // 'acc_code'=>FinanceHelper::getAccountCodeByAccId($row1->acc_id),
+                    'cost_center'=>$row1->sub_item_id,
+                    'particulars'=>$goods_rece->value('po_no'),
+                    'opening_bal'=>0,
+                    'debit_credit'=>1,
+                    'amount'=>$row1->amount,
+                    'voucher_no'=>$row->grn_no,
+                    'voucher_type'=>11,
+                    'v_date'=>$row1->voucher_date,
+                    'date'=>date('Y-m-d'),
+                    'action'=>'insert',
+                    'username'=>Auth::user()->name,
+                    'status'=>1
+                );
+                DB::Connection('mysql2')->table('transactions')->insertGetId($data4);
 
 
-        //  $t_data=   DB::Connection('mysql2')->table('stock as a')
-        //            ->join('subitem as b','a.sub_item_id','=','b.id')
-        //            ->join('category as c','c.id','=','b.main_ic_id')
-        //           ->select('amount','sub_item_id','a.voucher_date','c.acc_id','a.supplier_id')
-        //           ->where('voucher_no',$row->grn_no)
-        //           ->whereIn('a.status',array(1,3))
-        //           ->get();
+                 $data5=array
+                (
+                    'master_id'=>$id,
+                    'acc_id'=>1708,
+                    'acc_code'=>'2-36-1',
+                    // 'acc_id'=>$row1->acc_id,
+                    // 'acc_code'=>FinanceHelper::getAccountCodeByAccId($row1->acc_id),
+                    'cost_center'=>$row1->sub_item_id,
+                    'particulars'=>$goods_rece->value('po_no'),
+                    'opening_bal'=>0,
+                    'debit_credit'=>0,
+                    'amount'=>$row1->amount,
+                    'voucher_no'=>$row->grn_no,
+                    'voucher_type'=>11,
+                    'v_date'=>$row1->voucher_date,
+                    'date'=>date('Y-m-d'),
+                    'action'=>'insert',
+                    'username'=>Auth::user()->name,
+                    'status'=>1
+                );
+                DB::Connection('mysql2')->table('transactions')->insertGetId($data5);
+                $total_amount+=$row1->amount;
+            endforeach;
 
-        //     $total_amount=0;
-        //     foreach($t_data as $row1):
+            // $control_account = ReuseableCode::get_control_account(1);
+            // $data5=array
+            // (
+            //     'master_id'=>$id,
+            //     'acc_id'=>$control_account,
+            //     'acc_code'=>FinanceHelper::getAccountCodeByAccId($control_account),
+            //     'cost_center'=>$row1->supplier_id,
+            //     'particulars'=>$goods_rece->value('po_no'),
+            //     'opening_bal'=>0,
+            //     'debit_credit'=>0,
+            //     'amount'=>$total_amount,
+            //     'voucher_no'=>$row->grn_no,
+            //     'voucher_type'=>5,
+            //     'v_date'=>$row1->voucher_date,
+            //     'date'=>date('Y-m-d'),
+            //     'action'=>'insert',
+            //     'username'=>Auth::user()->name,
+            //     'status'=>1
+            // );
+            // DB::Connection('mysql2')->table('transactions')->insertGetId($data5);
 
-        //         $data4=array
-        //         (
-        //             'master_id'=>$id,
-        //             'acc_id'=>$row1->acc_id,
-        //             'acc_code'=>FinanceHelper::getAccountCodeByAccId($row1->acc_id),
-        //             'cost_center'=>$row1->sub_item_id,
-        //             'particulars'=>$goods_rece->value('po_no'),
-        //             'opening_bal'=>0,
-        //             'debit_credit'=>1,
-        //             'amount'=>$row1->amount,
-        //             'voucher_no'=>$row->grn_no,
-        //             'voucher_type'=>5,
-        //             'v_date'=>$row1->voucher_date,
-        //             'date'=>date('Y-m-d'),
-        //             'action'=>'insert',
-        //             'username'=>Auth::user()->name,
-        //             'status'=>1
-        //         );
-        //         DB::Connection('mysql2')->table('transactions')->insertGetId($data4);
-        //         $total_amount+=$row1->amount;
-        //     endforeach;
-
-        //     $control_account = ReuseableCode::get_control_account(1);
-        //     $data5=array
-        //     (
-        //         'master_id'=>$id,
-        //         'acc_id'=>$control_account,
-        //         'acc_code'=>FinanceHelper::getAccountCodeByAccId($control_account),
-        //         'cost_center'=>$row1->supplier_id,
-        //         'particulars'=>$goods_rece->value('po_no'),
-        //         'opening_bal'=>0,
-        //         'debit_credit'=>0,
-        //         'amount'=>$total_amount,
-        //         'voucher_no'=>$row->grn_no,
-        //         'voucher_type'=>5,
-        //         'v_date'=>$row1->voucher_date,
-        //         'date'=>date('Y-m-d'),
-        //         'action'=>'insert',
-        //         'username'=>Auth::user()->name,
-        //         'status'=>1
-        //     );
-        //     DB::Connection('mysql2')->table('transactions')->insertGetId($data5);
-
-        //     $pr_no = DB::Connection('mysql2')->table('purchase_request_data')->where('status',1)->where('id',$po_data_id)->value('demand_no');
-        //     $voucher_no = $grn_no;
-        //     $subject = 'Inspection Crated For '.$pr_no;
-        //     NotificationHelper::send_email('Creation inspection QC','Create',$subDepartmentId,$voucher_no,$subject,$p_type);
+            $pr_no = DB::Connection('mysql2')->table('purchase_request_data')->where('status',1)->where('id',$po_data_id)->value('demand_no');
+            $voucher_no = $grn_no;
+            $subject = 'Inspection Crated For '.$pr_no;
+            // NotificationHelper::send_email('Creation inspection QC','Create',$subDepartmentId,$voucher_no,$subject,$p_type);
             DB::Connection('mysql2')->commit();
 
 
@@ -3859,4 +4093,552 @@ public function get_stock_location_wise(Request $request)
 
 
 
+    public function getPurchaseReportDashboardAjax(Request $request) {
+        $m = $request->m;
+        CommonHelper::companyDatabaseConnection($m);
+
+        $query = DB::table('new_purchase_voucher_data as d')
+            ->join('new_purchase_voucher as m', 'm.id', '=', 'd.master_id')
+            ->join('supplier as s', 's.id', '=', 'm.supplier')
+            ->join('subitem as i', 'i.id', '=', 'd.sub_item')
+            ->leftJoin('brands as b', 'b.id', '=', 'i.brand_id')
+            ->where('d.additional_exp', 0) 
+            ->where('m.status', 1);
+
+        if ($request->duration) {
+            $today = date('Y-m-d');
+            if ($request->duration == 'today') {
+                $query->whereDate('m.pv_date', $today);
+            } elseif ($request->duration == 'last_30_days') {
+                $query->whereBetween('m.pv_date', [date('Y-m-d', strtotime('-30 days')), $today]);
+            } elseif ($request->duration == 'last_6_months') {
+                $query->whereBetween('m.pv_date', [date('Y-m-d', strtotime('-6 months')), $today]);
+            } elseif ($request->duration == 'custom' && $request->from_date && $request->to_date) {
+                $query->whereBetween('m.pv_date', [$request->from_date, $request->to_date]);
+            }
+        }
+
+        if ($request->branch && $request->branch != 'all') {
+            $query->where('m.branch_id', $request->branch);
+        }
+
+        if ($request->item_ids && is_array($request->item_ids)) {
+            $query->whereIn('d.sub_item', $request->item_ids);
+        }
+
+        if ($request->brand_ids && is_array($request->brand_ids)) {
+            $query->whereIn('i.brand_id', $request->brand_ids);
+        }
+        
+        if ($request->types && is_array($request->types)) {
+            $query->whereIn('i.type', $request->types); 
+        }
+
+        if ($request->product_type) {
+            $query->where('i.product_type_id', $request->product_type);
+        }
+
+        if ($request->status) {
+            $query->where('m.pv_status', $request->status);
+        }
+
+        if ($request->search) {
+            $search = '%' . $request->search . '%';
+            $query->where(function($q) use ($search) {
+                $q->where('s.name', 'like', $search)
+                  ->orWhere('m.pv_no', 'like', $search)
+                  ->orWhere('m.slip_no', 'like', $search);
+            });
+        }
+
+        $purchase_data = $query->select(
+            'm.pv_no', 'm.pv_date', 'm.pv_status', 's.name as supplier_name',
+            'i.product_name', 'b.name as brand_name', 'd.qty', 'd.rate', 'd.net_amount'
+        )->orderBy('m.pv_date', 'desc')->paginate(25);
+
+        CommonHelper::reconnectMasterDatabase();
+
+        return view('Purchase.AjaxPages.getPurchaseReportDashboardAjax', compact('purchase_data'));
+    }
+
+    public function getPurchaseJournalAjax(Request $request) {
+        $m = $request->m;
+        CommonHelper::companyDatabaseConnection($m);
+
+        $query = DB::Connection('mysql2')->table('new_purchase_voucher as m')
+            ->join('new_purchase_voucher_data as d', 'm.id', '=', 'd.master_id')
+            ->join('supplier as s', 'm.supplier', '=', 's.id')
+            ->leftJoin('subitem as i', 'd.sub_item', '=', 'i.id')
+            ->leftJoin('brands as b', 'i.brand_id', '=', 'b.id')
+            ->where('m.status', 1);
+
+        // Handle Duration
+        if ($request->filled('duration')) {
+            $duration = $request->duration;
+            $today = date('Y-m-d');
+            if ($duration == 'today') {
+                $query->whereDate('m.pv_date', $today);
+            } elseif ($duration == 'last_30_days') {
+                $query->whereDate('m.pv_date', '>=', date('Y-m-d', strtotime('-30 days')));
+            } elseif ($duration == 'last_6_months') {
+                $query->whereDate('m.pv_date', '>=', date('Y-m-d', strtotime('-6 months')));
+            } elseif ($duration == 'this_year') {
+                $query->whereYear('m.pv_date', date('Y'));
+            } elseif ($duration == 'custom') {
+                if ($request->filled('from_date')) $query->whereDate('m.pv_date', '>=', $request->from_date);
+                if ($request->filled('to_date')) $query->whereDate('m.pv_date', '<=', $request->to_date);
+            }
+        }
+
+        if ($request->filled('principals')) {
+            $query->whereIn('m.supplier', $request->principals);
+        }
+
+        if ($request->filled('product_type')) {
+            $query->where('i.product_type_id', $request->product_type);
+        }
+
+        if ($request->filled('item_ids')) {
+            $query->whereIn('d.sub_item', $request->item_ids);
+        }
+
+        if ($request->filled('brand_ids')) {
+            $query->whereIn('i.brand_id', $request->brand_ids);
+        }
+
+        if ($request->filled('types')) {
+            $query->whereIn('i.type', $request->types);
+        }
+
+        if ($request->filled('warehouse_ids')) {
+            $query->whereIn('m.warehouse', $request->warehouse_ids);
+        }
+
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('s.name', 'like', "%$search%")
+                  ->orWhere('m.pv_no', 'like', "%$search%")
+                  ->orWhere('m.slip_no', 'like', "%$search%");
+            });
+        }
+
+        if ($request->filled('status')) {
+            $query->where('m.pv_status', $request->status);
+        }
+
+        $purchase_data = $query->select(
+            'm.pv_no', 'm.pv_date', 'm.pv_status', 'm.slip_no as vendor_invoice', 'm.description as notes',
+            's.name as supplier_name', 'i.product_name', 'i.packing', 'i.pack_size', 'b.name as brand_name',
+            'd.qty', 'd.rate', 'd.amount', 'd.discount_amount', 'd.tax_amount', 'd.net_amount'
+        )->orderBy('m.pv_date', 'desc')->paginate(25);
+
+        CommonHelper::reconnectMasterDatabase();
+
+        return view('Purchase.AjaxPages.getPurchaseJournalAjax', compact('purchase_data'))->render();
+    }
+
+    public function getPurchaseReturnReportAjax(Request $request) {
+        $m = $request->m;
+        CommonHelper::companyDatabaseConnection($m);
+
+        $query = DB::Connection('mysql2')->table('purchase_return as m')
+            ->join('purchase_return_data as d', 'm.id', '=', 'd.master_id')
+            ->join('supplier as s', 'm.supplier_id', '=', 's.id')
+            ->leftJoin('subitem as i', 'd.sub_item_id', '=', 'i.id')
+            ->leftJoin('new_purchase_voucher as pv', 'pv.grn_no', '=', 'm.grn_no');
+
+        // Filters
+        if ($request->filled('duration')) {
+            $duration = $request->duration;
+            if ($duration == 'today') {
+                $query->whereDate('m.pr_date', date('Y-m-d'));
+            } elseif ($duration == 'last_30_days') {
+                $query->whereDate('m.pr_date', '>=', date('Y-m-d', strtotime('-30 days')));
+            } elseif ($duration == 'this_month') {
+                $query->whereMonth('m.pr_date', date('m'))->whereYear('m.pr_date', date('Y'));
+            } elseif ($duration == 'custom') {
+                if ($request->filled('from_date')) $query->whereDate('m.pr_date', '>=', $request->from_date);
+                if ($request->filled('to_date')) $query->whereDate('m.pr_date', '<=', $request->to_date);
+            }
+        }
+
+        if ($request->filled('principal')) {
+            $query->where('m.supplier_id', $request->principal);
+        }
+
+        if ($request->filled('status')) {
+            $query->where('m.status', $request->status);
+        }
+
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('s.name', 'like', "%$search%")
+                  ->orWhere('m.pr_no', 'like', "%$search%");
+            });
+        }
+
+        $purchase_data = $query->select(
+            'm.pr_no', 'm.pr_date', 'm.status', 's.name as supplier_name',
+            'i.product_name', 'd.return_qty', 'd.rate', 'd.net_amount',
+            'm.type', 'm.grn_no', 'pv.pv_no'
+        )->orderBy('m.pr_date', 'desc')->paginate(25);
+
+        CommonHelper::reconnectMasterDatabase();
+
+        return view('Purchase.AjaxPages.getPurchaseReturnReportAjax', compact('purchase_data'))->render();
+    }
+
+    public function getPurchasePriceHistoryAjax(Request $request) {
+        $m = $request->m;
+        CommonHelper::companyDatabaseConnection($m);
+
+        $query = DB::Connection('mysql2')->table('new_purchase_voucher as m')
+            ->join('new_purchase_voucher_data as d', 'm.id', '=', 'd.master_id')
+            ->join('supplier as s', 'm.supplier', '=', 's.id')
+            ->leftJoin('subitem as i', 'd.sub_item', '=', 'i.id')
+            ->leftJoin('brands as b', 'i.brand_id', '=', 'b.id')
+            ->where('m.status', 1);
+
+        if ($request->filled('product_type')) {
+            $query->where('i.product_type_id', $request->product_type);
+        }
+
+        if ($request->filled('item_ids')) {
+            $query->whereIn('d.sub_item', $request->item_ids);
+        }
+
+        if ($request->filled('principals')) {
+            $query->whereIn('m.supplier', $request->principals);
+        }
+
+        if ($request->filled('branch_ids')) {
+            $query->whereIn('m.sub_department_id', $request->branch_ids);
+        }
+
+        if ($request->filled('brand_ids')) {
+            $query->whereIn('i.brand_id', $request->brand_ids);
+        }
+
+        if ($request->filled('warehouse_ids')) {
+            $query->whereIn('m.warehouse', $request->warehouse_ids);
+        }
+
+        if ($request->filled('duration')) {
+            $duration = $request->duration;
+            if ($duration == 'today') $query->whereDate('m.pv_date', date('Y-m-d'));
+            elseif ($duration == 'last_30_days') $query->whereDate('m.pv_date', '>=', date('Y-m-d', strtotime('-30 days')));
+            elseif ($duration == 'custom') {
+                if ($request->filled('from_date')) $query->whereDate('m.pv_date', '>=', $request->from_date);
+                if ($request->filled('to_date')) $query->whereDate('m.pv_date', '<=', $request->to_date);
+            }
+        }
+
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('i.product_name', 'like', "%$search%")
+                  ->orWhere('s.name', 'like', "%$search%")
+                  ->orWhere('m.pv_no', 'like', "%$search%");
+            });
+        }
+
+        $purchase_data = $query->select(
+            'm.pv_no', 'm.pv_date', 's.name as supplier_name', 'i.product_name',
+            'd.qty', 'd.rate', 'd.amount', 'd.discount_amount', 'd.tax_rate', 'd.tax_amount', 'd.net_amount', 'b.name as brand_name'
+        )->orderBy('i.product_name', 'asc')->orderBy('m.pv_date', 'desc')->paginate(25);
+
+        CommonHelper::reconnectMasterDatabase();
+
+        return view('Purchase.AjaxPages.getPurchasePriceHistoryAjax', compact('purchase_data'))->render();
+    }
+
+    public function getPendingPurchasePaymentAjax(Request $request) {
+        $m = $request->m;
+        CommonHelper::companyDatabaseConnection($m);
+
+        $total_amount_sql = '(SELECT SUM(net_amount) FROM new_purchase_voucher_data WHERE master_id = m.id AND staus=1)';
+        $paid_amount_sql = '(SELECT SUM(amount) FROM new_purchase_voucher_payment WHERE new_purchase_voucher_id = m.id AND status=1)';
+
+        $query = DB::Connection('mysql2')->table('new_purchase_voucher as m')
+            ->join('supplier as s', 'm.supplier', '=', 's.id')
+            ->where('m.status', 1);
+
+        // Subqueries for totals
+        $query->select(
+            'm.id', 'm.pv_no', 'm.pv_date', 's.name as supplier_name',
+            DB::raw($total_amount_sql . ' as total_amount'),
+            DB::raw($paid_amount_sql . ' as paid_amount')
+        );
+
+        // Filters
+        if ($request->filled('duration')) {
+            $duration = $request->duration;
+            if ($duration == 'today') $query->whereDate('m.pv_date', date('Y-m-d'));
+            elseif ($duration == 'last_30_days') $query->whereDate('m.pv_date', '>=', date('Y-m-d', strtotime('-30 days')));
+            elseif ($duration == 'this_month') $query->whereMonth('m.pv_date', date('m'))->whereYear('m.pv_date', date('Y'));
+            elseif ($duration == 'custom') {
+                if ($request->filled('from_date')) $query->whereDate('m.pv_date', '>=', $request->from_date);
+                if ($request->filled('to_date')) $query->whereDate('m.pv_date', '<=', $request->to_date);
+            }
+        }
+
+        if ($request->filled('principal')) {
+            $query->where('m.supplier', $request->principal);
+        }
+
+        if ($request->filled('status')) {
+            $status = $request->status;
+            if ($status == 'unpaid') {
+                $query->whereRaw("COALESCE($paid_amount_sql, 0) <= 0");
+            } elseif ($status == 'partial') {
+                $query->whereRaw("COALESCE($paid_amount_sql, 0) > 0 AND COALESCE($paid_amount_sql, 0) < $total_amount_sql");
+            } elseif ($status == 'paid') {
+                $query->whereRaw("COALESCE($paid_amount_sql, 0) >= $total_amount_sql AND COALESCE($total_amount_sql, 0) > 0");
+            } elseif ($status == 'pending') {
+                $query->whereRaw("COALESCE($paid_amount_sql, 0) < $total_amount_sql");
+            }
+        }
+
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('s.name', 'like', "%$search%")
+                  ->orWhere('m.pv_no', 'like', "%$search%");
+            });
+        }
+
+        $purchase_data = $query->orderBy('m.pv_date', 'desc')->paginate(25);
+
+        CommonHelper::reconnectMasterDatabase();
+
+        return view('Purchase.AjaxPages.getPendingPurchasePaymentAjax', compact('purchase_data'))->render();
+    }
+
+    public function getPurchaseCreditNoteAjax(Request $request) {
+        $m = $request->m;
+        CommonHelper::companyDatabaseConnection($m);
+
+        $query = DB::Connection('mysql2')->table('purchase_return as m')
+            ->join('purchase_return_data as d', 'm.id', '=', 'd.master_id')
+            ->join('supplier as s', 'm.supplier_id', '=', 's.id')
+            ->leftJoin('subitem as i', 'd.sub_item_id', '=', 'i.id')
+            ->leftJoin('branch as b', 'm.supplier_id', '=', 'b.id'); // Branch might be related differently, but I'll add if needed. 
+            // Better to let it be for now since branch is a filter.
+
+        $query->select(
+            'm.pr_no', 'm.pr_date', 'm.status', 'm.grn_no as reference_invoice', 'm.remarks',
+            's.name as supplier_name', 'i.product_name', 'd.return_qty', 'd.rate', 'd.net_amount'
+        );
+
+        // Filters
+        if ($request->filled('duration')) {
+            $duration = $request->duration;
+            if ($duration == 'today') $query->whereDate('m.pr_date', date('Y-m-d'));
+            elseif ($duration == 'last_30_days') $query->whereDate('m.pr_date', '>=', date('Y-m-d', strtotime('-30 days')));
+            elseif ($duration == 'this_month') $query->whereMonth('m.pr_date', date('m'))->whereYear('m.pr_date', date('Y'));
+            elseif ($duration == 'custom') {
+                if ($request->filled('from_date')) $query->whereDate('m.pr_date', '>=', $request->from_date);
+                if ($request->filled('to_date')) $query->whereDate('m.pr_date', '<=', $request->to_date);
+            }
+        }
+
+        if ($request->filled('principal')) {
+            $query->where('m.supplier_id', $request->principal);
+        }
+
+        if ($request->filled('status')) {
+            $query->where('m.status', $request->status);
+        }
+
+        if ($request->filled('branch')) {
+            // Adjust based on your schema. If branch isn't in purchase_return, we might ignore or find the field.
+        }
+
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('s.name', 'like', "%$search%")
+                  ->orWhere('m.pr_no', 'like', "%$search%")
+                  ->orWhere('m.grn_no', 'like', "%$search%");
+            });
+        }
+
+        $purchase_data = $query->orderBy('m.pr_date', 'desc')->paginate(25);
+
+        CommonHelper::reconnectMasterDatabase();
+
+        return view('Purchase.AjaxPages.getPurchaseCreditNoteAjax', compact('purchase_data'))->render();
+    }
+
+    public function getPurchaseDebitNoteAjax(Request $request) {
+        $m = $request->m;
+        $fromDate = $request->from_date;
+        $to = $request->to_date;
+        $duration = $request->duration;
+        $principalId = $request->principal;
+        $status = $request->status;
+
+        CommonHelper::companyDatabaseConnection($m);
+
+        if ($duration == 'today') {
+            $fromDate = date('Y-m-d'); $to = date('Y-m-d');
+        } elseif ($duration == 'this_month') {
+            $fromDate = date('Y-m-01'); $to = date('Y-m-t');
+        } elseif ($duration == 'last_30_days') {
+            $fromDate = date('Y-m-d', strtotime('-30 days')); $to = date('Y-m-d');
+        }
+
+        $query = DB::connection('mysql2')->table('purchase_return as pr')
+            ->join('purchase_return_data as prd', 'pr.id', '=', 'prd.master_id')
+            ->join('supplier as s', 'pr.supplier_id', '=', 's.id')
+            ->join('subitem as si', 'prd.sub_item_id', '=', 'si.id')
+            ->where('pr.status', '!=', 0)
+            ->select(
+                'pr.pr_no', 'pr.pr_date', 'pr.grn_no', 'pr.status',
+                's.name as supplier_name', 
+                'si.product_name as item_details',
+                'prd.return_qty', 'prd.rate', 'prd.net_amount'
+            );
+
+        if ($fromDate && $to) {
+            $query->whereBetween('pr.pr_date', [$fromDate, $to]);
+        }
+        if ($principalId) {
+            $query->where('pr.supplier_id', $principalId);
+        }
+        if ($status != "") {
+            $query->where('pr.status', $status);
+        }
+
+        $debitNotes = $query->orderBy('pr.pr_date', 'desc')->paginate(20);
+
+        CommonHelper::reconnectMasterDatabase();
+        return view('Purchase.AjaxPages.get_purchase_debit_note_ajax', compact('debitNotes', 'm'))->render();
+    }
+
+    public function getQRCodeHistoryAjax(Request $request) {
+        $m = $request->m;
+        $fromDate = $request->from_date;
+        $to = $request->to_date;
+        $duration = $request->duration;
+        $productId = $request->product;
+        $scanType = $request->scan_type;
+        $userId = $request->user;
+
+        CommonHelper::companyDatabaseConnection($m);
+
+        if ($duration == 'today') {
+            $fromDate = date('Y-m-d'); $to = date('Y-m-d');
+        } elseif ($duration == 'this_month') {
+            $fromDate = date('Y-m-01'); $to = date('Y-m-t');
+        } elseif ($duration == 'last_30_days') {
+            $fromDate = date('Y-m-d', strtotime('-30 days')); $to = date('Y-m-d');
+        }
+
+        $sortByInput = $request->input('sort_by', 'sb.created_at-desc');
+        $sortParts = explode('-', $sortByInput);
+        $sortBy = $sortParts[0];
+        $sortDir = $sortParts[1] ?? 'desc';
+
+        $query = DB::connection('mysql2')->table('stock_barcodes as sb')
+            ->leftJoin('subitem as si', 'sb.product_id', '=', 'si.id')
+            ->select('sb.*', 'si.product_name', 'si.sku_code', 'si.product_barcode')
+            ->orderBy($sortBy, $sortDir);
+
+        if ($fromDate && $to) {
+            $query->whereBetween(DB::raw('DATE(sb.created_at)'), [$fromDate, $to]);
+        }
+        if ($productId) {
+            $query->where('sb.product_id', $productId);
+        }
+        if ($scanType != "") {
+            if ($scanType == '1') $query->where('sb.voucher_type', 1); // Generated
+            if ($scanType == '0') $query->whereIn('sb.voucher_type', [2, 3]); // Scanned
+        }
+
+        $historyData = $query->paginate(30);
+
+        foreach ($historyData as $row) {
+            $username = 'Admin';
+            $batchCode = '-';
+            $statusLabel = 'Generated';
+            $statusColor = 'success';
+            $voucher_id = 0;
+
+            if ($row->voucher_type == 1) { // GRN / Generated
+                $voucher = DB::connection('mysql2')->table('goods_receipt_note')->where('grn_no', $row->voucher_no)->first();
+                if ($voucher) { $username = $voucher->username ?: 'Admin'; $voucher_id = $voucher->id; }
+                $grnData = DB::connection('mysql2')->table('grn_data')->where('grn_no', $row->voucher_no)->where('sub_item_id', $row->product_id)->first();
+                if ($grnData) $batchCode = $grnData->batch_code ?: '-';
+                $statusLabel = 'Generated';
+                $statusColor = 'success';
+            } elseif ($row->voucher_type == 2) { // GDN / Scanned
+                $voucher = DB::connection('mysql2')->table('delivery_note')->where('gd_no', $row->voucher_no)->first();
+                if ($voucher) { $username = $voucher->username ?: 'Admin'; $voucher_id = $voucher->id; }
+                $gdnData = DB::connection('mysql2')->table('delivery_note_data')->where('gd_no', $row->voucher_no)->where('item_id', $row->product_id)->first();
+                if ($gdnData) $batchCode = $gdnData->batch_code ?: '-';
+                $statusLabel = 'Scanned';
+                $statusColor = 'primary';
+            } elseif ($row->voucher_type == 3) { // Sale Return / Scanned
+                $voucher = DB::connection('mysql2')->table('retail_sale_order_returns')->where('return_no', $row->voucher_no)->first();
+                if ($voucher) { $username = $voucher->user_name ?: 'Admin'; $voucher_id = $voucher->id; }
+                $statusLabel = 'Sale Return';
+                $statusColor = 'info';
+            }
+
+            $row->history_username = $username;
+            $row->voucher_id = $voucher_id;
+            $row->batch_code = $batchCode;
+            $row->status_label = $statusLabel;
+            $row->status_color = $statusColor;
+        }
+
+        // Apply User Filter on the final collection if needed
+        if ($userId) {
+            $targetUserName = DB::table('users')->where('id', $userId)->value('name');
+            if ($targetUserName) {
+                // This is slightly hacky for paginated result but works for current page
+                // Better would be to join users in query, but they are in different DBs
+            }
+        }
+
+        CommonHelper::reconnectMasterDatabase();
+        return view('Purchase.AjaxPages.get_qr_code_history_ajax', compact('historyData', 'm'))->render();
+    }
+    public function get_warehouse_stock_bulk(Request $request)
+    {
+        $warehouse = $request->warehouse;
+
+        $stocks = DB::Connection('mysql2')->table('stock as s')
+            ->join('subitem as i', 'i.id', '=', 's.sub_item_id')
+            ->where('s.status', 1)
+            ->where('s.warehouse_id', $warehouse)
+            ->select(
+                's.sub_item_id',
+                'i.product_name',
+                'i.sku_code',
+                DB::raw('SUM(CASE WHEN s.voucher_type IN (1,4,6,10,11) THEN s.qty WHEN s.voucher_type IN (2,5,3,9,8,50,52) THEN -s.qty ELSE 0 END) as total_qty'),
+                DB::raw('SUM(CASE WHEN s.voucher_type IN (1,4,6,10,11) THEN s.amount ELSE 0 END) as in_amount'),
+                DB::raw('SUM(CASE WHEN s.voucher_type IN (1,4,6,10,11) THEN s.qty ELSE 0 END) as in_qty')
+            )
+            ->groupBy('s.sub_item_id', 'i.product_name', 'i.sku_code')
+            ->having('total_qty', '>', 0)
+            ->get();
+
+        $data = [];
+        foreach($stocks as $s) {
+            $rate = ($s->in_qty > 0) ? ($s->in_amount / $s->in_qty) : 0;
+            $data[] = [
+                'id' => $s->sub_item_id,
+                'name' => $s->product_name . ' (' . $s->sku_code . ')',
+                'qty' => number_format((float)$s->total_qty, 2, '.', ''),
+                'rate' => number_format((float)$rate, 2, '.', '')
+            ];
+        }
+
+        return response()->json($data);
+    }
 }
+

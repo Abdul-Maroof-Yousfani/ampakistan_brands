@@ -532,70 +532,36 @@ class FinanceDataCallController extends Controller
 
     public function getOutstandingpvsDateAndAccontWise(Request $request)
     {
-
         $FromDate = $request->FromDate;
         $ToDate = $request->ToDate;
         $AccountId = $request->AccountId;
         $m = $request->m;
         $amount = $request->amount;
         $ref_no = $request->ref_no;
-        $pvs=new NewPv();
-        $pvs=$pvs->SetConnection('mysql2');
-
         $VoucherStatus = $request->VoucherStatus;
-        $Clause1 = '';
-        if($VoucherStatus == ''){$Clause1 = '';}
-        else{$Clause1 = 'a.pv_status = '.$VoucherStatus;}
 
-        $Clause2 = '';
-        if($ref_no == ''){$Clause2 = '';}
-        else{$Clause2 = 'AND a.ref_bill_no = '.$ref_no;}
+        $pvs = DB::Connection('mysql2')->table('new_pv as a')
+            ->join('new_pv_data as b', 'a.id', '=', 'b.master_id')
+            ->where('a.status', 1)
+            ->whereIn('a.type', [2, 3])
+            ->whereBetween('a.pv_date', [$FromDate, $ToDate]);
 
-        $Clause3 = '';
-        if($amount == ''){$Clause3 = '';}
-        else{$Clause3 = 'AND b.amount = '.$amount;}
-        if($AccountId !=""):
-
-           $pvs= DB::Connection('mysql2')->select('select a.* from new_pv a
-            inner join new_pv_data b ON a.id=b.master_id
-            inner join accounts c ON b.acc_id=c.id
-            where a.status=1
-            '.$Clause1.'
-            '.$Clause2.'
-            '.$Clause3.'
-            and a.type IN (2,3)
-            and c.id="'.$AccountId.'"
-            and a.pv_date Between "'.$FromDate.'" and "'.$ToDate.'"
-            ');
-        else:
-       
-        $pvs=$pvs->join('new_pv_data','new_pv_data.master_id','=','new_pv.id')->select('new_pv.*')->where('new_pv.status',1)->where('new_pv.pv_status',$VoucherStatus)->whereIn('new_pv.type',[2,3])->whereBetween('new_pv.pv_date',array($FromDate,$ToDate));
-        if($VoucherStatus !="")
-        {
-            $pvs=$pvs->where('new_pv.rv_status',$VoucherStatus);
+        if ($AccountId != "") {
+            $pvs->where('b.acc_id', $AccountId);
         }
-        if($amount != ""){
-            $pvs=$pvs->where('new_pv_data.amount',$amount);
+        if ($VoucherStatus != "") {
+            $pvs->where('a.pv_status', $VoucherStatus);
         }
-        if($ref_no != ""){
-            $pvs=$pvs->where('new_pv.ref_bill_no',$ref_no);
+        if ($amount != "") {
+            $pvs->where('b.amount', $amount);
         }
-            $pvs=$pvs->groupBy('new_pv_data.master_id')->get();
-       
-       
-            // if($VoucherStatus != "")
-        // {
-        //     $pvs=$pvs->where('status',1)->where('pv_status',$VoucherStatus)->whereIn('type',[2,3])->whereBetween('pv_date',array($FromDate,$ToDate))->get();
-        // }
-        // else
-        // {
-        //     $pvs=$pvs->where('status',1)->whereIn('type',[2,3])->whereBetween('pv_date',array($FromDate,$ToDate))->get();
-        // }
-        endif;
+        if ($ref_no != "") {
+            $pvs->where('a.ref_bill_no', $ref_no);
+        }
 
+        $pvs = $pvs->select('a.*')->groupBy('a.id')->get();
 
-
-        return view('Finance.AjaxPages.getOutstandingpvsDateAndAccontWise',compact('pvs','m','FromDate','ToDate'));
+        return view('Finance.AjaxPages.getOutstandingpvsDateAndAccontWise', compact('pvs', 'm', 'FromDate', 'ToDate'));
     }
 
     public function getOutstandingpvsDateAndAccontWiseImport(Request $request)
@@ -893,6 +859,8 @@ class FinanceDataCallController extends Controller
             foreach($grn as $row):
 
 
+                $data_get = DB::connection('mysql2')->table('new_purchase_voucher_data')->where('id','=',$row->id)->first();
+
                 $item_amount_percent = ($row->net_amount / $item_amount) * 100;
                 $exp_amount_apply = ($exp_amount /100) * $item_amount_percent;
                 $status=1;
@@ -911,14 +879,14 @@ class FinanceDataCallController extends Controller
                 $stock['amount_before_discount']=$row->amount;
                 $stock['discount_percent']=0;
                 $stock['discount_amount']=$row->discount_amount ;
-                $stock['amount']=$row->net_amount + $exp_amount_apply;
+                $stock['amount']=$row->amount ;
                 $stock['warehouse_id']=$row->warehouse;
                 $stock['description']=$row->description;
                 $stock['batch_code']=0;
                 $stock['status']=$status;
                 $stock['created_date']=date('Y-m-d');
                 $stock['username']=Auth::user()->name;
-                DB::Connection('mysql2')->table('stock')->insert($stock);
+                 DB::Connection('mysql2')->table('stock')->insert($stock);
                 $total_amount+=$row->net_amount;
             endforeach;
 
@@ -930,14 +898,22 @@ class FinanceDataCallController extends Controller
                   ->whereIn('a.status',array(1,3))
                   ->get();
 
+                  
+
 
             foreach($t_data as $row1):
+
+
+               
+
 
                 $data4=array
                 (
                     'master_id'=>$id,
-                    'acc_id'=>$row1->acc_id,
-                    'acc_code'=>FinanceHelper::getAccountCodeByAccId($row1->acc_id),
+                    // 'acc_id'=>$row1->acc_id,
+                    // 'acc_code'=>FinanceHelper::getAccountCodeByAccId($row1->acc_id),
+                        'acc_id' => config('accounts.inventory.main.id'),
+                    'acc_code' => config('accounts.inventory.main.code'),
                     'cost_center'=>$row1->sub_item_id,
                     'particulars'=>$desc,
                     'opening_bal'=>0,
@@ -952,6 +928,48 @@ class FinanceDataCallController extends Controller
                     'status'=>1
                 );
                 DB::Connection('mysql2')->table('transactions')->insertGetId($data4);
+
+                  $data5=array
+                (
+                    'master_id'=>$id,
+                    // 'acc_id'=>$row1->acc_id,
+                    // 'acc_code'=>FinanceHelper::getAccountCodeByAccId($row1->acc_id),
+                        'acc_id' => config('accounts.purchase.input_gst.id'),
+                    'acc_code' => config('accounts.purchase.input_gst.code'),
+                    'cost_center'=>$row1->sub_item_id,
+                    'particulars'=>$desc,
+                    'opening_bal'=>0,
+                    'debit_credit'=>1,
+                    'amount'=>$data_get->tax_amount,
+                    'voucher_no'=>$row1->voucher_no,
+                    'voucher_type'=>4,
+                    'v_date'=>$row1->voucher_date,
+                    'date'=>date('Y-m-d'),
+                    'action'=>'insert',
+                    'username'=>Auth::user()->name,
+                    'status'=>1
+                );
+                DB::Connection('mysql2')->table('transactions')->insertGetId($data5);
+
+                  $data6=array
+                (
+                    'master_id'=>$id,
+                    'acc_id'=>$supplier_acc_id,
+                    'acc_code'=>FinanceHelper::getAccountCodeByAccId($supplier_acc_id),                   
+                    'cost_center'=>$row1->sub_item_id,
+                    'particulars'=>$desc,
+                    'opening_bal'=>0,
+                    'debit_credit'=>0,
+                    'amount'=>$data_get->net_amount - $sales_tax_amount,
+                    'voucher_no'=>$row1->voucher_no,
+                    'voucher_type'=>4,
+                    'v_date'=>$row1->voucher_date,
+                    'date'=>date('Y-m-d'),
+                    'action'=>'insert',
+                    'username'=>Auth::user()->name,
+                    'status'=>1
+                );
+                DB::Connection('mysql2')->table('transactions')->insertGetId($data6);
                // $total_amount+=$row1->amount;
             endforeach;
             $exp= DB::Connection('mysql2')->table('new_purchase_voucher_data as a')
@@ -991,11 +1009,13 @@ class FinanceDataCallController extends Controller
                 $transaction=$transaction->SetConnection('mysql2');
                 $transaction->voucher_no=$pv_no;
                 $transaction->v_date=$pv_date;
-                $transaction->acc_id=$sales_tax_acc_id;
-                $transaction->acc_code=FinanceHelper::getAccountCodeByAccId($sales_tax_acc_id);
+                // $transaction->acc_id=$sales_tax_acc_id;
+                // $transaction->acc_code=FinanceHelper::getAccountCodeByAccId($sales_tax_acc_id);
+                 $transaction->acc_id = config('accounts.purchase.wht.id');
+                     $transaction->acc_code='2-36-2';
                 $transaction->particulars= $desc;
                 $transaction->opening_bal=0;
-                $transaction->debit_credit=1;
+                $transaction->debit_credit=0;
                 $transaction->amount=$sales_tax_amount;
                 $transaction->username=Auth::user()->name;;
                 $transaction->status=1;
@@ -1005,20 +1025,20 @@ class FinanceDataCallController extends Controller
                 endif;
 
 
-                $transaction=new Transactions();
-                $transaction=$transaction->SetConnection('mysql2');
-                $transaction->voucher_no=$pv_no;
-                $transaction->v_date=$pv_date;
-                $transaction->acc_id=$supplier_acc_id ;
-                $transaction->acc_code=FinanceHelper::getAccountCodeByAccId($supplier_acc_id);
-                $transaction->particulars= $desc;
-                $transaction->opening_bal=0;
-                $transaction->debit_credit=0;
-                $transaction->amount=$total_amount;
-                $transaction->username=Auth::user()->name;;
-                $transaction->voucher_type=4;
-                $transaction->status=1;
-                $transaction->save();
+                // $transaction=new Transactions();
+                // $transaction=$transaction->SetConnection('mysql2');
+                // $transaction->voucher_no=$pv_no;
+                // $transaction->v_date=$pv_date;
+                // $transaction->acc_id=$supplier_acc_id ;
+                // $transaction->acc_code=FinanceHelper::getAccountCodeByAccId($supplier_acc_id);
+                // $transaction->particulars= $desc;
+                // $transaction->opening_bal=0;
+                // $transaction->debit_credit=0;
+                // $transaction->amount=$total_amount;
+                // $transaction->username=Auth::user()->name;;
+                // $transaction->voucher_type=4;
+                // $transaction->status=1;
+                // $transaction->save();
 
 
                 // update pv
@@ -1048,12 +1068,20 @@ class FinanceDataCallController extends Controller
 
     public function approvePurchaseVoucherDetail(Request $request)
     {
+
+
         $master_id = $request->PvId;
         $grn_no = NewPurchaseVoucher::where('id',$master_id)->value('grn_no');
-        if ($grn_no!=0):
+
+        
+        if ($grn_no=='0'):
+
+            
             $this->direct_invoice_approve($master_id);
         return;
         endif;
+
+       
         DB::Connection('mysql2')->beginTransaction();
 
         try {
@@ -1082,6 +1110,7 @@ class FinanceDataCallController extends Controller
                 // $data = DB::Connection('mysql2')->selectRaw('select net_amount,category_id ,sub_item from new_purchase_voucher_data
                 // where master_id="'.$master_id.'" and additional_exp=0 ');
                 $data = DB::connection('mysql2')->table('new_purchase_voucher_data')->where([['master_id',$master_id],['additional_exp', 0 ]])->get();
+                $new_purchase_voucher_sup = DB::connection('mysql2')->table('new_purchase_voucher')->where('id',$master_id)->first();
 
 
                 foreach ($data as $key => $value) {
@@ -1096,12 +1125,57 @@ class FinanceDataCallController extends Controller
                     $transaction->master_id=$master_id;
                     $transaction->voucher_no=$value->pv_no;
                     $transaction->v_date=$purchase_date;
-                    $transaction->acc_id=$value->sub_item;
-                    $transaction->acc_code=FinanceHelper::getAccountCodeByAccId($value->sub_item);
+                    // $transaction->acc_id=$value->sub_item;
+                    // $transaction->acc_code=FinanceHelper::getAccountCodeByAccId($value->sub_item);
+                     $transaction->acc_id = config('accounts.purchase.grn_clearing.id');
+                     $transaction->acc_code = config('accounts.purchase.grn_clearing.code');
+                
                     $transaction->particulars= $desc;
                     $transaction->opening_bal=0;
                     $transaction->debit_credit=1;
-                    $transaction->amount=$value->net_amount;
+                    $transaction->amount=$value->amount;
+                    $transaction->username=Auth::user()->name;;
+                    $transaction->status=1;
+                    $transaction->voucher_type=4;
+                    $transaction->save();
+
+                    $credit_amount+=$value->net_amount;
+
+                    $transaction=new Transactions();
+                    $transaction=$transaction->SetConnection('mysql2');
+                    $transaction->master_id=$master_id;
+                    $transaction->voucher_no=$value->pv_no;
+                    $transaction->v_date=$purchase_date;
+                    // $transaction->acc_id=$value->sub_item;
+                    // $transaction->acc_code=FinanceHelper::getAccountCodeByAccId($value->sub_item);
+                     $transaction->acc_id = config('accounts.purchase.input_gst.id');
+                     $transaction->acc_code = config('accounts.purchase.input_gst.code');
+                
+                    $transaction->particulars= $desc;
+                    $transaction->opening_bal=0;
+                    $transaction->debit_credit=1;
+                    $transaction->amount=$value->tax_amount;
+                    $transaction->username=Auth::user()->name;;
+                    $transaction->status=1;
+                    $transaction->voucher_type=4;
+                    $transaction->save();
+
+                    $credit_amount+=$value->net_amount;
+                    $supplier_acc_id = FinanceHelper::getSupplier($new_purchase_voucher_sup->supplier);
+
+                    $transaction=new Transactions();
+                    $transaction=$transaction->SetConnection('mysql2');
+                    $transaction->master_id=$master_id;
+                    $transaction->voucher_no=$value->pv_no;
+                    $transaction->v_date=$purchase_date;
+                    $transaction->acc_id=$supplier_acc_id;
+                    $transaction->acc_code=FinanceHelper::getAccountCodeByAccId($supplier_acc_id);
+                    
+                
+                    $transaction->particulars= $desc;
+                    $transaction->opening_bal=0;
+                    $transaction->debit_credit=0;
+                    $transaction->amount=$value->net_amount - $sales_tax_amount ;
                     $transaction->username=Auth::user()->name;;
                     $transaction->status=1;
                     $transaction->voucher_type=4;
@@ -1116,8 +1190,12 @@ class FinanceDataCallController extends Controller
                     $transaction=$transaction->SetConnection('mysql2');
                     $transaction->voucher_no=$pv_no;
                     $transaction->v_date=$purchase_date;
-                    $transaction->acc_id=$sales_tax_acc_id;
-                    $transaction->acc_code=FinanceHelper::getAccountCodeByAccId($sales_tax_acc_id);
+                    // $transaction->acc_id=$sales_tax_acc_id;
+                    // $transaction->acc_code=FinanceHelper::getAccountCodeByAccId($sales_tax_acc_id);
+
+                     $transaction->acc_id = config('accounts.purchase.wht.id');
+                      $transaction->acc_code = config('accounts.purchase.wht.code');
+                
                     $transaction->particulars= $desc;
                     $transaction->opening_bal=0;
                     $transaction->debit_credit=1;
@@ -1155,20 +1233,20 @@ class FinanceDataCallController extends Controller
 
 
 
-                $transaction=new Transactions();
-                $transaction=$transaction->SetConnection('mysql2');
-                $transaction->voucher_no=$pv_no;
-                $transaction->v_date=$purchase_date;
-                $transaction->acc_id=$supp_acc_id;
-                $transaction->acc_code=FinanceHelper::getAccountCodeByAccId($supp_acc_id);
-                $transaction->particulars= $desc;
-                $transaction->opening_bal=0;
-                $transaction->debit_credit=0;
-                $transaction->amount=$credit_amount;
-                $transaction->username=Auth::user()->name;;
-                $transaction->voucher_type=4;
-                $transaction->status=1;
-                $transaction->save();
+                // $transaction=new Transactions();
+                // $transaction=$transaction->SetConnection('mysql2');
+                // $transaction->voucher_no=$pv_no;
+                // $transaction->v_date=$purchase_date;
+                // $transaction->acc_id=$supp_acc_id;
+                // $transaction->acc_code=FinanceHelper::getAccountCodeByAccId($supp_acc_id);
+                // $transaction->particulars= $desc;
+                // $transaction->opening_bal=0;
+                // $transaction->debit_credit=0;
+                // $transaction->amount=$credit_amount;
+                // $transaction->username=Auth::user()->name;;
+                // $transaction->voucher_type=4;
+                // $transaction->status=1;
+                // $transaction->save();
 
 
                 $purchase_voucher=new NewPurchaseVoucher();
@@ -1936,21 +2014,21 @@ $newdate = date('Y-m-d', $newdate);
     </th>
 </thead>
     <thead>
-        <th colspan="3" class="text-center"></th>
-        <th colspan="2" class="text-center">Opening Balance</th>
-        <th colspan="2" class="text-center">Transactions</th>
-        <th colspan="2" class="text-center">Closing Balance</th>
+        <th colspan="3" class="text-center" style="background-color: #f8f9fa;"></th>
+        <th colspan="2" class="text-center" style="background-color: #e9ecef; border-bottom: 2px solid #dee2e6;">Opening Balance</th>
+        <th colspan="2" class="text-center" style="background-color: #f8f9fa; border-bottom: 2px solid #dee2e6;">Transactions</th>
+        <th colspan="2" class="text-center" style="background-color: #e9ecef; border-bottom: 2px solid #dee2e6;">Closing Balance</th>
     </thead>
-    <thead  class="fix" style="display: table-header-group">
-        <th  class="text-center">Sr.No</th>
-        <th  class="text-center col-sm-1">ACC.CODE</th>
-        <th  class="text-center col-sm-5">ACCOUNT</th>
-        <th  class="text-center col-sm-1">OPEN.DR</th>
-        <th  class="text-center col-sm-1">OPEN.CR</th>
-        <th  class="text-center col-sm-1">TX.DR</th>
-        <th  class="text-center col-sm-1">TX.CR</th>
-        <th  class="text-center col-sm-1">CL.DR</th>
-        <th  class="text-center col-sm-1">CL.CR</th>
+    <thead class="fix" style="display: table-header-group">
+        <th class="text-center" style="width: 50px;">Sr.No</th>
+        <th class="text-center col-sm-1">ACC.CODE</th>
+        <th class="text-center col-sm-5">ACCOUNT</th>
+        <th class="text-center col-sm-1" style="background-color: #f1f3f5;">OPEN.DR</th>
+        <th class="text-center col-sm-1" style="background-color: #f1f3f5;">OPEN.CR</th>
+        <th class="text-center col-sm-1">TX.DR</th>
+        <th class="text-center col-sm-1">TX.CR</th>
+        <th class="text-center col-sm-1" style="background-color: #f1f3f5;">CL.DR</th>
+        <th class="text-center col-sm-1" style="background-color: #f1f3f5;">CL.CR</th>
     </thead>
     <tbody>
     <?php
@@ -2190,15 +2268,14 @@ $open_debit=DB::selectOne('select sum(amount)amount from transactions where acc_
 
 
 
-    <tr>
-        <td colspan="3">TOTAL</td>
-        <td class="text-right" colspan="1"><?php echo number_format($total_opening_debit,2) ?></td>
-        <td class="text-right" colspan="1"><?php echo number_format($total_opening_credit*-1,2) ?></td>
-        <td class="text-right" colspan="1"><?php echo number_format($tx_trial_debit,2) ?></td>
-        <td class="text-right" colspan="1"><?php echo number_format($tx_trial_credit,2) ?></td>
-        <td class="text-right" colspan="1"><?php echo number_format($end_debit_total,2); ?></td>
-        <td class="text-right" colspan="1"><?php echo number_format($end_credit_total*-1,2); ?></td>
-
+    <tr style="background-color: #e9ecef; font-weight: bold; font-size: 14px;">
+        <td colspan="3" class="text-center">GRAND TOTAL</td>
+        <td class="text-right"><?php echo number_format($total_opening_debit,2) ?></td>
+        <td class="text-right"><?php echo number_format($total_opening_credit*-1,2) ?></td>
+        <td class="text-right"><?php echo number_format($tx_trial_debit,2) ?></td>
+        <td class="text-right"><?php echo number_format($tx_trial_credit,2) ?></td>
+        <td class="text-right"><?php echo number_format($end_debit_total,2); ?></td>
+        <td class="text-right"><?php echo number_format($end_credit_total*-1,2); ?></td>
     </tr>
 </table>
             <input type="submit" value="Customise Trial Balance" class="btn btn-success">
@@ -5298,7 +5375,7 @@ $( document ).ready(function() {
                     $open_amount_dr=DB::Connection('mysql2')->table('transactions')
                     ->where('status',1)
                     ->where('debit_credit',1)
-                    ->where('acc_id',97)
+                    ->where('acc_id', config('accounts.inventory.finished_goods.id'))
                     ->whereBetween('v_date',[$financial[0],$too])
                     ->sum('amount');
 
@@ -5307,7 +5384,7 @@ $( document ).ready(function() {
                     $open_amount_cr=DB::Connection('mysql2')->table('transactions')
                     ->where('status',1)
                     ->where('debit_credit',0)
-                    ->where('acc_id',97)
+                    ->where('acc_id', config('accounts.inventory.finished_goods.id'))
                     ->whereBetween('v_date',[$financial[0],$too])
                     ->sum('amount');
             $open_amount=$open_amount_dr-$open_amount_cr;
@@ -5327,7 +5404,7 @@ $( document ).ready(function() {
                      $net_purchase=DB::Connection('mysql2')->table('transactions')
                     ->where('status',1)
                     ->where('debit_credit',1)
-                    ->where('acc_id',97)
+                    ->where('acc_id', config('accounts.inventory.finished_goods.id'))
                     ->whereBetween('v_date',[$from_date,$to_date])
                     ->where('opening_bal',0)
                     ->sum('amount');
@@ -5336,7 +5413,7 @@ $( document ).ready(function() {
                     $credit_note=DB::Connection('mysql2')->table('transactions')
                     ->where('status',1)
                     ->where('debit_credit',1)
-                    ->where('acc_id',97)
+                    ->where('acc_id', config('accounts.inventory.finished_goods.id'))
                     ->whereBetween('v_date',[$from_date,$to_date])
                     ->where('opening_bal',0)
                     ->where('voucher_type',9)
@@ -5350,7 +5427,7 @@ $( document ).ready(function() {
             $issuence_from_work=DB::Connection('mysql2')->table('transactions')
                     ->where('status',1)
                     ->where('debit_credit',0)
-                    ->where('acc_id',97)
+                    ->where('acc_id', config('accounts.inventory.finished_goods.id'))
                     ->whereBetween('v_date',[$from_date,$to_date])
                     ->where('opening_bal',0)
                     ->where('voucher_type',13)
@@ -5365,7 +5442,7 @@ $( document ).ready(function() {
                       $purchase_amount_dr=DB::Connection('mysql2')->table('transactions')
                     ->where('status',1)
                     ->where('debit_credit',1)
-                    ->where('acc_id',97)
+                    ->where('acc_id', config('accounts.inventory.finished_goods.id'))
                     ->whereBetween('v_date',[$from_date,$to_date])
                     ->where('opening_bal',0)
                     ->whereNotIn('voucher_type',[9])
@@ -5377,7 +5454,7 @@ $( document ).ready(function() {
                     $purchase_amount_cr=DB::Connection('mysql2')->table('transactions')
                     ->where('status',1)
                     ->where('debit_credit',0)
-                    ->where('acc_id',97)
+                    ->where('acc_id', config('accounts.inventory.finished_goods.id'))
                     ->where('voucher_type',5)
                     ->whereBetween('v_date',[$from_date,$to_date])
                     ->where('opening_bal',0)
@@ -5385,9 +5462,23 @@ $( document ).ready(function() {
                   $purchase_amount=  $purchase_amount_dr-$purchase_amount_cr-$issuence_from_work;
 
                      $net_purchase.' - '.$credit_note.' - '.$stock_return_from_work_order.' - '.$purchase_amount_cr.' - '.$issuence_from_work.' = ';
-               echo       number_format($purchase_amount,2);
+                echo       number_format($purchase_amount,2);
 
 ?>
+                             </tr>
+
+                            <tr>
+                                <td>Inventory Loss / (Gain)</td>
+                                <td class="text-right"><?php
+                                    $loss_acc = config('accounts.adjustment.loss');
+                                    $gain_acc = config('accounts.adjustment.gain');
+                                    
+                                    $loss_amount = CommonHelper::get_parent_and_account_amount(1, $from_date, $to_date, $loss_acc['code'], '1', 1, 0);
+                                    $gain_amount = CommonHelper::get_parent_and_account_amount(1, $from_date, $to_date, $gain_acc['code'], '1', 0, 1);
+                                    
+                                    $net_adjustment = $loss_amount - $gain_amount;
+                                    echo number_format($net_adjustment, 2);
+                                ?></td>
                             </tr>
 
 
@@ -5399,7 +5490,7 @@ $( document ).ready(function() {
          $sales_dr=DB::Connection('mysql2')->table('transactions')
                     ->where('status',1)
                     ->where('debit_credit',1)
-                    ->where('acc_id',768)
+                    ->where('acc_id', config('accounts.sales.cogs.id'))
                     ->whereBetween('v_date',[$from_date,$to_date])
                     ->where('opening_bal',0)
                     ->sum('amount');
@@ -5408,7 +5499,7 @@ $( document ).ready(function() {
                      $saless=DB::Connection('mysql2')->table('transactions')
                     ->where('status',1)
                     ->where('debit_credit',1)
-                    ->where('acc_id',768)
+                    ->where('acc_id', config('accounts.sales.cogs.id'))
                     ->where('voucher_type',8)
                     ->whereBetween('v_date',[$from_date,$to_date])
                     ->where('opening_bal',0)
@@ -5417,7 +5508,7 @@ $( document ).ready(function() {
                      $sales_return=DB::Connection('mysql2')->table('transactions')
                     ->where('status',1)
                     ->where('debit_credit',0)
-                    ->where('acc_id',768)
+                    ->where('acc_id', config('accounts.sales.cogs.id'))
                     ->where('voucher_type',9)
                     ->whereBetween('v_date',[$from_date,$to_date])
                     ->where('opening_bal',0)
@@ -5427,7 +5518,7 @@ $( document ).ready(function() {
                 $sales_cr=DB::Connection('mysql2')->table('transactions')
                     ->where('status',1)
                     ->where('debit_credit',0)
-                    ->where('acc_id',768)
+                    ->where('acc_id', config('accounts.sales.cogs.id'))
                     ->whereBetween('v_date',[$from_date,$to_date])
                     ->where('opening_bal',0)
                     ->sum('amount');
@@ -5436,7 +5527,7 @@ $( document ).ready(function() {
         $sales=$sales_dr-$sales_cr;
 
 
-                    $cogs=$open_amount+$purchase_amount-$sales;
+                    $cogs=$open_amount+$purchase_amount+$net_adjustment-$sales;
                     echo number_format($cogs,2);
 $in_amount=0;
 $remianig_amount=0;
@@ -5481,9 +5572,10 @@ $remianig_amount=0;
 
                             $head=strlen($row->code);
                             $level=count(explode('-',$row->code));
-                        $amount =CommonHelper::get_parent_and_account_amount(1,$from_date,$to_date,$row->code,'1',1,0);
+                        $amount = CommonHelper::get_parent_and_account_amount(1, $from_date, $to_date, $row->code, '1', 1, 0);
 
-                        if ($amount!=0):
+                        $loss_acc_id = config('accounts.adjustment.loss.id');
+                        if ($amount != 0 || $row->id == $loss_acc_id):
                         ?>
                             <tr>
 <!--                                <td>< ?php echo $row->code.'=='.$level ?></td>-->
@@ -6287,8 +6379,22 @@ function vendor_summery(Request $request)
                     ->select('customers.id','customers.name','customers.acc_id','transactions.acc_code')
                     ->join('transactions', 'transactions.acc_id', '=', 'customers.acc_id')
                     ->where('customers.status','=',1)
-                    ->where('transactions.status','=',1)
-                    ->groupBy('transactions.acc_id')
+                    ->where('transactions.status','=',1);
+
+                if($request->customer_id) {
+                    $Client->where('customers.id', $request->customer_id);
+                }
+                if($request->customer_group_id) {
+                    $Client->where('customers.customer_group_id', $request->customer_group_id);
+                }
+                if($request->region_id) {
+                    $Client->where('customers.region_id', $request->region_id);
+                }
+                if($request->territory_id) {
+                    $Client->where('customers.territory_id', $request->territory_id);
+                }
+
+                $Client = $Client->groupBy('transactions.acc_id')
                     ->get();
 
                 return view('Finance.AjaxPages.receivablSummaryReport',compact('Client','from','to','m'));
@@ -6309,6 +6415,16 @@ function vendor_summery(Request $request)
         }
 
 	}
+
+    public function getCustomersByGroup(Request $request) {
+        CommonHelper::companyDatabaseConnection($request->m);
+        $query = DB::connection('mysql2')->table('customers')->where('status', 1);
+        if($request->group_id) {
+            $query->where('customer_group_id', $request->group_id);
+        }
+        $customers = $query->orderBy('name')->get();
+        return response()->json($customers);
+    }
 
 	function employeeSummaryReport(Request $request)
 	{
@@ -6501,6 +6617,54 @@ function vendor_summery(Request $request)
         $GetType = $request->GetType;
         $m = $request->m;
         return view('Finance.AjaxPages.trial_balance_other_format',compact('from','to','m','GetType'));
+    }
+
+    public function get_pending_stock_outputs(Request $request)
+    {
+        $warehouse_to = $request->warehouse_to;
+        $brand_id = $request->brand_id;
+        $m = $request->m;
+        CommonHelper::companyDatabaseConnection($m);
+        
+        $query = DB::Connection('mysql2')->table('stock_out_data as sod')
+            ->join('stock_out as so', 'so.id', '=', 'sod.master_id')
+            ->join('subitem as si', 'si.id', '=', 'sod.item_id')
+            ->join('warehouse as wf', 'wf.id', '=', 'sod.warehouse_from')
+            ->join('warehouse as wt', 'wt.id', '=', 'sod.warehouse_to')
+            ->select('sod.*', 'so.so_date', 'so.description as master_desc', 'si.product_name', 'si.sku_code', 'si.product_barcode', 'wf.name as from_warehouse_name', 'wt.name as to_warehouse_name', 'sod.qty as total_qty', 'sod.received_qty as prev_received_qty', DB::raw('(sod.qty - sod.received_qty) as pending_qty'))
+            ->where('sod.si_status', 0) // Not yet fully received
+            ->whereRaw('sod.qty > sod.received_qty')
+            ->where('sod.status', 1);
+
+        if ($warehouse_to != "") {
+            $query->where('sod.warehouse_to', $warehouse_to);
+        } else {
+            // Default to user's assigned warehouses if exists
+            $user = Auth::user();
+            // if ($user && $user->territory_id) {
+            //     $territory_ids = json_decode($user->territory_id, true);
+            //     if (!is_array($territory_ids)) {
+            //         $territory_ids = [$user->territory_id];
+            //     }
+                
+                $warehouse_ids = DB::connection('mysql2')->table('warehouse')
+                    // ->whereIn('territory_id', $territory_ids)
+                    ->where('status', 1)
+                    ->pluck('id');
+                
+                if (!$warehouse_ids->isEmpty()) {
+                    $query->whereIn('sod.warehouse_to', $warehouse_ids);
+                }
+            // }
+        }
+
+        if ($brand_id != "") {
+            $query->where('si.brand_id', $brand_id);
+        }
+            
+        $data = $query->get();
+            
+        return response()->json($data);
     }
 }
 

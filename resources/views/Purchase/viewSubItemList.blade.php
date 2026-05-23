@@ -337,6 +337,7 @@ if ($accType == 'client') {
 
             <script type="text/javascript">
                 function viewSubItemList() {
+                    alert("test");
                     if (loading == false) {
                         loading = true;
                         $('#viewSubItemList').html(

@@ -17,7 +17,7 @@ class CustomerGroupController extends Controller
     public function listCustomerGroup()
     {
         $responses = CustomerGroup::where('status', 1)->get();
-        return view('Sales.customergroup.listCustomerGroup', compact('responses'));
+        return view('customergroup.listCustomerGroup', compact('responses'));
     }
 
     /**
@@ -27,7 +27,7 @@ class CustomerGroupController extends Controller
      */
     public function createCustomerGroup()
     {
-        return view('Sales.customergroup.createCustomerGroup');
+        return view('customergroup.createCustomerGroup');
     }
 
     /**
@@ -78,7 +78,7 @@ class CustomerGroupController extends Controller
     public function editCustomerGroup($id)
     {
         $response = CustomerGroup::find($id);
-        return view('Sales.customergroup.editCustomerGroup', compact('response'));
+        return view('customergroup.editCustomerGroup', compact('response'));
     }
 
     /**

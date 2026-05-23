@@ -4,6 +4,7 @@
 	use Config;
 	use App\Models\FinanceDepartment;
 	use App\Models\Account;
+	use App\Models\Supplier;
 	use App\Models\Transactions;
 	use App\Models\Rvs;
 	use Auth;
@@ -83,11 +84,13 @@
 
 
 		public static function companyDatabaseConnection($param1){
-			$d = DB::selectOne('select `dbName` from `company` where `id` = '.Session::get('run_company').'')->dbName;
+			$company_id = $param1 ? $param1 : Session::get('run_company');
+			$d = DB::selectOne('select `dbName` from `company` where `id` = '.$company_id.'')->dbName;
 			Config::set(['database.connections.tenant.database' => $d]);
-		//	Config::set(['database.connections.tenant.username' => 'innovative_unison']);
+			Config::set(['database.connections.mysql2.database' => $d]);
 			Config::set('database.default', 'tenant');
 			DB::reconnect('tenant');
+			DB::reconnect('mysql2');
 		}
 
 		public static function reconnectMasterDatabase(){
@@ -280,6 +283,24 @@
 				if($account)
 				{
 					return $account->code;
+				}
+				else
+				{
+					return '' ;
+				}
+			else:
+				return '';
+			endif;
+		}
+		public static  function getSupplier($id)
+		{
+			if ($id!=0):	
+				$account=new Supplier();
+				$account=$account->SetConnection('mysql2');
+				$account=$account->where('status',1)->where('id',$id)->select('acc_id')->first();
+				if($account)
+				{
+					return $account->acc_id;
 				}
 				else
 				{

@@ -16,6 +16,7 @@ use App\Helpers\SalesHelper;
 use App\Models\Contact;
 use App\Models\Customer;
 use Illuminate\Support\Facades\Auth;
+use App\Models\SubDepartment;
 use Config;
 use Redirect;
 use Session;
@@ -130,26 +131,50 @@ class SalesOrderController extends Controller
     {
         $itemId = $request->item;
         $warehouseFrom = $request->warehouse_id;
+        $cusIdget = $request->cusId;
 
-        // ✅ Single Query (company + store + stock)
-        $warehouses = DB::connection('mysql2')
-            ->table('warehouse')
-            ->leftJoin('stock', function ($join) use ($itemId) {
-                $join->on('stock.warehouse_id', '=', 'warehouse.id')
-                    ->where('stock.sub_item_id', $itemId);
-            })
-            ->select(
-                'warehouse.id',
-                'warehouse.name',
-                'warehouse.is_virtual',
-                DB::raw('COALESCE(SUM(stock.qty), 0) AS total_qty')
-            )
-            ->when($warehouseFrom != 0, function ($query) use ($warehouseFrom) {
-                return $query->where('warehouse.id', $warehouseFrom);
-            })
-            ->groupBy('warehouse.id', 'warehouse.name', 'warehouse.is_virtual')
-            ->get();
+       
+// $warehouses = DB::connection('mysql2')
+//     ->table('warehouse')
+//     ->leftJoin('ba_stock', function ($join) use ($itemId, $cusIdget) {
+//         $join->on('ba_stock.warehouse_id', '=', 'warehouse.id')
+//              ->where('ba_stock.sub_item_id', $itemId)
+//              ->where('ba_stock.customer_id', $cusIdget);
+//     })
+//     ->select(
+//         'warehouse.id',
+//         'warehouse.name',
+//         'warehouse.is_virtual',
+//         DB::raw('COALESCE(SUM(ba_stock.qty),0) as total_qty'),
+        
+//     )
+//     ->groupBy('warehouse.id','warehouse.name','warehouse.is_virtual')
+//     ->get();
 
+$warehouses = DB::connection('mysql2')
+    ->table('warehouse')
+    ->leftJoin('ba_stock as s', function ($join) use ($itemId, $cusIdget) {
+        $join->on('s.warehouse_id', '=', 'warehouse.id')
+            ->where('s.sub_item_id', $itemId)
+            ->where('s.customer_id', $cusIdget);
+    })
+    ->select(
+        'warehouse.id',
+        'warehouse.name',
+        'warehouse.is_virtual',
+
+
+        DB::raw('COALESCE(SUM(CASE WHEN s.voucher_type IN (50) THEN s.qty ELSE 0 END),0) as out_stock'),
+
+        DB::raw('
+            COALESCE(SUM(CASE WHEN s.voucher_type IN (51,1,9) THEN s.qty ELSE 0 END),0) 
+            -
+            COALESCE(SUM(CASE WHEN s.voucher_type IN (50) THEN s.qty ELSE 0 END),0) 
+            as total_qty
+        ')
+    )
+    ->groupBy('warehouse.id','warehouse.name','warehouse.is_virtual')
+    ->get();
         // Arrays & Totals
         $company_warehouses = [];
         $store_warehouses   = [];
@@ -177,7 +202,7 @@ class SalesOrderController extends Controller
         return response()->json([
             'total_so'               => ReuseableCode::get_reserved_so($itemId, $request->cusId),
             'company_warehouse'      => $company_warehouses,
-            'store_warehouse'        => $store_warehouses,
+            'store_warehouse'        => $store_warehouses, 
             'company_total_quantity' => ReuseableCode::get_stock($itemId, $warehouseFrom),
             'store_total_quantity'   => $store_total_qty,
         ]);
@@ -302,26 +327,104 @@ class SalesOrderController extends Controller
         $username= Subitem::select("username")->groupBy("username")->get();
         return view('selling.saleorder.listSaleOrder', compact('username'));
     }
-    public function getlistSaleOrder(Request $request)
-    {
+    // public function getlistSaleOrder(Request $request)
+    // {
 
-        if ($request->ajax()) {
+    //     if ($request->ajax()) {
             
-            $territory_ids = json_decode(auth()->user()->territory_id); 
+    //         $territory_ids = json_decode(auth()->user()->territory_id); 
 
-            $sale_orders = DB::Connection('mysql2')->table('sales_order')
+    //         $sale_orders = DB::Connection('mysql2')->table('sales_order')
+    //         ->join('customers', 'sales_order.buyers_id', 'customers.id')
+    //         ->join('sales_order_data', 'sales_order_data.master_id', 'sales_order.id')
+    //         ->join('subitem', 'subitem.id', 'sales_order_data.item_id');
+
+    //         $m = Session::get("run_company");
+    //         if($m == 1) {
+    //             $sale_orders = $sale_orders->whereIn('customers.territory_id', $territory_ids);
+    //         } else {
+    //             $territories = (DB::connection("mysql2")->table("territories")->select("id")->get()->pluck("id"))->toArray();
+    //             $sale_orders = $sale_orders->whereIn('customers.territory_id', $territories);
+    //         }
+
+
+    //     $user = Auth::user();
+    //     if ($user && $user->acc_type === 'user') {
+    //         $territory_ids = json_decode($user->territory_id, true);
+    //         if (!is_array($territory_ids)) {
+    //             $territory_ids = [$user->territory_id];
+    //         }
+
+    //         $sale_orders->whereIn('customers.territory_id', $territory_ids);
+    //     }
+
+    //         if ($request->has('search') && $request->search != '') {
+    //             $search = strtolower($request->search); 
+    //             $sale_orders->whereRaw('LOWER(customers.name) LIKE ?', ['%' . $search . '%'])
+    //             ->orWhereRaw('LOWER(sales_order.so_no) LIKE ?', ['%' . $search . '%'])
+    //             ->orWhereRaw('LOWER(subitem.product_name) LIKE ?', ['%' . $search . '%'])
+    //             ->orWhereRaw('LOWER(subitem.sys_no) LIKE ?', ['%'. $search .'%'])
+    //             ->orWhereRaw('LOWER(subitem.product_barcode) LIKE ?', ['%'. $search .'%'])
+    //             ->orWhereRaw('LOWER(subitem.sku_code) LIKE ?', ['%'. $search .'%']);
+    //         }
+
+    //         if($request->has('username') && $request->username !='') {
+    //             $username = $request->username;
+    //             $sale_orders->when($username, function ($query, $username) {
+    //                 $query->whereIn('subitem.username', $username);
+    //             });
+    //         }
+    //         if($request->has('date') && $request->date !=''){
+    //             $date = $request->date;
+    //             $sale_orders->when($date, function ($query, $date) {
+    //                 $query->whereDate('sales_order.so_date', '=', $date);
+    //             });
+    //         }
+    //        $sale_orders->where('sales_order.status', 1);
+
+
+    //         // $sale_orders->select('sales_order.*', 'customers.name');
+    //         // ->where('sales_order.status',1)->select('sales_order.*','customers.name');
+    //         // if(!empty($request->to) && !empty($request->from)){
+    //         //     $from = $request->from;
+    //         //     $to = $request->to;
+    //         //     $sale_orders->whereBetween('sales_order.so_date',[$from,$to]);
+
+    //         // }
+    //         if (!empty($request->Filter)) {
+    //             $sale_orders->where('sales_order.so_no', 'Like', '%' . $request->SoNo . '%');
+    //         }
+
+    //          $sale_orders->select('sales_order.*', 'customers.name')
+    //                 ->groupBy('sales_order.id')->orderBy('sales_order.id', 'DESC');
+
+    //         $sale_orders = $sale_orders->get();
+    //         // $sale_orders = $sale_orders->paginate(request('per_page'));
+
+    //         return view('selling.saleorder.listSaleOrderAjax', compact('sale_orders'));
+    //     }
+    // }
+
+
+    public function getlistSaleOrder(Request $request)
+{
+    if ($request->ajax()) {
+        
+        $territory_ids = json_decode(auth()->user()->territory_id); 
+
+        $sale_orders = DB::Connection('mysql2')->table('sales_order')
             ->join('customers', 'sales_order.buyers_id', 'customers.id')
             ->join('sales_order_data', 'sales_order_data.master_id', 'sales_order.id')
-            ->join('subitem', 'subitem.id', 'sales_order_data.item_id');
+            ->join('subitem', 'subitem.id', 'sales_order_data.item_id')
+            ->leftJoin('sales_tax_invoice', 'sales_tax_invoice.so_no', '=', 'sales_order.so_no');
 
-            $m = Session::get("run_company");
-            if($m == 1) {
-                $sale_orders = $sale_orders->whereIn('customers.territory_id', $territory_ids);
-            } else {
-                $territories = (DB::connection("mysql2")->table("territories")->select("id")->get()->pluck("id"))->toArray();
-                $sale_orders = $sale_orders->whereIn('customers.territory_id', $territories);
-            }
-
+        $m = Session::get("run_company");
+        if($m == 1) {
+            $sale_orders = $sale_orders->whereIn('customers.territory_id', $territory_ids);
+        } else {
+            $territories = (DB::connection("mysql2")->table("territories")->select("id")->get()->pluck("id"))->toArray();
+            $sale_orders = $sale_orders->whereIn('customers.territory_id', $territories);
+        }
 
         $user = Auth::user();
         if ($user && $user->acc_type === 'user') {
@@ -329,57 +432,82 @@ class SalesOrderController extends Controller
             if (!is_array($territory_ids)) {
                 $territory_ids = [$user->territory_id];
             }
-
             $sale_orders->whereIn('customers.territory_id', $territory_ids);
         }
 
-            if ($request->has('search') && $request->search != '') {
-                $search = strtolower($request->search); 
-                $sale_orders->whereRaw('LOWER(customers.name) LIKE ?', ['%' . $search . '%'])
-                ->orWhereRaw('LOWER(sales_order.so_no) LIKE ?', ['%' . $search . '%'])
-                ->orWhereRaw('LOWER(subitem.product_name) LIKE ?', ['%' . $search . '%'])
-                ->orWhereRaw('LOWER(subitem.sys_no) LIKE ?', ['%'. $search .'%'])
-                ->orWhereRaw('LOWER(subitem.product_barcode) LIKE ?', ['%'. $search .'%'])
-                ->orWhereRaw('LOWER(subitem.sku_code) LIKE ?', ['%'. $search .'%']);
-            }
-
-            if($request->has('username') && $request->username !='') {
-                $username = $request->username;
-                $sale_orders->when($username, function ($query, $username) {
-                    $query->whereIn('subitem.username', $username);
-                });
-            }
-            if($request->has('date') && $request->date !=''){
-                $date = $request->date;
-                $sale_orders->when($date, function ($query, $date) {
-                    $query->whereDate('sales_order.so_date', '=', $date);
-                });
-            }
-           $sale_orders->where('sales_order.status', 1);
-
-
-            // $sale_orders->select('sales_order.*', 'customers.name');
-            // ->where('sales_order.status',1)->select('sales_order.*','customers.name');
-            // if(!empty($request->to) && !empty($request->from)){
-            //     $from = $request->from;
-            //     $to = $request->to;
-            //     $sale_orders->whereBetween('sales_order.so_date',[$from,$to]);
-
-            // }
-            if (!empty($request->Filter)) {
-                $sale_orders->where('sales_order.so_no', 'Like', '%' . $request->SoNo . '%');
-            }
-
-             $sale_orders->select('sales_order.*', 'customers.name')
-                    ->groupBy('sales_order.id')->orderBy('sales_order.id', 'DESC');
-
-            $sale_orders = $sale_orders->get();
-            // $sale_orders = $sale_orders->paginate(request('per_page'));
-
-            return view('selling.saleorder.listSaleOrderAjax', compact('sale_orders'));
+        // ============ FILTER CONDITIONS ============
+        
+        // Customer filter
+        if($request->has('customer_id') && $request->customer_id != '') {
+            $sale_orders->where('sales_order.buyers_id', $request->customer_id);
         }
-    }
 
+        // SO No filter
+        if($request->has('so_no') && $request->so_no != '') {
+            $sale_orders->where('sales_order.so_no', 'LIKE', '%' . $request->so_no . '%');
+        }
+
+        // SI No / GI No filter — fetched from sales_tax_invoice.gi_no via so_no
+        if($request->has('gi_no') && $request->gi_no != '') {
+            $sale_orders->where('sales_tax_invoice.gi_no', 'LIKE', '%' . $request->gi_no . '%');
+        }
+
+        // Date range filter (from - to)
+        if($request->has('from') && $request->from != '' && $request->has('to') && $request->to != '') {
+            $sale_orders->whereBetween('sales_order.so_date', [$request->from, $request->to]);
+        } elseif($request->has('from') && $request->from != '') {
+            $sale_orders->whereDate('sales_order.so_date', '>=', $request->from);
+        } elseif($request->has('to') && $request->to != '') {
+            $sale_orders->whereDate('sales_order.so_date', '<=', $request->to);
+        }
+
+        // Approval status filter
+        if($request->has('status') && $request->status != '') {
+            $sale_orders->where('sales_order.status', $request->status);
+        } else {
+            $sale_orders->where('sales_order.status', 1); // Default approved
+        }
+
+        // Payment status filter
+        if($request->has('payment_status') && $request->payment_status != '') {
+            $sale_orders->where('sales_order.payment_status', $request->payment_status);
+        }
+
+        // Global search filter (if you have a search input)
+        if ($request->has('search') && $request->search != '') {
+            $search = strtolower($request->search); 
+            $sale_orders->where(function($query) use ($search) {
+                $query->whereRaw('LOWER(customers.name) LIKE ?', ['%' . $search . '%'])
+                    ->orWhereRaw('LOWER(sales_order.so_no) LIKE ?', ['%' . $search . '%'])
+                    ->orWhereRaw('LOWER(subitem.product_name) LIKE ?', ['%' . $search . '%'])
+                    ->orWhereRaw('LOWER(subitem.sys_no) LIKE ?', ['%'. $search .'%'])
+                    ->orWhereRaw('LOWER(subitem.product_barcode) LIKE ?', ['%'. $search .'%'])
+                    ->orWhereRaw('LOWER(subitem.sku_code) LIKE ?', ['%'. $search .'%']);
+            });
+        }
+
+        if($request->has('username') && $request->username != '') {
+            $username = $request->username;
+            $sale_orders->whereIn('subitem.username', (array)$username);
+        }
+        
+        if($request->has('date') && $request->date != ''){
+            $sale_orders->whereDate('sales_order.so_date', '=', $request->date);
+        }
+
+        $sale_orders->select(
+                'sales_order.*',
+                'customers.name',
+                DB::raw('MAX(sales_tax_invoice.gi_no) as invoice_no')
+            )
+            ->groupBy('sales_order.id', 'customers.name')
+            ->orderBy('sales_order.id', 'DESC');
+
+        $sale_orders = $sale_orders->get();
+
+        return view('selling.saleorder.listSaleOrderAjax', compact('sale_orders'));
+    }
+}
     /**
      * Show the form for creating a new resource.
      *
@@ -387,56 +515,29 @@ class SalesOrderController extends Controller
      */
     public function createSaleOrder()
     {
-        return view($this->path . 'createSaleOrder');
+        $user = auth()->user();
+        $territory_ids = json_decode($user->territory_id, true);
+        if (!is_array($territory_ids)) {
+            $territory_ids = [$user->territory_id];
+        }
+
+        $salesmen = SubDepartment::where('status', 1)
+            ->get();
+        return view($this->path . 'createSaleOrder', compact('salesmen'));
     }
 
     // new code
-    // public function viewSaleOrdernew(Request $request)
-    // {
-    //     $sale_order = Sales_Order::where('id', $request->id)->first();
-
-        
-    //     $sale_order_data = Sales_Order_Data::where('master_id', $request->id)->get();
-
-    //     return view('selling.saleorder.viewSaleOrdernew', compact('sale_order', 'sale_order_data'));
-    // }
-
-    // public function viewSaleOrdernew(Request $request)
-    // {
-    //     $sale_order = Sales_Order::where('id', $request->id)->first();
-        
-    //     $sale_order_data = Sales_Order_Data::join(
-    //             'subitem',
-    //             'subitem.id',
-    //             '=',
-    //             'sales_order_data.item_id'
-    //         )
-    //         ->where('master_id', $request->id)
-    //         ->get();
-
-    //     return view('selling.saleorder.viewSaleOrdernew', compact('sale_order', 'sale_order_data'));
-    // }
-
-
-     public function viewSaleOrdernew(Request $request)
+    public function viewSaleOrdernew(Request $request)
     {
         $sale_order = Sales_Order::where('id', $request->id)->first();
-        
-        $sale_order_data = Sales_Order_Data::join(
-                'subitem',
-                'subitem.id',
-                '=',
-                'sales_order_data.item_id'
-            )
-            ->select(
-                "*",
-                DB::raw("sales_order_data.rate as sale_order_rate")
-            )
-            ->where('master_id', $request->id)
-            ->get();
+        $sale_order_data = Sales_Order_Data::where('master_id', $request->id)->get();
 
-       
-        return view('selling.saleorder.viewSaleOrdernew', compact('sale_order', 'sale_order_data'));
+        $salesman = null;
+        if ($sale_order && $sale_order->sales_person_id) {
+            $salesman = SubDepartment::find($sale_order->sales_person_id);
+        }
+
+        return view('selling.saleorder.viewSaleOrdernew', compact('sale_order', 'sale_order_data', 'salesman'));
     }
 
     public function approveSaleOrder(Request $request)
@@ -506,6 +607,7 @@ class SalesOrderController extends Controller
                     ]);
                 
                 }
+
                 CommonHelper::createNotification("Sale Order with " . $data->so_no . " is approved by " . auth()->user()->name, "Sales Order");
         
             } catch(\Exception $e) {
@@ -567,7 +669,17 @@ class SalesOrderController extends Controller
             $sales_order->phone_no = $request->phone_no ?? null;
             $sales_order->address = $request->address ?? null;
             $sales_order->branch = $request->branch ?? null;
-            $sales_order->sales_person = $request->saleperson ?? null;
+            $sales_order->model_terms_of_payment = $request->model_terms_of_payment ?? null;
+
+            $sales_person_id = $request->saleperson_id ?? null;
+            $sales_order->sales_person_id = $sales_person_id;
+            if ($sales_person_id) {
+                $salesman = SubDepartment::find($sales_person_id);
+                $sales_order->sales_person = $salesman ? $salesman->sub_department_name : ($request->saleperson ?? null);
+            } else {
+                $sales_order->sales_person = $request->saleperson ?? null;
+            }
+
             $sales_order->balance_amount = $request->balance_amount ?? 0.0;
             $sales_order->credit_limit = $request->credit_limit ?? 0.0;
             $sales_order->current_balance_due = $request->balance_amount + $request->total_amount_after_sale_tax ?? 0.0;
@@ -583,7 +695,15 @@ class SalesOrderController extends Controller
             $sales_order->sale_taxes_amount_total = $request->sale_taxes_amount_total ?? 0;
             $sales_order->sale_taxes_amount_rate = $request->sale_taxes_amount_rate ?? 0;
             $sales_order->warehouse_from = $request->warehouse;
-            $sales_order->principal_group_id = $request->principal_group;
+
+            $principal_groups = $request->principal_group;
+            if (is_array($principal_groups)) {
+                $sales_order->principal_group_id = $principal_groups[0] ?? null;
+                $sales_order->principal_group_ids = implode(',', $principal_groups);
+            } else {
+                $sales_order->principal_group_id = $principal_groups;
+                $sales_order->principal_group_ids = $principal_groups;
+            }
             // $sales_order->purchase_order_no=$request->purchase_order_no ?? '';
             // $sales_order->purchase_order_date=$request->purchase_order_date;
             // $sales_order->purchase_order_contract=$request->quotation_id ?? '';
@@ -680,7 +800,6 @@ class SalesOrderController extends Controller
             // $sales_order->save();
             SalesHelper::sales_activity($so_no, date('Y-m-d'), '0', 1, 'Insert');
             CommonHelper::createNotification("Sale Order with " . $so_no . " is created by " . auth()->user()->name, "Sales Order");
-         
             $voucher_no = $so_no;
             $subject = 'Sales Order Created ' . $so_no;
 
@@ -840,7 +959,17 @@ class SalesOrderController extends Controller
         // print_r($sales_order_data);
         // exit();
 
-        return view($this->path . 'editSaleOrder', compact('sale_orders', 'sales_order_data', 'data'));
+
+        $user = auth()->user();
+        $territory_ids = json_decode($user->territory_id, true);
+        if (!is_array($territory_ids)) {
+            $territory_ids = [$user->territory_id];
+        }
+
+        $salesmen = SubDepartment::where('status', 1)
+            ->whereIn('territory_id', $territory_ids)
+            ->get();
+        return view($this->path . 'editSaleOrder', compact('sale_orders', 'sales_order_data', 'data', 'salesmen'));
     }
     /**
      * Update the specified resource in storage.
@@ -1051,9 +1180,20 @@ class SalesOrderController extends Controller
             $sales_order->phone_no = $request->phone_no ?? null;
             $sales_order->address = $request->address ?? null;
             $sales_order->branch = $request->branch ?? null;
-            $sales_order->sales_person = $request->saleperson ?? null;
+            $sales_order->model_terms_of_payment = $request->model_terms_of_payment ?? null;
+
+            $sales_person_id = $request->saleperson_id ?? null;
+            $sales_order->sales_person_id = $sales_person_id;
+            if ($sales_person_id) {
+                $salesman = SubDepartment::find($sales_person_id);
+                $sales_order->sales_person = $salesman ? $salesman->sub_department_name : ($request->saleperson ?? null);
+            } else {
+                $sales_order->sales_person = $request->saleperson ?? null;
+            }
+
             $sales_order->balance_amount = $request->balance_amount ?? 0.0;
-            $sales_order->principal_group_id = $request->principal_group;
+            $sales_order->principal_group_id = is_array($request->principal_group) ? ($request->principal_group[0] ?? null) : $request->principal_group;
+            $sales_order->principal_group_ids = is_array($request->principal_group) ? implode(',', $request->principal_group) : $request->principal_group;
             $sales_order->credit_limit = $request->credit_limit ?? 0.0;
             $sales_order->current_balance_due = $request->balance_amount + $request->total_amount_after_sale_tax ?? 0.0;
             $sales_order->virtual_warehouse_check = $virtualWarehouseCheck;
@@ -1110,7 +1250,7 @@ class SalesOrderController extends Controller
 
             SalesHelper::sales_activity($sales_order->so_no, date('Y-m-d'), '0', 1, 'Update');
             \App\Helpers\CommonHelper::createNotification("Sale Order with " . $sales_order->so_no . " is updated by " . auth()->user()->name, "Sales Order");
-       
+        
 
             DB::connection('mysql2')->commit();
             
@@ -1141,7 +1281,6 @@ class SalesOrderController extends Controller
    public function destroy($id)
 {
     $sale_order = DB::connection("mysql2")->table("sales_order")->where("id", $id)->first();
-    
     // Set sale_order.status = 0
     DB::connection('mysql2')->table('sales_order')
         ->where('id', $id)
@@ -1153,9 +1292,18 @@ class SalesOrderController extends Controller
         ->update(['status' => 0]);
 
     CommonHelper::createNotification("Sale Order with " . $sale_order->so_no . " is deleted by " . auth()->user()->name, "Sales Order");
-    
+        
 
     return redirect()->back()->with('success', 'Sale order deleted successfully.');
+}
+
+public function closeSaleOrder($id)
+{
+    DB::connection('mysql2')->table('sales_order')
+        ->where('id', $id)
+        ->update(['delivery_note_status' => 1]);
+
+    return redirect()->back()->with('success', 'Sale order closed successfully.');
 }
 
 

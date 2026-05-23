@@ -21,7 +21,7 @@ if($accType == 'client'){
                     <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
                         <div class="well">
                             <div class="row">
-                                 <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
+                                <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
                                     <span class="subHeadingLabelClass" style="float: left;">View Region List</span>
                                     <a href="/purchase/addRegionForm?m={{ $m }}&pageType=true&parentCode=true" class="btn btn-primary" style="float: right;">Create Region</a>
                                 </div>

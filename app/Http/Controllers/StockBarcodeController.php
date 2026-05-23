@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\DeliveryNoteData;
-use App\Models\GoodsReceiptNote;
 use App\Models\GRNData;
 use App\StockBarcode;
 use Illuminate\Http\Request;
@@ -29,9 +28,9 @@ class StockBarcodeController extends Controller
 //            return '<div class="col-12 text-center"><h4>Please Select Item</h4></div>';
 //        }
 
-        if ($request->has('voucherItemCount')) {
-            $data['voucherItemCount'] = $request->voucherItemCount;
-        } elseif ($request->type == 'grn') {
+        if ($request->type == 'grn') {
+
+
             $data['voucherItemCount'] = GRNData::where('grn_no', $request->voucher_no)
                 ->where('sub_item_id', $request->product)
                 ->value('purchase_recived_qty');
@@ -39,7 +38,7 @@ class StockBarcodeController extends Controller
             $data['voucherItemCount'] = DeliveryNoteData::where('gd_no', $request->voucher_no)
                 ->where('item_id', $request->product)
                 ->value('qty');
-        }
+            }
 
 
 
@@ -52,7 +51,6 @@ class StockBarcodeController extends Controller
 
         $data['product_id'] = $request->product;
         $data['voucher_no'] = $request->voucher_no;
-        $data['skip_check'] = $request->skip_check ?? 0;
 //dd($data['barcode']);
         return view('StockBarcode.getBarcodeListAgainstProduct',$data);
 
@@ -182,33 +180,15 @@ class StockBarcodeController extends Controller
      * @param  \App\StockBarcode  $stockBarcode
      * @return \Illuminate\Http\Response
      */
-      public function destroy(StockBarcode $stockBarcode)
+    public function destroy(StockBarcode $stockBarcode)
     {
-        if(request()->skip_check == 1) {
-            $stockBarcode->delete();
-            return response()->json("deleted");
-        }
-
         $stock_voucher_no = $stockBarcode->voucher_no;
-
-        if(str_contains(strtolower($stock_voucher_no), "grn")) {
-            $grn = GoodsReceiptNote::where("grn_no", $stock_voucher_no)->first();
-            if($grn && $grn->grn_status == 2) {
-                return response()->json("GRN has already approved", 404);
-            }
-    
-            $stockBarcode->delete();
-            return response()->json("deleted");
-        
-        } else {
-            $gdn = DB::connection("mysql2")->table("delivery_note")->where("gd_no", $stock_voucher_no)->first();
-            if($gdn && $gdn->status == 1) {
-                return response()->json("Gdn has already approved", 404);
-            }
-    
-            $stockBarcode->delete();
-            return response()->json("deleted");
+        $gdn = DB::connection("mysql2")->table("delivery_note")->where("gd_no", $stock_voucher_no)->first();
+        if($gdn->status == 1) {
+            return response()->json("Gdn has already approved", 404);
         }
 
+        $stockBarcode->delete();
+        return response()->json("deleted");
     }
 }

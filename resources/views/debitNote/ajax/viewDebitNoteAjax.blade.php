@@ -40,12 +40,12 @@ input.form-control.form-control2{margin:0!important;}
                                     <div class="row">
                                         <div class="col-lg-6 col-md-6 col-sm-6 col-xs-6">
                                             <div class="contr">
-                                                <h2 class="subHeadingLabelClass">AM Pakistan (Pvt) Ltd</h2>
-                                                <!-- <p>301-305, 3rd Floor, Kavish Crown Plaza
-                                                    Sharah-e-Faisal, karachi.</p> -->
+                                                <h2 class="subHeadingLabelClass">Brands Unlimited (Pvt) Ltd</h2>
+                                                <p>301-305, 3rd Floor, Kavish Crown Plaza
+                                                    Sharah-e-Faisal, karachi.</p>
                                                     <br>
-                                                <!-- <p>N.T.N #:5098058-8 </p>
-                                                <p>S.t #: 3277876156235</p> -->
+                                                <p>N.T.N #:5098058-8 </p>
+                                                <p>S.t #: 3277876156235</p>
 
                                                 <br>
                                                 <p>Bill To:</p>
@@ -86,27 +86,9 @@ input.form-control.form-control2{margin:0!important;}
                                                                 </td>
                                                             </tr>
                                                             <tr>
-                                                                <td>Delivery Man</td>
-                                                                <td style="text-align: right;">
-                                                                    {{ $debit->delivery_man }}
-                                                                </td>
-                                                            </tr>
-                                                            <tr>
                                                                 <td>Date</td>
                                                                 <td style="text-align: right;">
                                                                     {{ \Carbon\Carbon::parse($debit->date)->format("d-M-y") }}
-                                                                </td>
-                                                            </tr>
-                                                            <tr>
-                                                                <td>On Record</td>
-                                                                <td style="text-align: right;">
-                                                                    {{ $debit->on_record == 1 ? "Yes" : "No" }}
-                                                                </td>
-                                                            </tr>
-                                                            <tr>
-                                                                <td>Voucher Type</td>
-                                                                <td style="text-align: right;">
-                                                                    {{ json_decode(\App\Helpers\CommonHelper::get_vouchers($debit->voucher_type))[0]->name }}
                                                                 </td>
                                                             </tr>
                                                             <tr>
@@ -116,9 +98,9 @@ input.form-control.form-control2{margin:0!important;}
                                                                 </td>
                                                             </tr>
                                                             <tr>
-                                                                <td>Debit</td>
+                                                                <td>Account</td>
                                                                 <td style="text-align: right;">
-                                                                    {{ $debit->debit != "-" ? \App\Helpers\CommonHelper::get_account_name_by_id($debit->debit) : "N/A" }}
+                                                                    {{ \App\Helpers\CommonHelper::get_account_name($debit->debit) }}
                                                                 </td>
                                                             </tr>
                                                             <tr>

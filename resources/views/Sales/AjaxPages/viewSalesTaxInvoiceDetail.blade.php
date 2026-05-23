@@ -29,22 +29,24 @@ if ($sales_tax_invoice->currency != 0) {
 foreach ($sales_tax_invoice_data as $item) {
     $saleOrderDetail = CommonHelper::get_item_detials($item->so_data_id);
     $total_expense = 0;
-    $total_before_tax += $item->rate * $item->qty;
+    
+    $gross_amount = $item->rate * $item->qty;
+    $percentage_amount = $saleOrderDetail ? $saleOrderDetail->discount_percent_1 : 0;
+    $discount_amount = ($gross_amount * $percentage_amount) / 100;
+
+    $tax = $item->tax;
+    $tax_amount = ($tax * $gross_amount) / 100;
+
+    $amount = round((float)$item->amount, 2);
+
+    $total_before_tax += $gross_amount;
     $total_tax += $item->tax_amount;
-    $total_after_tax += $item->amount;
-    $total_tax_amount += $item->tax_amount;
+    $total_after_tax += $amount;
+    $total_tax_amount += $tax_amount;
     $total_qty += $item->qty;
-    $total_discount_amount += $saleOrderDetail->discount_amount_1 ?? 0;
-    $total_gross_amount += $saleOrderDetail->sub_total ?? 0;
-    $total_amount_after_tax += $saleOrderDetail->amount ?? 0;
-    // $saleOrderDetail = CommonHelper::get_item_detials($item->so_data_id);
-    // $total_qty += $item->qty;
-    // $total_before_tax += $item->qty * $item->rate;
-    // $total_foc += $item->foc;
-    // $total_discount_amount += $saleOrderDetail->discount_amount_1;
-    // $total_gross_amount += $saleOrderDetail->sub_total;
-    // $total_tax += $item->tax_amount;
-    // $total_after_tax += $item->amount;
+    $total_discount_amount += $discount_amount;
+    $total_gross_amount += $gross_amount;
+    $total_amount_after_tax += $amount;
 }
 ?>
 <style>
@@ -191,11 +193,11 @@ input.form-control.form-control2{margin:0!important;}
                 <div class="row">
                     <div class="col-lg-6 col-md-6 col-sm-6 col-xs-6">
                         <div class="contr">
-                            <h2 class="subHeadingLabelClass">AM Pakistan (Pvt) Ltd</h2>
-                            <!-- <p>301-305, 3rd Floor, Kavish Crown Plaza
+                            <h2 class="subHeadingLabelClass">Brands Unlimited (Pvt) Ltd</h2>
+                            <p>301-305, 3rd Floor, Kavish Crown Plaza
                                 Sharah-e-Faisal, karachi.</p>
                             <p>S.t #: 3277876156235</p>
-                                <p>N.T.N #:5098058-8 </p> -->
+                                <p>N.T.N #:5098058-8 </p>
                             <br>
                             <p style="margin-top:-13px;">Bill To:</p>
                             <br>
@@ -215,7 +217,7 @@ input.form-control.form-control2{margin:0!important;}
                         <div class="contr2">
                             <h2 class="subHeadingLabelClass">Sale Invoice</h2>
                                 <br>
-                            <p>Document # {{ $sales_tax_invoice->gi_no }}</p>
+                            <p>Document # {{ strtoupper($sales_tax_invoice->gi_no) }}</p>
                             <!-- <p>Doc #: 27903</p> -->
                             <p style="margin-bottom: -23px !important;">Date: {{ \Carbon\Carbon::parse($sales_tax_invoice->gi_date )->format('d-M-Y') }}</p>
                             <br>
@@ -279,11 +281,13 @@ input.form-control.form-control2{margin:0!important;}
                                 <div class="col-lg-4 col-md-4 col-sm-4 col-xs-4">
                                     <div class="term">
                                         <p>SO #: {{ $sales_order->so_no }}</p>
-                                        <p>GDN #: {{ $dn_detail->gd_no }}</p>
+                                       <p>GDN #: {{ strtoupper($dn_detail->gd_no) }}</p>
                                         <p>Branch: {{ $sales_order->branch }}</p>
-                                        <p>Sales Rep: {{ $customer_data->SaleRep }} </p>
+                                         <p>Sales Rep:
+                                            {{ $sales_order->sales_person ?: (DB::table('sub_department')->where('id', $sales_order->sales_person_id ?? $customer_data->SaleRep)->value('sub_department_name') ?: $customer_data->SaleRep) }}
+                                        </p>
                                         @if (strtoupper($customer_data->display_note_invoice) == 'YES')
-                                            <p>Note: {{ $customer_data->strn_term }} </p>
+                                          <p>Note: {{ $sales_order->remark }} </p>
                                         @endif
                                     </div>
                                 </div>
@@ -338,18 +342,20 @@ input.form-control.form-control2{margin:0!important;}
 
                                         @foreach ($sales_tax_invoice_data as $row)
                                             @php
-                                                
                                                 $saleOrderDetail = CommonHelper::get_item_detials($row->so_data_id);
                                                 $productbarcode = CommonHelper::product_barcode($row->item_id);
+
+                                                $gross_amount = $row->rate * $row->qty;
+                                                $percentage_amount = $saleOrderDetail ? $saleOrderDetail->discount_percent_1 : 0;
+                                                $discount_amount = ($gross_amount * $percentage_amount) / 100;
+
+                                                $tax = $row->tax;
+                                                $tax_amount = ($tax * $gross_amount) / 100;
+
+                                                $amount = $row->amount;
+                                               
                                             @endphp
                                             <tr>
-                                                {{-- $total_expense = 0;
-                                        $total_before_tax += $row->rate * $row->qty;
-                                        <!-- $total_tax += $row->tax_amount; -->
-                                        $total_tax = number_format($items->sum('tax_amount'), 2, '.', '');
-
-                                        
-                                        $total_after_tax += $row->amount; --}}
                                             <tr>
                                                 <td style="text-align: center !important;">{{ $count++ }}</td>
                                                 <td><strong>{{ CommonHelper::get_product_sku($row->item_id) }}-{{ CommonHelper::get_product_name($row->item_id) }}</strong></td>
@@ -358,12 +364,13 @@ input.form-control.form-control2{margin:0!important;}
                                                 <td style="text-align: center !important;" class="wsale2"><p>{{ number_format($row->qty) }}</p></td>
                                                 <td style="text-align: center !important;">{{ CommonHelper::get_product_mrp_price($row->item_id) }}</td>
                                                 <td style="text-align: center !important;">{{ number_format($row->rate, 2) }}</td>
-                                                <td style="text-align: center !important;"> {{ number_format($saleOrderDetail->sub_total, 2) }}</td>
-                                                <td style="text-align: center !important;">{{ number_format($saleOrderDetail->discount_percent_1, 2) }}% </td>
-                                                <td style="text-align: center !important;">{{ number_format($saleOrderDetail->discount_amount_1, 2) }}</td>
-                                                <td style="text-align: center !important;">{{ number_format($row->tax, 2) }}%</td>
+                                                <td style="text-align: center !important;"> {{ number_format($gross_amount, 2) }}</td>
+                                                <td style="text-align: center !important;">{{ number_format($percentage_amount, 2) }}% </td>
+                                                <td style="text-align: center !important;">{{ number_format($discount_amount, 2) }}</td>
+                                                <td style="text-align: center !important;">{{ number_format($tax, 2) }}%</td>
                                                 <td style="text-align: center !important;">{{ number_format($row->tax_amount, 2) }}</td>
-                                                <td style="text-align: center !important;">{{ number_format($saleOrderDetail->amount, 2) }}</td>
+                                                <!-- <td style="text-align: center !important;">{{ number_format($tax_amount, 2) }}</td> -->
+                                                <td style="text-align: center !important;">{{number_format( round($amount),0) }}</td>
                                             </tr>
                                             <tr>
                                                 {{-- <td style="text-align: center !important;"> {{ $count++ }} </td> --}}
@@ -500,8 +507,15 @@ input.form-control.form-control2{margin:0!important;}
                         </div>
                         <div class="totlas">
                             <p><strong>Total</strong></p>
-                            <p><strong>{{ number_format((float) $total_amount_after_tax + (float) $sale_order->sale_taxes_amount_rate, 2) }} </strong></p>
-                        </div>
+                           <p>
+                            <strong>
+                            {{ number_format(
+                                round((float)$total_amount_after_tax + (float)$sale_order->sale_taxes_amount_rate, 0),
+                                0
+                            ) }}
+                            </strong>
+                            </p>
+                                                    </div>
                     </div>
                 </div>
             </div>

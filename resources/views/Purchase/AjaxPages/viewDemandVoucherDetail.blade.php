@@ -92,15 +92,16 @@ foreach ($demandDetail as $row) {
                             <thead>
                             <tr>
                                 <th class="text-center" style="width:50px;">S.No</th>
-                                <th class="text-center">Item Code</th>
+                                <th class="text-center">SKU Code</th>
                                 <th class="text-center">Product Name</th>
+                                <th class="text-center">Barcode</th>
                                 <th class="text-center">Product Type</th>
                                 <th class="text-center">Product Classification</th>
                                 <th class="text-center">Product Trend</th>
                                 
                                 <th class="text-center">UOM</th>
                                 <th class="text-center" style="width:100px;">Qty.</th>
-                                <th class="text-center" style="width:100px;">Remaining Qty</th>
+                                <!-- <th class="text-center" style="width:100px;">Remaining Qty</th> -->
 
                                 <!--
                                 <?php if($row->demand_status == 1 && $row->status == 1){?>
@@ -126,16 +127,21 @@ foreach ($demandDetail as $row) {
                                     <input type="hidden" name="rowId[]" id="rowId_<?php $row1->id;?>" value="<?php echo $row1->id;?>">
                                 </td>
 
-                                <?php $sub_ic_detail=CommonHelper::get_subitem_detail($row1->sub_item_id);
+                                <!-- <?php $sub_ic_detail=CommonHelper::get_subitem_detail($row1->sub_item_id);
                                 $sub_ic_detail= explode(',',$sub_ic_detail)
-                                ?>
-                               
-
-                                <td>{{ $sub_ic_detail[3] }}</td>
+                                ?> -->
                                 
+
+                                <!-- <td>{{ $sub_ic_detail[3] }}</td> -->
+                                <td>
+                                <?php echo CommonHelper::get_product_sku($row1->sub_item_id)?>
+                                </td>
                                 <td title="{{$row1->sub_item_id}}">
                                     <?php echo CommonHelper::get_product_name($row1->sub_item_id)?>
                                     <input type="hidden" name="subItemId_<?php echo $row1->id;?>" id="subItemId_<?php echo $row1->id;?>" value="<?php echo $row1->sub_item_id;?>">
+                                </td>
+                                 <td>
+                                <?php echo CommonHelper::product_barcode($row1->sub_item_id)?>
                                 </td>
                                 <td title="{{$sub_ic_detail[7]}}">
                                     <?php echo CommonHelper::get_product_type_name($sub_ic_detail[7])?>
@@ -145,7 +151,7 @@ foreach ($demandDetail as $row) {
                                     <?php echo CommonHelper::get_product_classification_name($sub_ic_detail[8])?>
                                 </td>
                                 <td title="{{$sub_ic_detail[9]}}">
-                                    <?php echo CommonHelper::get_product_trend_name($sub_ic_detail[9])?>
+                                    <?php echo CommonHelper::get_product_trend_name_new($sub_ic_detail[9])?>
                                 </td>
                                 
 
@@ -154,7 +160,7 @@ foreach ($demandDetail as $row) {
 
                                 <td class="text-center"><?php echo number_format($row1->qty,2);?></td>
 
-                                <td class="text-center"><?php echo CommonHelper::get_remaining_qty($row1->sub_item_id)?></td>
+                                <!-- <td class="text-center"><?php echo CommonHelper::get_remaining_qty($row1->sub_item_id)?></td> -->
 
 
                             </tr>

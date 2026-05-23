@@ -135,6 +135,8 @@ $AccYearTo = $AccYearDate->accyearto;
                                                                 $makeTotalAmount = 0;
 
                                                                 foreach ($pvs as $row1) {
+
+                                                                    
                                                                 ?>
                                                                 <tr @if ($row1->type==2) style="background-color: darkgray" @endif class="tr<?php echo $row1->id ?>" id="tr<?php echo $row1->id ?>" title="<?php echo $row1->id ?>" id="1row<?php echo $counter ?>" <?php if($row1->pv_status == 1):?>  onclick="checkUncheck('1chk<?php echo $counter ?>','1row<?php echo $counter ?>')"<?php endif;?>>
 
@@ -163,9 +165,9 @@ $AccYearTo = $AccYearDate->accyearto;
                                                                             <?php endif;?>
                                                                             <?php if($row1->payment_type == 1 && $row1->pv_status == 2):?>
                                                                             <?php if($return == true):?>
-                                                                            <input class="btn btn-xs BtnReturn<?php echo $row1->pv_no?>" style="background-color: blue; color: white;"
+                                                                            <!-- <input class="btn btn-xs BtnReturn<?php echo $row1->pv_no?>" style="background-color: blue; color: white;"
                                                                                    type="button" onclick="VoucherReturn('<?php echo $row1->id;?>','<?php echo $row1->pv_no?>','<?php echo $row1->pv_date?>','<?php echo CommonHelper::GetAmount('new_pv_data',$row1->id)?>','<?php echo $row1->cheque_no?>')"
-                                                                                   value="Return" />
+                                                                                   value="Return" /> -->
                                                                             <?php endif;?>
                                                                             <?php endif;?>
 

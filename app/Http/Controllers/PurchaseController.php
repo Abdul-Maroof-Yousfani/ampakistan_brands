@@ -136,6 +136,97 @@ class PurchaseController extends Controller
         return view('Purchase.purchaseInvoiceReportPage');
     }
 
+    public function purchaseJournal(Request $request) {
+        $m = $request->m;
+        CommonHelper::companyDatabaseConnection($m);
+
+        $Branches = DB::Connection('mysql2')->table('branch')->where('status', 1)->get();
+        $Items = DB::Connection('mysql2')->table('subitem')->where('status', 1)->orderBy('product_name')->get();
+        $Brands = DB::Connection('mysql2')->table('brands')->where('status', 1)->orderBy('name')->get();
+        $Types = DB::Connection('mysql2')->table('type')->where('status', 1)->get();
+        $Warehouses = DB::Connection('mysql2')->table('warehouse')->where('status', 1)->orderBy('name')->get();
+        $Principals = DB::Connection('mysql2')->table('supplier')->where('status', 1)->get();
+        $ProductTypes = DB::Connection('mysql2')->table('product_type')->where('status', 1)->get();
+
+        CommonHelper::reconnectMasterDatabase();
+
+        return view('Purchase.purchaseJournal', compact('Branches', 'Items', 'Brands', 'Types', 'Warehouses', 'Principals', 'ProductTypes'));
+    }
+
+    public function purchaseReturnReport(Request $request) {
+        $m = $request->m;
+        CommonHelper::companyDatabaseConnection($m);
+        $Principals = DB::Connection('mysql2')->table('supplier')->where('status', 1)->get();
+        CommonHelper::reconnectMasterDatabase();
+        return view('Purchase.purchaseReturnReport', compact('Principals'));
+    }
+
+    public function purchasePriceHistoryReport(Request $request) {
+        $m = $request->m;
+        CommonHelper::companyDatabaseConnection($m);
+
+        $Employees = DB::Connection('mysql2')->table('employee')->where('status', 1)->get();
+        $Branches = DB::Connection('mysql2')->table('branch')->where('status', 1)->get();
+        $Items = DB::Connection('mysql2')->table('subitem')->where('status', 1)->orderBy('product_name')->get();
+        $Brands = DB::Connection('mysql2')->table('brands')->where('status', 1)->orderBy('name')->get();
+        $Types = DB::Connection('mysql2')->table('type')->where('status', 1)->get();
+        $Warehouses = DB::Connection('mysql2')->table('warehouse')->where('status', 1)->orderBy('name')->get();
+       
+        $Suppliers = DB::Connection('mysql2')->table('supplier')->where('status', 1)->get();
+        $ProductTypes = DB::Connection('mysql2')->table('product_type')->where('status', 1)->get();
+
+        CommonHelper::reconnectMasterDatabase();
+
+        return view('Purchase.purchasePriceHistoryReport', compact('Employees', 'Branches', 'Items', 'Brands', 'Types', 'Warehouses', 'Suppliers', 'ProductTypes'));
+    }
+
+    public function pendingPurchasePaymentReport(Request $request) {
+        $m = $request->m;
+        CommonHelper::companyDatabaseConnection($m);
+        $Principals = DB::Connection('mysql2')->table('supplier')->where('status', 1)->get();
+        CommonHelper::reconnectMasterDatabase();
+        return view('Purchase.pendingPurchasePaymentReport', compact('Principals'));
+    }
+
+    public function purchaseCreditNoteReport(Request $request) {
+        $m = $request->m;
+        CommonHelper::companyDatabaseConnection($m);
+        $Principals = DB::Connection('mysql2')->table('supplier')->where('status', 1)->get();
+        $Branches = DB::Connection('mysql2')->table('branch')->where('status', 1)->get();
+        CommonHelper::reconnectMasterDatabase();
+        return view('Purchase.purchaseCreditNoteReport', compact('Principals', 'Branches'));
+    }
+
+    public function purchaseDebitNoteReport(Request $request) {
+        $m = $request->m;
+        CommonHelper::companyDatabaseConnection($m);
+        $Principals = DB::Connection('mysql2')->table('supplier')->where('status', 1)->get();
+        $Branches = DB::Connection('mysql2')->table('branch')->where('status', 1)->get();
+        CommonHelper::reconnectMasterDatabase();
+        return view('Purchase.purchaseDebitNoteReport', compact('Principals', 'Branches'));
+    }
+
+    public function qrCodeHistoryReport(Request $request) {
+        $m = $request->m;
+
+          $Users = DB::table('users')->select('id', 'name')->get();
+        CommonHelper::companyDatabaseConnection($m);
+        $Products = DB::Connection('mysql2')->table('subitem')->where('status', 1)->where('is_barcode_scanning', 1)->get();
+      
+        CommonHelper::reconnectMasterDatabase();
+        return view('Purchase.qrCodeHistoryReport', compact('Products', 'Users'));
+    }
+
+    public function purchaseReportDashboard(){
+        $Items = DB::connection('mysql2')->table('subitem')->where('status', 1)->orderBy('product_name')->get();
+        $Brands = DB::connection('mysql2')->table('brands')->where('status', 1)->orderBy('name')->get();
+        $Warehouses = DB::connection('mysql2')->table('warehouse')->where('status', 1)->orderBy('name')->get();
+        $Types = DB::connection('mysql2')->table('type')->where('status', 1)->get();
+        $Branches = DB::connection('mysql2')->table('branch')->get();
+        $ProductTypes = DB::connection('mysql2')->table('product_type')->where('status', 1)->get();
+        return view('Purchase.purchaseReportDashboard', compact('Items', 'Brands', 'Warehouses', 'Types', 'Branches', 'ProductTypes'));
+    }
+
     public function aqmsStockReportPage(){
 
         return view('Purchase.aqmsStockReportPage');
@@ -326,7 +417,17 @@ class PurchaseController extends Controller
     }
 
     public function addRegionForm(){
-        return view('Purchase.addRegionForm');
+        $regNo = '0001';
+
+        $region = Region::orderBy("id", "desc")->first();
+
+        $regionNo = null;
+        if ($regNo) {
+            $lastRegionNumber = (int)explode("-", $region->region_code)[1]; // Extract numeric part, assuming ba_no starts with a prefix (like '0')
+            $regionNo = str_pad($lastRegionNumber + 1, 4, '0', STR_PAD_LEFT); // Increment and format with leading zeros
+        }
+
+        return view('Purchase.addRegionForm', compact("regionNo"));
     }
 
     public function regionList(){
@@ -523,6 +624,16 @@ class PurchaseController extends Controller
         return view('Purchase.viewSubItemList', compact('product_classification', 'subitem', 'username', 'product_trends', 'principl_groups'));
     }
 
+    public function viewSubItemListWithoutEditing(){
+        $subitem = Subitem::all();
+        $username = Subitem::select("username")->groupBy("username")->get();
+        $product_classification = ProductClassification::where('status',1)->get();
+        $product_trends = ProductTrend::where('status',1)->get();
+        $principl_groups = ProductsPrincipalGroup::select("id", "products_principal_group")->get();
+
+        return view('Purchase.viewSubItemListWithoutEditing', compact('product_classification', 'subitem', 'username', 'product_trends', 'principl_groups'));
+    }
+
     public function viewSubItemDetail(){
         $id=$_GET['id'];
         $sub_item=new Subitem();
@@ -549,8 +660,9 @@ class PurchaseController extends Controller
     }
 
     public function viewDemandList(){
-          $type = request()->type;
-      
+        $type = request()->type;
+        
+        
         $demand_detail= DB::Connection('mysql2')->table('demand')
                         ->leftJoin("demand_data", "demand.id", "=", "demand_data.master_id")
                         ->leftJoin("subitem", "subitem.id", "=", "demand_data.sub_item_id")
@@ -559,7 +671,6 @@ class PurchaseController extends Controller
                         ->when($type == 'pending', function($query) {
                             $query->where("demand.demand_status", 1);
                         })
-             
                         ->groupBy("subitem.username")
                         ->get();
         return view('Purchase.viewDemandList', compact("demand_detail"));
@@ -592,6 +703,9 @@ class PurchaseController extends Controller
         $demand_data=$demand_data->where('master_id',$id)->orderBy('id','ASC')->get();
         $departments = new Department;
         $departments = $departments::where([['company_id', '=', $_GET['m']], ['status', '=', '1'], ])->select('id','department_name')->orderBy('id')->get();
+        
+            
+
         return view('Purchase.editDemandVoucherForm',compact('demand','demand_data','id','departments'));
     }
 
@@ -751,8 +865,8 @@ class PurchaseController extends Controller
             })
             ->where('grn_id','!=',0)
             ->orderBy('pv_date','desc')->get();
-         $Supplier  = DB::Connection('mysql2')->table('supplier')->where('status',1)->get();
-
+        $Supplier  = DB::Connection('mysql2')->table('supplier')->where('status',1)->get();
+        
         return view('Purchase.viewPurchaseVoucherListThroughGrn',compact('purchase_voucher','Supplier','first_day_this_month','last_day_this_month', 'username'));
 
     }
@@ -933,11 +1047,24 @@ class PurchaseController extends Controller
         ->where('master_id', $id)
         ->get();
 
-    // You may want to eager load related data like product names, uom, etc.
-    // Or enhance in query if needed
+    $currencies = DB::connection('mysql2')
+        ->table('currency')
+        ->where('to_type_id', $purchaseRequest->po_type)
+        ->get();
+        
+    $suppliers = DB::connection('mysql2')
+        ->table('supplier')
+        ->where('status', 1)
+        ->get();
+        
+    $supplierAddresses = [];
+    foreach($suppliers as $s) {
+        $addr = \App\Helpers\CommonHelper::get_supplier_address($s->id);
+        $supplierAddresses[$s->id] = '@#' . $addr . '@#' . $s->ntn . '@#' . $s->terms_of_payment . '@#' . $s->strn;
+    }
 
-    return view('Purchase.editDirectPurchaseOrderForm', compact('purchaseRequest', 'purchaseDetails'));
-}
+    return view('Purchase.editDirectPurchaseOrderForm', compact('purchaseRequest', 'purchaseDetails', 'currencies', 'suppliers', 'supplierAddresses'));
+    }
 
     public function purchase_order_status()
     {

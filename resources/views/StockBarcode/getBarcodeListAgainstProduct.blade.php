@@ -29,9 +29,7 @@
             <td>{{$sb->product_name}}</td>
             <td class="text-uppercase">{{$sb->voucher_no}}</td>
             <td>
-                <button type="button" class="btn btn-danger btn-xs" onclick="deleteBarcode('{{ $sb->id }}', '{{ $sb->barcode }}', '{{ $skip_check ?? 0 }}')">
-                    <i class="fa fa-trash"></i> Delete
-                </button>
+                <button onclick="deleteBarcode('{{ $sb->id }}', '{{ $sb->barcode }}')">Delete</button>
             </td>
         </tr>
     @endforeach
@@ -50,62 +48,24 @@
     // Optionally, you can store it in localStorage for later use
     localStorage.setItem('existingBarcodes', JSON.stringify(existingBarcodes));
 
-    function deleteBarcode(id, barcode, skip_check = 0) {
-        if (!confirm('Are you sure you want to delete this barcode?')) {
-            return;
-        }
-
+    function deleteBarcode(id, barcode) {
         $.ajax({
-            url: '{{ url("purchase/stockBarcode") }}/' + id,
-            type: 'POST',
-            data: {
-                _token: '{{ csrf_token() }}',
-                _method: 'DELETE',
-                skip_check: skip_check
-            },
-            dataType: 'json',
+            url: `/purchase/stockBarcode/${id}`, // Your endpoint
+            type: 'DELETE',                         // GET, POST, PUT, or DELETE
+            data: { id },                   // Data sent to the server
+            dataType: 'json',                    // Type of data you expect back
             success: function(response) {
                 $(`#barcode-${id}`).remove();
                 existingBarcodes = existingBarcodes.filter(barcodeValue => barcodeValue != barcode);
                 localStorage.setItem('existingBarcodes', JSON.stringify(existingBarcodes));
 
-                var totalQty = parseInt($('#voucherItemQty').val()) || 0;
-                var scannedQty = existingBarcodes.length;
-                var remainingQty = totalQty - scannedQty;
-
-                $(".scanned").text(scannedQty);
-                $(".remaining_qty").text(remainingQty);
-
-                // Update list badges color
-                var $scannedBtn = $(".scanned").closest('button');
-                if (scannedQty === totalQty) {
-                    $scannedBtn.removeClass('btn-danger').addClass('btn-success');
-                } else {
-                    $scannedBtn.removeClass('btn-success').addClass('btn-danger');
-                }
-
-                // Synchronize with the main GRN form table if rowId is available
-                var rowId = '{{ $rowId ?? "" }}';
-                if (rowId) {
-                    $('#barcodeCountRow' + rowId).text(' (' + scannedQty + ')');
-                    var $parentBtn = $('#barcodeCountRow' + rowId).closest('button');
-                    if (remainingQty === 0) {
-                        $parentBtn.removeClass('btn-info').addClass('btn-success');
-                    } else {
-                        $parentBtn.removeClass('btn-success').addClass('btn-info');
-                    }
-                }
+                $(".scanned").text(existingBarcodes.length);
+                $(".remaining_qty").text(existingBarcodes.length + 1);
                 
                 console.log('Success:', response);
             },
             error: function(xhr, status, error) {
-                var errorMessage = "Error deleting barcode.";
-                if (xhr.responseJSON && typeof xhr.responseJSON === 'string') {
-                    errorMessage = xhr.responseJSON;
-                } else if (xhr.responseJSON && xhr.responseJSON.message) {
-                    errorMessage = xhr.responseJSON.message;
-                }
-                alert(errorMessage);
+                alert("gdn is already approved, can not delete it");
             }
         });
     }

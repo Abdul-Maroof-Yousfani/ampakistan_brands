@@ -3,6 +3,7 @@ use App\Helpers\PurchaseHelper;
 
 use App\Helpers\SalesHelper;
 use App\Helpers\CommonHelper;
+use App\Helpers\ReuseableCode;
 $accType = Auth::user()->acc_type;
 if($accType == 'client'){
     $m = $_GET['m'];
@@ -58,7 +59,7 @@ if($accType == 'client'){
                                                         <div class="col-lg-3 col-md-3 col-sm-3 col-xs-12">
                                                             <label>Company Name :</label>
                                                             <span class="rflabelsteric"><strong>*</strong></span>
-                                                            <input autofocus type="text" name="company_name" id="company_name" value="{{ $supplier->company_name }}" class="form-control requiredField" />
+                                                            <input autofocus type="text"  name="company_name" id="company_name" value="{{ $supplier->company_name }}" class="form-control requiredField" />
                                                         </div>
 
 
@@ -80,7 +81,7 @@ if($accType == 'client'){
                                                                     <select   name="country" id="country" class="form-control">
                                                                         <option value="">Select Country :</option>
                                                                         @foreach($countries as $key => $y)
-                                                                            <option value="{{ $y->id}}">{{ $y->name}}</option>
+                                                                            <option @if($supplier->country == $y->id) selected @endif value="{{ $y->id}}">{{ $y->name}}</option>
                                                                         @endforeach
                                                                     </select>
                                                                 </div>
@@ -252,7 +253,7 @@ if($accType == 'client'){
                                                     $con=0;
                                                 @endphp
                                                 @if(!empty($category_id))        
-                                                <div class="container">
+                                                <div class="container hide">
                                                 <div class="col-lg-3 col-md-3 col-sm-3 col-xs-12">
                                                     <div class="row">
                                                     <div class="col-sm-6">
@@ -353,13 +354,27 @@ if($accType == 'client'){
                                                                 </select>
                                                             @endif
                                                         </div>
-                                                        ->debit_credit==1
-                                                        <div class="col-lg-5 col-md-5 col-sm-5 col-xs-12">
+                                                         <div class="col-lg-3 col-md-3 col-sm-3 col-xs-12">
+                                                            <label for="o_blnc">WithHolding Tax :</label>
+                                                           <select name="with_holding_tax" id="with_holding_tax"
+                                                                class="form-control select2"
+                                                               
+                                                               >
+                                                                <option value="">Select WithHolding</option>
+                                                                @foreach(ReuseableCode::get_all_sales_tax() as $row_tax)
+                                                                <option @if($supplier->with_holding_tax == $row_tax->id) selected @endif value="{{ $row_tax->id}}" data-rate="{{$row_tax->rate}}" >{{$row_tax->rate}} %
+                                                                </option>
+
+                                                             
+                                                                @endforeach
+                                                            </select>
+                                                        </div>
+                                                        <div class="col-lg-5 col-md-5 col-sm-5 col-xs-12 hide">
                                                             <label for="o_blnc" >TaxPayer Status </label> <br>
-                                                            <span>COMPANY</span> <input type="checkbox" name="company_status[]" id="COMPANY" value="COMPANY"><br>
-                                                            <span>INDIVIDUAL</span> <input type="checkbox" name="company_status[]" id="INDIVIDUAL" value="INDIVIDUAL"><br>
-                                                            <span>AOP</span> <input type="checkbox" name="company_status[]" id="AOP" value="AOP"><br>
-                                                            <span>BUSINESS INDIVIDUAL</span> <input type="checkbox" name="company_status[]" id="BUSINESS_INDIVIDUAL" value="BUSINESS_INDIVIDUAL">
+                                                            <span>COMPANY</span> <input type="checkbox" name="acompany_status[]" id="COMPANY" value="COMPANY"><br>
+                                                            <span>INDIVIDUAL</span> <input type="checkbox" name="acompany_status[]" id="INDIVIDUAL" value="INDIVIDUAL"><br>
+                                                            <span>AOP</span> <input type="checkbox" name="acompany_status[]" id="AOP" value="AOP"><br>
+                                                            <span>BUSINESS INDIVIDUAL</span> <input type="checkbox" name="acompany_status[]" id="BUSINESS_INDIVIDUAL" value="BUSINESS_INDIVIDUAL">
                                                         </div>
 
 
@@ -449,24 +464,23 @@ if($accType == 'client'){
                                                                         id="regd_in_income_tax"
                                                                         name="regd_in_income_tax"
                                                                         value="1"
-
+                                                                        {{ $supplier->resgister_income_tax == 1 ? 'checked' : '' }}
                                                                         />
                                                                 <input type="hidden" value="set" name="hidden" />
                                                                 <b class="smr-text-cgreen"> Registered In Income Tax?</b>
                                                             </label>
                                                         </div>
 
-
-                                                        <div class="col-lg-8 col-md-8 col-sm-8 col-xs-12" id="income_tax_div" style="display:none">
+                                                        <div class="col-lg-8 col-md-8 col-sm-8 col-xs-12" id="income_tax_div">
                                                             <div class="panel panel-primary panel-body well" data-collapsed="0" >
                                                                 <label class="radio-inline">
-                                                                    <input class=""  onclick="ntn_cnic('1')" type="radio" name="optradio" class="income" id="business" value="1">Business Individual
+                                                                    <input class=""  onclick="ntn_cnic('1')" type="radio" name="company_status" class="income" id="business" value="1"  {{ $supplier->company_status == 1 ? 'checked' : '' }}>Business Individual
                                                                 </label>
                                                                 <label class="radio-inline">
-                                                                    <input onclick="ntn_cnic('2')" type="radio" name="optradio" class="income" id="company" value="2">Company
+                                                                    <input onclick="ntn_cnic('2')" type="radio" name="company_status" class="income" id="company" value="2" {{ $supplier->company_status == 2 ? 'checked' : '' }}>Company
                                                                 </label>
                                                                 <label class="radio-inline">
-                                                                    <input onclick="ntn_cnic('3')" type="radio" name="optradio" class="income" id="aop" value="3">Aop
+                                                                    <input onclick="ntn_cnic('3')" type="radio" name="company_status" class="income" id="aop" value="3" {{ $supplier->company_status == 3 ? 'checked' : '' }}>Aop
                                                                 </label>
                                                             </div>
                                                         </div>
@@ -488,8 +502,7 @@ if($accType == 'client'){
 
                                                         <div class="col-lg-6 col-md-6 col-sm-6 col-xs-12 checkbox">
 
-
-                                                            <input style="display: none;margin-top: 15px" placeholder="CNIC" type="text" name="cnic" class="form-control" id="cnic"/>
+                                                            <input style="display: none;margin-top: 15px" placeholder="CNIC" type="text" name="cnic" value="{{ $supplier->cnic }}" class="form-control" id="cnic"/>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -662,6 +675,79 @@ if($accType == 'client'){
     </div>
     <script type="text/javascript">
         $(document).ready(function() {
+  var selectedCountry = $('#country').val();
+    var selectedState = "{{ $supplier->province }}";
+    var selectedCity = "{{ $supplier->city }}";
+    
+    if (selectedCountry) {
+        // First load states based on country
+        $.ajax({
+            url: '<?php echo url('/')?>/slal/stateLoadDependentCountryId',
+            type: "GET",
+            data: { id: selectedCountry },
+            success: function(data) {
+                $('select[name="state"]').html(data);
+                
+                // After states are loaded, select the saved state
+                if (selectedState) {
+                    $('select[name="state"]').val(selectedState).trigger('change');
+                    
+                    // Then load cities based on selected state
+                    $.ajax({
+                        url: '<?php echo url('/')?>/slal/cityLoadDependentStateId',
+                        type: "GET",
+                        data: { id: selectedState },
+                        success: function(cityData) {
+                            $('select[name="city"]').html(cityData);
+                            
+                            // Finally, select the saved city
+                            if (selectedCity) {
+                                $('select[name="city"]').val(selectedCity);
+                            }
+                        }
+                    });
+                }
+            }
+        });
+    }
+    
+    // Your existing code for country change event
+    $('select[name="country"]').on('change', function() {
+        var countryID = $(this).val();
+        if(countryID) {
+            $.ajax({
+                url: '<?php echo url('/')?>/slal/stateLoadDependentCountryId',
+                type: "GET",
+                data: { id: countryID},
+                success:function(data) {
+                    $('select[name="city"]').empty();
+                    $('select[name="state"]').empty();
+                    $('select[name="state"]').html(data);
+                }
+            });
+        }else{
+            $('select[name="state"]').empty();
+            $('select[name="city"]').empty();
+        }
+    });
+
+    // Your existing code for state change event
+    $('select[name="state"]').on('change', function() {
+        var stateID = $(this).val();
+        if(stateID) {
+            $.ajax({
+                url: '<?php echo url('/')?>/slal/cityLoadDependentStateId',
+                type: "GET",
+                data: { id: stateID},
+                success:function(data) {
+                    $('select[name="city"]').empty();
+                    $('select[name="city"]').html(data);
+                }
+            });
+        }else{
+            $('select[name="city"]').empty();
+        }
+    });
 
             var con={{$con}};
             if(con<1){
@@ -730,6 +816,17 @@ if($accType == 'client'){
                 }
             });
 
+            // Initial state for Income Tax
+            if ($('#regd_in_income_tax').is(':checked')) {
+                $('#income_tax_div').show();
+                var selectedStatus = $('input[name="company_status"]:checked').val();
+                if (selectedStatus) {
+                    ntn_cnic(selectedStatus);
+                }
+            } else {
+                $('#income_tax_div').hide();
+                $("#cnic").hide();
+            }
 
         });
 
@@ -738,45 +835,116 @@ if($accType == 'client'){
             $('#cat'+con).remove(); 
         }
 
+        // function ntn_cnic(id)
+        // {
+        //     if(id==1)
+        //     {
+
+        //         $(this).prop('checked', false);
+        //         $("#ntn").fadeIn(500);
+        //         $("#cnic").fadeIn(500);
+        //         $("#amir").removeClass("col-lg-12 col-md-12 col-sm-12 col-xs-12");
+        //         $("#amir").addClass("col-lg-6 col-md-6 col-sm-6 col-xs-12");
+        //         $("#ntn").addClass("requiredField");
+        //         $("#cnic").addClass("requiredField");
+        //     }
+
+        //     else
+        //     {
+
+        //         $("#ntn").fadeIn(500);
+        //         $("#ntn").addClass("requiredField");
+        //         $("#cnic").css("display", "none");
+        //         $("#cnic").removeClass("requiredField");
+        //         $("#amir").removeClass("col-lg-6 col-md-6 col-sm-6 col-xs-12");
+        //         $("#amir").addClass("col-lg-12 col-md-12 col-sm-12 col-xs-12");
+
+        //     }
+        // }
+
         function ntn_cnic(id)
-        {
-            if(id==1)
-            {
+{
+    if(id==1) // Business Individual
+    {
+        // Show both NTN and CNIC
+        $("#ntn").fadeIn(500);
+        $("#cnic").fadeIn(500);
+        
+        // Add required class to both
+        $("#ntn").addClass("requiredField");
+        $("#cnic").addClass("requiredField");
+        
+        // Adjust column layout
+        $("#amir").removeClass("col-lg-12 col-md-12 col-sm-12 col-xs-12");
+        $("#amir").addClass("col-lg-6 col-md-6 col-sm-6 col-xs-12");
+    }
+    else if(id==2 || id==3) // Company or AOP
+    {
+        // Show only NTN
+        $("#ntn").fadeIn(500);
+        
+        // Add required class to NTN only
+        $("#ntn").addClass("requiredField");
+        
+        // Hide and remove required from CNIC
+        $("#cnic").css("display", "none");
+        $("#cnic").removeClass("requiredField");
+        // $('#cnic').val(""); // Clear CNIC value (REMOVED to prevent loss of data)
+        
+        // Adjust column layout
+        $("#amir").removeClass("col-lg-6 col-md-6 col-sm-6 col-xs-12");
+        $("#amir").addClass("col-lg-12 col-md-12 col-sm-12 col-xs-12");
+    }
+}
 
-                $(this).prop('checked', false);
-                $("#ntn").fadeIn(500);
-                $("#cnic").fadeIn(500);
-                $("#amir").removeClass("col-lg-12 col-md-12 col-sm-12 col-xs-12");
-                $("#amir").addClass("col-lg-6 col-md-6 col-sm-6 col-xs-12");
-                $("#ntn").addClass("requiredField");
-                $("#cnic").addClass("requiredField");
-            }
-
-            else
-            {
-
-                $("#ntn").fadeIn(500);
-                $("#ntn").addClass("requiredField");
-                $("#cnic").css("display", "none");
-                $("#cnic").removeClass("requiredField");
-                $("#amir").removeClass("col-lg-6 col-md-6 col-sm-6 col-xs-12");
-                $("#amir").addClass("col-lg-12 col-md-12 col-sm-12 col-xs-12");
-
-            }
-        }
+        // $('#regd_in_income_tax').change(function(){
+        //     if ($(this).is(':checked'))
+        //     {
+        //         $('.income').prop('checked', false);
+        //         document.getElementById("income_tax_div").style.display = "block";
+        //     } else {
+        //         document.getElementById("income_tax_div").style.display = "none";
+        //         $("#cnic").css("display", "none");
+        //         // $("#ntn").css("display", "none");
+        //         // $('#ntn').val("");
+        //     }
+        // });
 
         $('#regd_in_income_tax').change(function(){
-            if ($(this).is(':checked'))
-            {
-                $('.income').prop('checked', false);
-                document.getElementById("income_tax_div").style.display = "block";
-            } else {
-                document.getElementById("income_tax_div").style.display = "none";
-                $("#cnic").css("display", "none");
-                // $("#ntn").css("display", "none");
-                // $('#ntn').val("");
-            }
-        });
+    if ($(this).is(':checked'))
+    {
+        // $('.income').prop('checked', false); // REMOVED: Preserve selection
+        document.getElementById("income_tax_div").style.display = "block";
+        
+        var selectedStatus = $('input[name="company_status"]:checked').val();
+        if (selectedStatus) {
+            ntn_cnic(selectedStatus);
+        }
+    } else {
+        document.getElementById("income_tax_div").style.display = "none";
+        
+        // Sirf required class hatao, input field ko hide mat karo
+        $("#ntn").removeClass("requiredField");
+        $("#cnic").removeClass("requiredField");
+        
+        // Required class ka red border bhi hatao
+        $("#ntn").css('border-color', '#ccc');
+        $("#cnic").css('border-color', '#ccc');
+        
+        // Radio buttons ko unchecked karo
+        $('.income').prop('checked', false);
+        
+        // CNIC ko hide karo (kionke business individual select nahi hai)
+        $("#cnic").css("display", "none");
+        
+        // NTN ko visible rakho lekin required na ho
+        $("#ntn").css("display", "block");
+        
+        // Column layout reset karo
+        $("#amir").removeClass("col-lg-6 col-md-6 col-sm-6 col-xs-12");
+        $("#amir").addClass("col-lg-12 col-md-12 col-sm-12 col-xs-12");
+    }
+});
 
 
         $('#regd_in_sales_tax').change(function(){
@@ -1039,6 +1207,7 @@ if($accType == 'client'){
             $('#RemoveRows'+Rows).remove();
         }
     </script>
+
 
     <script type="text/javascript">
         $('#account_head').select2();

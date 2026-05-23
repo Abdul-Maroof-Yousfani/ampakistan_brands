@@ -191,25 +191,23 @@ class QuotationController extends Controller
 
     public function quotation_list()
     {
-      
+
    
         return view($this->page);
     }
 
     public function quotation_query()
     {
-           $type = request()->type;
-     
+        $type = request()->type;
      return   DB::Connection('mysql2')->table('quotation as a')
             ->join('quotation_data as b','a.id','=','b.master_id')
             ->join('demand as c','a.pr_id','=','c.id')
             ->select('a.*',DB::Connection('mysql2')->raw('SUM(b.amount) As amount'),'c.demand_date','c.quotation_approve')
             ->where('a.status',1)
-             ->groupBy('a.id')
-                   ->when($type == 'pending', function($query) {
+            ->groupBy('a.id')
+            ->when($type == 'pending', function($query) {
                 $query->where("a.quotation_status", 1);
             })
-      
             ->orderBy('a.id','Desc')
             ->orderBy('a.pr_no')
             ->get();
@@ -336,12 +334,23 @@ class QuotationController extends Controller
 DB::connection('mysql2')->table('quotation')
     ->whereIn('id', $master_ids) // status update
     ->update(['quotation_status' => 2]);
-
 DB::connection('mysql2')->table('quotation')
     ->whereIn('pr_id', (array)$pr_id) // array bana kar pass karo
     ->update([
         'comparative_number' => DB::raw("CONCAT('COMP-', id)")
     ]);
+
+$exists = DB::connection('mysql2')->table('demand')
+    ->whereIn('id', (array)$pr_id)
+    ->exists();
+
+if ($exists) {
+    DB::connection('mysql2')->table('demand')
+        ->whereIn('id', (array)$pr_id)
+        ->update([
+            'comparative_number_new' => DB::raw("CONCAT('COMP-', id)")
+        ]);
+}
 
         $voucher_no = 'Quotation Against '.$pr_no;
         $subject = 'Purchase Quotation Approved For '.$pr_no;            

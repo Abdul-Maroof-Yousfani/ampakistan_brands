@@ -1,0 +1,142 @@
+<?php use App\Helpers\CommonHelper; ?>
+<div class="modal-body row">
+
+
+    <div class="row" id="bundle_table">
+        <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
+
+
+
+            <div class="table-responsive" >
+
+
+                <h3 style="text-align: center;font-family: cursive"><u>Insert Data</u></h3>
+
+
+                <table class="table table-bordered" id="">
+                    <thead>
+                    <tr>
+                        <th class="text-center" style="">SR No</th>
+                        <th style="" class="text-center" >Warehouse<span class="rflabelsteric"><strong>*</strong></span></th>
+                        <th style="" class="text-center" > Stock IN<span class="rflabelsteric"><strong>*</strong></span></th>
+                        <th style="" class="text-center" > Unit Price<span class="rflabelsteric"><strong>*</strong></span></th>
+                        <th class="text-center"  style="" >Closing Value<span class="rflabelsteric"><strong>*</strong></span></th>
+                        <th class="text-center" style="display: none">Batch Number<span class="rflabelsteric"><strong>*</strong></span></th>
+
+                    </tr>
+                    </thead>
+                    <tbody id="append_bundle">
+                        @php
+                            $closingStock = 0;
+                            $closingValue = 0;
+                            $allWarehouses = CommonHelper::get_all_warehouse();
+                        @endphp
+                    <?php $counter=1; ?>
+                    
+                    @foreach($allWarehouses as $row)
+                        <tr>
+                            <td>{{$counter++}}</td>
+                            <input type="hidden" name="warehouse[]" value="{{$row->id}}"/>
+                            <td class="text-center">{{$row->name}}</td>
+                            <td><input step="any" type="number" onkeyup="calculateRowAmount({{$counter}})" class="form-control requiredField closing_stock" value="0" name="closing_stock[]" id="closing_stock{{$counter}}" /> </td>
+                            <td><input step="any" type="number" onkeyup="calculateRowAmount({{$counter}})" class="form-control requiredField unit_price" value="0" name="unit_price[]" id="unit_price{{$counter}}" /> </td>
+                            <td style=""><input readonly step="any" type="number" onkeyup="calculateClosingRate()" class="form-control requiredField closing_value" value="0" name="closing_val[]" id="closing_val{{$counter}}" /> </td>
+                            <td style="display: none"><input type="text" class="form-control requiredField" value="0" name="batch_code[]" id="batch_code{{$counter}}" /> </td>
+                        </tr>
+                    @endforeach
+                    </tbody>
+
+                    <tbody>
+                    <tr  style="font-size:large;font-weight: bold">
+                        <td class="text-center" colspan="2">Total</td>
+                        <td id="" class="text-right" colspan="1"><input readonly class="form-control clear closing_stock_value" type="text" value="{{ $closingStock }}" id="total_qty"/> </td>
+                        <td></td>
+                        <td style="" id="" class="text-right" colspan="1"><input readonly class="form-control clear closing_rate_value" type="text" value="{{ $closingValue }}" id="total_rate"/> </td>
+
+
+                    </tr>
+                    </tbody>
+
+                </table>
+
+
+
+            </div>
+
+
+        </div>
+    </div>
+
+    @if (Session::get('run_company')==1 || Session::get('run_company')==1)
+    <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12 text-center">
+
+        {{ Form::submit('Submit', ['class' => 'btn sa']) }}
+    </div>
+        @endif
+</div>
+
+<script>
+    function calculateRowAmount(id) {
+        let qty = Number($("#closing_stock" + id).val());
+        let rate = Number($("#unit_price" + id).val());
+        let amount = qty * rate;
+        $("#closing_val" + id).val(amount.toFixed(2));
+        
+        calculateClosingStock();
+        calculateClosingRate();
+    }
+
+    function calculateClosingStock() {
+        let closing_stock_value = 0;
+
+        $(".closing_stock").each(function () {
+            closing_stock_value += Number($(this).val());
+        });
+
+        $(".closing_stock_value").val(closing_stock_value);
+    }
+
+    function calculateClosingRate() {
+        let closing_rate_value = 0;
+
+        $(".closing_value").each(function () {
+            closing_rate_value += Number($(this).val());
+        });
+    
+        $(".closing_rate_value").val(closing_rate_value.toFixed(2));    
+    }
+
+   
+
+
+</script>
+<script>
+    $(document).ready(function() {
+        $(".sa").click(function(e){
+
+            var category = new Array();
+            var val;
+            //$("input[name='chartofaccountSection[]']").each(function(){
+            category.push($(this).val());
+            //});
+            var _token = $("input[name='_token']").val();
+            for (val of category) {
+
+                jqueryValidationCustom();
+
+                if(validate == 0){
+                    Swal.fire({
+                        toast: true,
+                        position: 'top-end',
+                        icon: 'info',
+                        title: 'Saving opening stock...',
+                        showConfirmButton: false,
+                        timer: 2000
+                    });
+                }else{
+                    return false;
+                }
+            }
+        });
+    });
+</script>

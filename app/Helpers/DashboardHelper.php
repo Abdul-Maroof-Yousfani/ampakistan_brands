@@ -168,4 +168,211 @@ class DashboardHelper
 
         return $data;
     }
+
+    public static function getSaleSummaryAmount($monthStartDate, $monthEndDate)
+    {
+        $sale = DB::Connection('mysql2')->table('sales_order')
+            ->where('sales_order.status', 1)
+            ->whereBetween('sales_order.date', [$monthStartDate, $monthEndDate])
+            ->select(DB::raw('sum(sales_order.total_amount_after_sale_tax) as sale_amount'))
+            ->first();
+
+        if ($sale) {
+            return $sale->sale_amount;
+        } else {
+            return 0;
+        }
+    }
+
+    public static function getCollectionSummaryAmount($startDate, $endDate)
+    {
+        return DB::connection('mysql2')->table('transactions')
+            ->where('status', 1)
+            ->whereBetween('date', [$startDate, $endDate])
+            ->where(function ($query) {
+                $query->where('voucher_no', 'like', 'brv%')
+                    ->orWhere('voucher_no', 'like', 'crv%')
+                    ->orWhere('voucher_no', 'like', 'ADV%');
+            })
+            ->where('debit_credit', 1)
+            ->sum('amount');
+    }
+
+    public static function getTotalReceivablesAmount()
+    {
+        $debits = DB::connection('mysql2')->table('transactions')
+            ->where('status', 1)
+            ->where('acc_code', 'like', '1-%')
+            ->where('debit_credit', 1)
+            ->sum('amount');
+        $credits = DB::connection('mysql2')->table('transactions')
+            ->where('status', 1)
+            ->where('acc_code', 'like', '1-%')
+            ->where('debit_credit', 0)
+            ->sum('amount');
+        return $debits - $credits;
+    }
+
+    public static function getTotalPayablesAmount()
+    {
+        $credits = DB::connection('mysql2')->table('transactions')
+            ->where('status', 1)
+            ->where('acc_code', 'like', '2-%')
+            ->where('debit_credit', 0)
+            ->sum('amount');
+        $debits = DB::connection('mysql2')->table('transactions')
+            ->where('status', 1)
+            ->where('acc_code', 'like', '2-%')
+            ->where('debit_credit', 1)
+            ->sum('amount');
+        return $credits - $debits;
+    }
+
+    public static function getBankBalance()
+    {
+        $debits = DB::connection('mysql2')->table('transactions')
+            ->where('status', 1)
+            ->where(function ($query) {
+                $query->where('acc_code', 'like', '1-1%')
+                    ->orWhere('acc_code', 'like', '1-18%');
+            })
+            ->where('debit_credit', 1)
+            ->sum('amount');
+        $credits = DB::connection('mysql2')->table('transactions')
+            ->where('status', 1)
+            ->where(function ($query) {
+                $query->where('acc_code', 'like', '1-1%')
+                    ->orWhere('acc_code', 'like', '1-18%');
+            })
+            ->where('debit_credit', 0)
+            ->sum('amount');
+        return $debits - $credits;
+    }
+
+    public static function getMonthlySalesData()
+    {
+        $sales = [];
+        $labels = [];
+        for ($i = 5; $i >= 0; $i--) {
+            $month = date('Y-m', strtotime("-$i months"));
+            $startDate = "$month-01";
+            $endDate = date('Y-m-t', strtotime($startDate));
+            $amount = self::getSaleSummaryAmount($startDate, $endDate);
+            $sales[] = (float)$amount;
+            $labels[] = date('M', strtotime($startDate));
+        }
+        return ['labels' => $labels, 'data' => $sales];
+    }
+
+    public static function getTopSellingProducts($limit = 5, $type = 'value', $period = 'month')
+    {
+        $query = DB::connection('mysql2')->table('sales_order_data')
+            ->join('sales_order', 'sales_order_data.master_id', '=', 'sales_order.id')
+            ->join('subitem', 'sales_order_data.item_id', '=', 'subitem.id')
+            ->where('sales_order.status', 1);
+
+        if ($period == 'today') {
+            $query->whereDate('sales_order.date', date('Y-m-d'));
+        } else {
+            $query->whereBetween('sales_order.date', [date('Y-m-01'), date('Y-m-t')]);
+        }
+
+        $orderBy = $type == 'qty' ? 'total_qty' : 'total_sales';
+
+        return $query->select(
+                'subitem.product_name',
+                'subitem.sku_code',
+                DB::raw('SUM(sales_order_data.qty) as total_qty'),
+                DB::raw('SUM(sales_order_data.qty * COALESCE(subitem.sale_price, 0)) as total_sales')
+            )
+            ->groupBy('subitem.id', 'subitem.product_name', 'subitem.sku_code')
+            ->orderBy($orderBy, 'DESC')
+            ->limit($limit)
+            ->get();
+    }
+
+    public static function getApprovedInvoicesAmount($startDate, $endDate)
+    {
+        return DB::Connection('mysql2')->table('sales_order')
+            ->where('status', 1)
+            ->whereBetween('date', [$startDate, $endDate])
+            ->sum('total_amount_after_sale_tax');
+    }
+
+    public static function getMonthlySalesValue($startDate, $endDate)
+    {
+        return DB::Connection('mysql2')->table('sales_order')
+            ->where('status', 1)
+            ->whereBetween('date', [$startDate, $endDate])
+            ->sum('total_amount_after_sale_tax');
+    }
+
+    public static function getPendingSalesOrdersTotal()
+    {
+        return DB::Connection('mysql2')->table('sales_order')
+            ->where('so_status', 0)
+            ->sum('total_amount_after_sale_tax');
+    }
+
+    public static function getBATargetAchievementList()
+    {
+        $year = date('Y');
+        $month = (int)date('m');
+
+        $targets = DB::connection('mysql2')->table('target_items')
+            ->where('year', $year)
+            ->where('month', $month)
+            ->select('employee_id', DB::raw('SUM(target) as total_target'))
+            ->groupBy('employee_id')
+            ->get()
+            ->keyBy('employee_id');
+
+        $actuals = DB::connection('mysql2')->table('retail_sale_orders as so')
+            ->join('retail_sale_order_details as sod', 'so.id', '=', 'sod.retail_sale_order_id')
+            ->whereYear('so.sale_order_date', $year)
+            ->whereMonth('so.sale_order_date', $month)
+            ->select('so.user_id', DB::raw('SUM(sod.qty) as total_actual'))
+            ->groupBy('so.user_id')
+            ->get()
+            ->keyBy('user_id');
+
+        $result = [];
+        $employeeIds = $targets->keys()->merge($actuals->keys())->unique();
+        $employees = DB::table('users')->whereIn('id', $employeeIds)->pluck('name', 'id');
+
+        foreach ($employees as $id => $name) {
+            $targetVal = $targets[$id]->total_target ?? 0;
+            $actualVal = $actuals[$id]->total_actual ?? 0;
+            $percentage = $targetVal > 0 ? ($actualVal / $targetVal) * 100 : 0;
+            
+            $result[] = (object)[
+                'name' => $name,
+                'target' => $targetVal,
+                'actual' => $actualVal,
+                'percentage' => round($percentage, 2)
+            ];
+        }
+
+        usort($result, function($a, $b) {
+            return $b->percentage <=> $a->percentage;
+        });
+
+        return $result;
+    }
+
+    public static function getPendingSalesOrdersForApproval()
+    {
+        $territory_ids = json_decode(auth()->user()->territory_id);
+        if (!is_array($territory_ids)) {
+            $territory_ids = [auth()->user()->territory_id];
+        }
+
+        return DB::Connection('mysql2')->table('sales_order')
+            ->join('customers', 'sales_order.buyers_id', 'customers.id')
+            ->whereIn('customers.territory_id', $territory_ids)
+            ->where('sales_order.status', 1)
+            ->where('sales_order.so_status', 0)
+            ->select('sales_order.*', 'customers.name')
+            ->orderBy('sales_order.id', 'DESC')->get();
+    }
 }

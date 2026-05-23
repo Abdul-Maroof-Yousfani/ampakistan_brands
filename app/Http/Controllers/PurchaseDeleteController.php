@@ -305,7 +305,7 @@ class PurchaseDeleteController extends Controller
 
     public function delete_records(Request $request)
     {
-            $id=  Input::get('id');
+        $id=  Input::get('id');
         $TableType=  Input::get('TableType');
         $Master = '';
         $Detail = '';
@@ -342,7 +342,6 @@ class PurchaseDeleteController extends Controller
         DB::Connection('mysql2')->table($Detail)->where('master_id',$id)->update($data);
 
         CommonHelper::inventory_activity($VoucherNo,$VoucherDate,$Amount,$TableType,'Delete');
-     
     }
 
     public function DeleteAgainForPO()

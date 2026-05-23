@@ -26,7 +26,7 @@ $AccYearTo = $AccYearDate->accyearto;
                     <div class="row">
                         <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
                             <div class="col-lg-6 col-md-6 col-sm-6 col-xs-12">
-                                <span class="subHeadingLabelClass">Debtor Outstanding</span>
+                                <span class="subHeadingLabelClass">Debtor Outstanding Report</span>
                             </div>
                             <div class="col-lg-6 col-md-6 col-sm-6 col-xs-12 text-right">
                                 <button class="btn btn-primary" onclick="printView('PrintEmpExitInterviewList','','1')" style="">
@@ -65,7 +65,9 @@ $AccYearTo = $AccYearDate->accyearto;
                     <div class="lineHeight">&nbsp;</div>
                     <div class="panel">
                         <div class="panel-body" id="PrintEmpExitInterviewList">
-                            <?php echo CommonHelper::headerPrintSectionInPrintView($m);?>
+                            <div class="visible-print-block">
+                                <?php echo CommonHelper::headerPrintSectionInPrintView($m);?>
+                            </div>
                             <div class="row">
                                 <div class="col-lg-12 col-md-12 col-sm-12col-xs-12">
                                     <div class="table-responsive" id="ShowHide">
@@ -109,7 +111,8 @@ $AccYearTo = $AccYearDate->accyearto;
             $('#ShowHide').html('<div class="row"><div class="col-lg-12 col-md-12 col-sm-12 col-xs-12"><div class="loader"></div></div></div>');
 
             $.ajax({
-                url: '/sdc/getOutstandingReportAjax',
+                // url: '/sdc/getOutstandingReportAjax',
+                  url: "{{ route('getOutstandingReportAjax') }}",
                 type: 'Get',
                 data: {ClientId: ClientId,FromDate:FromDate,ToDate:ToDate,m:m},
 
