@@ -15,8 +15,10 @@ class BaAttendanceReportController extends Controller
 {
     public function index()
     {
-        $data['employees'] = Employees::whereIn('emp_id', BAFormation::pluck('employee_id')->unique())->get();
+        $baEmployeeIds = BAFormation::pluck('employee_id')->unique();
+        $data['employees'] = Employees::whereIn('emp_id', $baEmployeeIds)->get();
         $data['brands'] = DB::connection('mysql2')->table('brands')->where('status', 1)->orderBy('name')->get();
+        $data['zones'] = Employees::whereIn('emp_id', $baEmployeeIds)->whereNotNull('zone')->where('zone', '!=', '')->distinct()->pluck('zone');
         return view('BA.Reports.attendance_report', $data);
     }
 
@@ -27,21 +29,26 @@ class BaAttendanceReportController extends Controller
         $employee_ids = $request->employee_ids;
         $brand_id = $request->brand_id;
         $targetType = $request->target_type ?? 'qty';
+        $zone = $request->zone;
 
         $dates = [];
         for ($date = $startDate->copy(); $date->lte($endDate); $date->addDay()) {
             $dates[] = $date->format('Y-m-d');
         }
 
-        $bas = Employees::whereIn('emp_id', function ($query) use ($brand_id) {
-            $query->select('employee_id')
-                ->from('b_a_formations')
-                ->when(!empty($brand_id), function ($q) use ($brand_id) {
-                    $q->whereJsonContains('brands_ids', (string) $brand_id);
-                });
-        })
+        $formationQuery = BAFormation::query();
+        $formationQuery = BAFormation::query();
+        if (!empty($brand_id)) {
+            $formationQuery->whereJsonContains('brands_ids', (string) $brand_id);
+        }
+        $baEmployeeIds = $formationQuery->pluck('employee_id')->unique()->toArray();
+
+        $bas = Employees::whereIn('emp_id', $baEmployeeIds)
             ->when(!empty($employee_ids), function ($query) use ($employee_ids) {
                 $query->whereIn('emp_id', $employee_ids);
+            })
+            ->when(!empty($zone), function ($query) use ($zone) {
+                $query->whereRaw('TRIM(zone) = ?', [trim($zone)]);
             })
             ->get()
             ->sortBy(function ($ba) {
@@ -55,6 +62,13 @@ class BaAttendanceReportController extends Controller
                 }
                 return 'zzz'; // BAs without brands at the end
             });
+
+        \Log::info('BA Report Generation Debug', [
+            'zone_filter' => $zone,
+            'ba_count' => $bas->count(),
+            'brand_id' => $brand_id,
+            'employee_ids' => $employee_ids
+        ]);
 
         $reportData = [];
         $client = new \GuzzleHttp\Client();
@@ -164,7 +178,7 @@ class BaAttendanceReportController extends Controller
 
             $baData['customer'] = $formation->customer->name ?? 'N/A';
             $baData['city'] = 'N/A';
-            $baData['zone'] = 'N/A';
+            $baData['zone'] = $ba->zone ?? 'N/A';
             $baData['location'] = 'N/A';
 
             $apiAttendance = [];
@@ -275,7 +289,7 @@ class BaAttendanceReportController extends Controller
 
         if ($request->export == 'excel') {
             $exportData = [];
-            $headings = ['BA Code', 'BA Name', 'Customer', 'Brand(s)'];
+            $headings = ['BA Code', 'BA Name', 'Zone', 'Customer', 'Brand(s)'];
 
             foreach ($dates as $date) {
                 $d = \Carbon\Carbon::parse($date)->format('d M Y');
@@ -294,6 +308,7 @@ class BaAttendanceReportController extends Controller
                 $row = [
                     $ba['emp_id'],
                     $ba['name'],
+                    $ba['zone'],
                     $ba['customer'],
                     $ba['brands']
                 ];

@@ -478,14 +478,48 @@ public function exportCustomers(Request $request)
     public function uploadCreditCustomer(Request $request)
 {
     $file = $request->file('import_file');
+
+    if (!$file) {
+        return \Illuminate\Support\Facades\Redirect::back()->with('dataDelete', 'Please select a file to upload.');
+    }
+
+    $extension = strtolower($file->getClientOriginalExtension());
+    $content = file_get_contents($file->getRealPath(), false, null, 0, 2);
+    
+    // Check if it's not a CSV or if it's a binary Excel file masquerading as a CSV
+    if ($extension !== 'csv' || $content === 'PK') {
+        return \Illuminate\Support\Facades\Redirect::back()->with('dataDelete', 'Only CSV files are allowed! Please open your Excel file (.xlsx) and "Save As" a CSV (Comma delimited) file before uploading.');
+    }
+
     $data = array_map('str_getcsv', file($file->getRealPath()));
+
+    $inserted = 0;
+    $updated = 0;
+    $skipped = 0;
+    $errors = [];
 
     foreach ($data as $key => $row) {
         if ($key == 0) {
             continue; // Skip the header row
         }
 
-        $row = array_pad($row, 45, null); // ensure enough indexes
+        if (empty(array_filter($row))) {
+            continue; // Skip trailing empty lines
+        }
+
+        if (is_array($row)) {
+            $row = array_map(function($val) {
+                return is_string($val) ? mb_convert_encoding($val, 'UTF-8', 'UTF-8') : $val;
+            }, $row);
+        }
+
+        $row = array_pad($row, 47, null); // ensure enough indexes
+
+        if (empty($row[0])) {
+            $skipped++;
+            $errors[] = "Row " . ($key + 1) . ": Customer Name is missing";
+            continue;
+        }
 
         // city, state, country
         $cityData = CommonHelper::get_city_id_by_name($row[7]);
@@ -538,7 +572,7 @@ public function exportCustomers(Request $request)
             'region_id' => Region::where('region_name', $row[45])->value('id'),
             'warehouse_to' => $row[42] ?? null,
             'username' => Auth::user()->name,
-            'customer_group_id' => CommonHelper::get_id_from_db_by_name($row[31], 'customer_group') ?? NULL,
+            'customer_group_id' => CommonHelper::get_id_from_db_by_name($row[46], 'customer_group') ?? NULL,
             'date' => date("Y-m-d"),
             'time' => date("H:i:s"),
             'action' => 'create',
@@ -557,6 +591,8 @@ public function exportCustomers(Request $request)
             DB::connection('mysql2')->table('customers')
                 ->where('id', $existingCustomer->id)
                 ->update($customerData);
+            
+            $updated++;
 
         } else {
       
@@ -586,7 +622,7 @@ public function exportCustomers(Request $request)
                 $counter++;
             }
             $data1['code'] = $code;
-            $data1['name'] = $row[0];
+            $data1['name'] = $row[0] ?? '';
             $data1['parent_code'] = $sent_code;
             $data1['username'] = Auth::user()->name;
             $data1['date'] = date("Y-m-d");
@@ -633,10 +669,16 @@ public function exportCustomers(Request $request)
                 ];
                 DB::connection('mysql2')->table('bank_detail')->insert($bankData);
             }
+            $inserted++;
         }
     }
 
-    return Redirect::to('sales/viewCreditCustomerList?pageType=' . Input::get('pageType') . '&&parentCode=' . Input::get('parentCode') . '&&m=' . Input::get('m') . '#SFR');
+    $message = "Upload Complete! Inserted: $inserted, Updated: $updated.";
+    if ($skipped > 0) {
+        $message .= " Skipped: $skipped. Issues: " . implode(" | ", $errors);
+    }
+
+    return Redirect::to('sales/viewCreditCustomerList?pageType=' . Input::get('pageType') . '&&parentCode=' . Input::get('parentCode') . '&&m=' . Input::get('m') . '#SFR')->with('dataInsert', $message);
 }
 
     // public function uploadProductbkbk(Request $request)
@@ -1343,9 +1385,17 @@ public function uploadProduct(Request $request)
 
         DB::connection('mysql2')->commit();
 
+        if ($skippedRows > 0 && !empty($errors)) {
+            $logPath = storage_path('logs/skipped_products.txt');
+            $logContent = "Skipped Rows Report - " . date('Y-m-d H:i:s') . "\n";
+            $logContent .= "Total Skipped: {$skippedRows}\n\n";
+            $logContent .= implode("\n", $errors);
+            file_put_contents($logPath, $logContent);
+        }
+
         $message = "Products uploaded successfully: {$insertedCount} inserted, {$updatedCount} updated";
         if ($skippedRows > 0) {
-            $message .= ", {$skippedRows} rows skipped (missing required fields)";
+            $message .= ", {$skippedRows} rows skipped (missing required fields). Detailed log saved in storage/logs/skipped_products.txt";
         }
 
         return redirect()->back()->with([
