@@ -417,14 +417,13 @@ class PurchaseController extends Controller
     }
 
     public function addRegionForm(){
-        $regNo = '0001';
-
         $region = Region::orderBy("id", "desc")->first();
 
-        $regionNo = null;
-        if ($regNo) {
-            $lastRegionNumber = (int)explode("-", $region->region_code)[1]; // Extract numeric part, assuming ba_no starts with a prefix (like '0')
-            $regionNo = str_pad($lastRegionNumber + 1, 4, '0', STR_PAD_LEFT); // Increment and format with leading zeros
+        $regionNo = '0001';
+        if ($region && $region->region_code) {
+            $parts = explode("-", $region->region_code);
+            $lastRegionNumber = count($parts) > 1 ? (int)$parts[1] : (int)$parts[0];
+            $regionNo = str_pad($lastRegionNumber + 1, 4, '0', STR_PAD_LEFT);
         }
 
         return view('Purchase.addRegionForm', compact("regionNo"));
